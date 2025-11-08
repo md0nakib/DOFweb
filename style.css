@@ -1,0 +1,158 @@
+/* default css */
+:root {
+  --bg: linear-gradient(to bottom, #e8f0e9, #e1f0ee);
+  --text: #1b5e20;
+  --primary: #007bff;
+  --hbg: #0F320F;
+}
+
+
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  
+  transition: all 0.3s ease;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: 'LSC', Tahoma, Arial, sans-serif;
+  overflow-x: hidden;
+  cursor: url('./src/img/logo1.svg'), auto;
+}
+
+/* All dark css is here */
+body.dark {
+  --bg: #121212;
+  --text: #e9ecef;
+  --primary: #0dcaf0;
+}
+
+body.dark header {
+  background: var(--hbg);
+}
+body.dark aside {
+  background: var(--hbg);
+  backdrop-filter: blur(1px);
+}
+
+/* Allow light Css is here*/
+header {
+  background: var(--bg);
+  backdrop-filter: blur(3px);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 10;
+  height: 60px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo img {
+  width: 40px;
+}
+
+.menu-btn {
+  font-size: 1.7em;
+  cursor: pointer;
+  color: var(--primary);
+}
+
+.theme-toggle {
+  cursor: pointer;
+  font-size: 1.4em;
+  color: var(--primary);
+}
+
+
+aside {
+  width: 300px;
+  background: var(--bg);
+  backdrop-filter: blur(1%);
+  position: fixed;
+  left: -300px;
+  top: 50px;
+  height: calc(100% - 0px);
+  padding: 20px;
+  border-right: 1px solid #ccc;
+  transition: left 0.35s ease;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  z-index: 9;
+}
+
+
+
+aside.show {
+  left: 0;
+}
+
+aside a {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+  padding: 1px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  font-size: 0.95em;
+}
+
+aside a:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+
+main {
+  flex: 1;
+  width: 100%;
+  height: 100vh;
+  /* পুরো স্ক্রিন উচ্চতা */
+  margin-top: 50px;
+  /* হেডারের জন্য margin বাদ */
+  display: flex;
+  justify-content: center;
+  /*align-items: center;*/
+}
+
+.content {
+  width: 100vw;
+  /* পুরো স্ক্রিন প্রস্থ */
+  height: auto;
+  /* পুরো স্ক্রিন উচ্চতা */
+  overflow: auto;
+  /* scroll না দেখানোর জন্য */
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+@media (max-width: 700px) {
+  header {
+    height: 50px;
+    font-size: 12px;
+    backdrop-filter: blur(1px);
+  }
+  
+  aside.show {
+    backdrop-filter: blur(1px);
+  }
+}
