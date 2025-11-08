@@ -16,6 +16,20 @@
             -webkit-tap-highlight-color: transparent;
             font-family: 'LSC', Tahoma, Arial, sans-serif;
         }
+a {
+  display: block;
+  color: white;
+  text-decoration: none;
+  padding: 1px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  font-size: 0.95em;
+}
+
+a:hover {
+  background: skyblue;
+  color: #fff;
+}
 
         body {
             font-family: 'LSC', Tahoma, Arial, sans-serif;
