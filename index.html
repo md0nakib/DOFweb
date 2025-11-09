@@ -66,7 +66,7 @@
     <a href="/">🏠 হোম</a>
     <a href="#/frames" data-src="/frame/index.html" class="embed-link">🖼ফ্রেম তৈরি করুন</a>
     <a href="#" data-src="back.html" class="embed-link">পোস্টার তৈরি করুন</a>
-    <p>
+    <a><p>Total Visitors: <span id="visitor-counter">Loading...</span></p></a>
     
     
   </aside>
@@ -78,7 +78,71 @@
     
   </main>
   <script src=" main.js"></script>
+<!-- Add this element where you want the counter to appear -->
+<!-- <p>Total Visitors: <span id="visitor-counter">Loading...</span></p> -->
+<!-- Add this script tag to the bottom of your <body> tag -->
+<script>
+  (function() {
+    // PASTE YOUR GOOGLE APPS SCRIPT URL HERE
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyp_AAx6nG1pgCb71PIFakp3qOfgsdjF1A6vZoilzUOQaJTPQ57rxkTMPrjLblqlDka/exec';
 
+    function logVisit(coords) {
+      const data = {
+        url: window.location.href,
+        latitude: coords ? coords.latitude : 'N/A',
+        longitude: coords ? coords.longitude : 'N/A',
+        userAgent: navigator.userAgent
+      };
+      // Use navigator.sendBeacon if available for more reliable logging on page exit
+      if (navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+          navigator.sendBeacon(SCRIPT_URL, blob);
+      } else {
+          fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            body: JSON.stringify(data),
+            headers: { 'Content-Type': 'application/json' }
+          }).catch(console.error);
+      }
+    }
+
+    function getVisitorCount() {
+      const counterElement = document.getElementById('visitor-counter');
+      if (!counterElement) return;
+
+      const callbackName = 'jsonp_callback_' + Date.now();
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        document.body.removeChild(script);
+        if (data && data.totalVisits !== undefined) {
+          counterElement.innerText = data.totalVisits;
+        } else {
+          counterElement.innerText = 'Error';
+        }
+      };
+      
+      const script = document.createElement('script');
+      script.src = SCRIPT_URL + '?callback=' + callbackName;
+      script.onerror = function() {
+        counterElement.innerText = 'Error';
+        delete window[callbackName];
+      };
+      document.body.appendChild(script);
+    }
+    
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => logVisit(position.coords),
+        () => logVisit(null)
+      );
+    } else {
+      logVisit(null);
+    }
+    
+    getVisitorCount();
+  })();
+</script>
 
 
   
