@@ -79,12 +79,13 @@
   </main>
   <script src=" main.js"></script>
 <!-- Add this element where you want the counter to appear -->
-<!-- <p>Total Visitors: <span id="visitor-counter">Loading...</span></p> -->
+<p>Total Visitors: <span id="visitor-counter">Loading...</span></p>
+
 <!-- Add this script tag to the bottom of your <body> tag -->
 <script>
   (function() {
     // PASTE YOUR GOOGLE APPS SCRIPT URL HERE
-    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyp_AAx6nG1pgCb71PIFakp3qOfgsdjF1A6vZoilzUOQaJTPQ57rxkTMPrjLblqlDka/exec';
+    const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzUHzk-wUF09RVuBztnb1UCAOalpxuPz-bbINqRZQvskGeEg-bXYTnewTsrhsRcXVjH7A/exec';
 
     function logVisit(coords) {
       const data = {
@@ -93,16 +94,18 @@
         longitude: coords ? coords.longitude : 'N/A',
         userAgent: navigator.userAgent
       };
+      
+      const formData = new FormData();
+      formData.append('payload', JSON.stringify(data));
+
       // Use navigator.sendBeacon if available for more reliable logging on page exit
       if (navigator.sendBeacon) {
-          const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
-          navigator.sendBeacon(SCRIPT_URL, blob);
+          navigator.sendBeacon(SCRIPT_URL, formData);
       } else {
           fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
-            body: JSON.stringify(data),
-            headers: { 'Content-Type': 'application/json' }
+            body: formData
           }).catch(console.error);
       }
     }
