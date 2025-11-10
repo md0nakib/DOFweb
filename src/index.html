@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <title>ব্রাউজারে ওপেন করুন</title>
+</head>
+<body>
+  <button onclick="openInBrowser()">ওয়েবসাইট খুলুন</button>
+
+  <script>
+    function openInBrowser() {
+      const url = "https://dmofarukfan.netlify.app/#/frames";
+      
+      // অ্যান্ড্রয়েডের জন্য Chrome intent
+      if (/Android/i.test(navigator.userAgent)) {
+        window.location = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+      } 
+      // iPhone এর জন্য Safari fallback
+      else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location = url;
+        alert("যদি ফেসবুক ব্রাউজারে না খুলে, দয়া করে Safari বা Chrome এ ওপেন করুন।");
+      } 
+      // ডেস্কটপে সাধারণ ওপেন
+      else {
+        window.open(url, "_blank");
+      }
+    }
+  </script>
+</body>
+</html>
