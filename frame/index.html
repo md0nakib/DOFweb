@@ -42,7 +42,7 @@
     </section>
 
     <section class="preview-section">
-        <div class="preview-title">টপ্রিভিউ</div>
+        <div class="preview-title">প্রিভিউ</div>
         <canvas id="preview-canvas"></canvas>
     </section>
 
@@ -50,6 +50,8 @@
         <button id="crop-btn" class="btn btn-primary">ক্রপ করুন</button>
         <button id="download-btn" class="btn btn-success">ডাউনলোড</button>
         <button id="share-btn" class="btn btn-danger">শেয়ার করুন</button>
+        <button onclick="openInBrowser()" class="btn btn-danger">ডাউনলোড বা শেয়ারে সমস্যা হলে এখানে ক্লিক করুন পরে continue এ ক্লিক করুন </button>
+
     </div>
 </div>
 
@@ -76,6 +78,26 @@
 
 
 </script>
+
+  <script>
+    function openInBrowser() {
+      const url = "https://dmofarukfan.netlify.app/#/frames";
+      
+      // অ্যান্ড্রয়েডের জন্য Chrome intent
+      if (/Android/i.test(navigator.userAgent)) {
+        window.location = `intent://${url.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+      } 
+      // iPhone এর জন্য Safari fallback
+      else if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        window.location = url;
+        alert("যদি ফেসবুক ব্রাউজারে না খুলে, দয়া করে Safari বা Chrome এ ওপেন করুন।");
+      } 
+      // ডেস্কটপে সাধারণ ওপেন
+      else {
+        window.open(url, "_blank");
+      }
+    }
+  </script>
 <script src="frames.js">frames.frames.js</script>
 </body>
 </html>
