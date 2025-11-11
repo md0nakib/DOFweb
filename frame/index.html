@@ -50,10 +50,11 @@
         <button id="crop-btn" class="btn btn-primary">ক্রপ করুন</button>
         <button id="download-btn" class="btn btn-success">ডাউনলোড</button>
         <button id="share-btn" class="btn btn-danger">শেয়ার করুন</button>
-        <button onclick="openInBrowser()" class="btn btn-danger">ডাউনলোড বা শেয়ারে সমস্যা হলে এখানে ক্লিক করুন পরে continue এ ক্লিক করুন </button>
-
+        
     </div>
 </div>
+    <button onclick="openInBrowser()" class="btn btn-danger">ডাউনলোড বা শেয়ারে সমস্যা হলে এখানে ক্লিক করুন পরে continue এ ক্লিক করুন </button>
+
 
 <!-- Scripts -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
@@ -81,7 +82,7 @@
 
   <script>
     function openInBrowser() {
-      const url = "https://dmofarukfan.netlify.app/#/frames";
+      const url = "https://doffan.pages.dev/#/frames";
       
       // অ্যান্ড্রয়েডের জন্য Chrome intent
       if (/Android/i.test(navigator.userAgent)) {
