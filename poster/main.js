@@ -9,7 +9,7 @@
     const status = document.getElementById('status');
 
     let userImageURL = null;
-    const bgImageURL = '/src/img/pr1.png';
+    const bgImageURL = '/src/img/p1.png';
     const POSTER_WIDTH = 340;
     const POSTER_HEIGHT = 474.24;
     const INNER_WIDTH = 329;
