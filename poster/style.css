@@ -153,13 +153,12 @@
   height: 10px;
   width: 50px;
   position: absolute;
-  z-index: 3;
+  z-index: 10;
   rotate: 270deg;
   bottom: 20px;
   right: -20px;
 }
 .watermark img{
-  position: absolute;
   height: 100%;
   width: 100%;
 }
