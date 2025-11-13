@@ -162,4 +162,10 @@
   height: 100%;
   width: 100%;
 }
-  
+  @font-face {
+    font-family: 'LSC'; /* A name you choose for your font */
+    src: url('/src/font/LSC.ttf') format('truetype'); /* Path to your font file */
+    /* Add other formats (WOFF, WOFF2) for better browser compatibility */
+    font-weight: normal;
+    font-style: normal;
+  }
