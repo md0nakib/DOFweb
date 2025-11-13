@@ -1,0 +1,166 @@
+
+    :root {
+      --bg: linear-gradient(to bottom, #C1E6C6A1, #e1f0ee);
+      --text: #1b5e20;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'LSC', Tahoma, Arial, sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .input-wrapper {
+      margin: 12px 0;
+      width: 100%;
+      max-width: 340px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1.5px solid #a0c4a0;
+      border-radius: 8px;
+      font-size: 16px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.2);
+    }
+
+    .poster {
+      background: white;
+      height: 474.24px;
+      width: 340px;
+      position: relative;
+      border: 0.5px solid rgba(173, 179, 244, 1);
+      margin: 30px auto;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .download {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      height: 464.24px;
+      width: 329px;
+      background: url('p:1.png') center/contain no-repeat;
+      border: 0.2px solid rgba(197, 106, 166, 1);
+    }
+
+    .uploadImagePreview {
+      position: absolute;
+      bottom: 0;
+      right: 0;
+      height: 200px;
+      width: 180px;
+      z-index: 1;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      
+    }
+
+    .tBackground {
+      position: absolute;
+      height: 35px;
+      width: 100%;
+      background-color: #10572E;
+      bottom: 0;
+      z-index: 2;
+    }
+
+    .inputNameView {
+      position: absolute;
+      bottom: 12px;
+      width: 100%;
+      text-align: center;
+      color: #EFEFEF;
+      z-index: 3;
+      font-weight: bold;
+      font-size: 16px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 10px;
+    }
+
+    .inputPostView {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      text-align: center;
+      color: #EFEFEF;
+      z-index: 4;
+      font-size: 10px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      padding: 0 10px;
+    }
+
+    #downloadBtn {
+      margin-top: 20px;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: bold;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+    }
+
+    #downloadBtn:hover {
+      background: #0056b3;
+      transform: translateY(-2px);
+    }
+    .download img{
+      position: absolute;
+      height: 100%;
+      width:100%;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #d32f2f;
+    }
+.watermark {
+  height: 10px;
+  width: 50px;
+  position: absolute;
+  z-index: 3;
+  rotate: 270deg;
+  bottom: 20px;
+  right: -20px;
+}
+.watermark img{
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+  
