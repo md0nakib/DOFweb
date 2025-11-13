@@ -96,13 +96,13 @@
       ctx.fillStyle = '#EFEFEF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      const nameText = nameInput.value || 'মো শফিকুল ইসলাম';
+      const nameText = nameInput.value || 'আপনার নাম';
       ctx.fillText(nameText, (POSTER_WIDTH / 2) * SCALE, (POSTER_HEIGHT - 17.5) * SCALE);
 
       // Draw Post
       ctx.font = `${10 * SCALE}px 'LSC', Tahoma, Arial, sans-serif`;
       ctx.fillStyle = '#EFEFEF';
-      const postText = postInput.value || 'সাধারণ সম্পাদক, ১নং ওয়ার্ড গুজাদিয়া';
+      const postText = postInput.value || 'সাধারণ সম্পাদক, ---নং ওয়ার্ড গুজাদিয়া';
       ctx.fillText(postText, (POSTER_WIDTH / 2) * SCALE, (POSTER_HEIGHT - 5.5) * SCALE);
 
       // Download
@@ -110,7 +110,7 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `poster_4k_${Date.now()}.png`;
+        a.download = `ড.ওসমান ফারুক_পোস্টার_${Date.now()}.png`;
         a.click();
         URL.revokeObjectURL(url);
         status.textContent = 'ডাউনলোড সম্পূর্ণ!';
@@ -121,6 +121,6 @@
     // Initialize preview
     window.addEventListener('load', () => {
       preview.style.backgroundImage = `url(${bgImageURL})`;
-      nameView.textContent = 'মো শফিকুল ইসলাম';
-      postView.textContent = 'সাধারণ সম্পাদক, ১নং ওয়ার্ড গুজাদিয়া';
+      nameView.textContent = 'আপনার নাম';
+      postView.textContent = 'সাধারণ সম্পাদক, --নং ওয়ার্ড গুজাদিয়া';
     });
