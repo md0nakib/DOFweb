@@ -1,1 +1,50 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>পোস্টার জেনারেটর - 4K কোয়ালিটি</title>
+  <link rel="stylesheet" href="../style.css">
 
+
+</head>
+<body>
+  <div class="stap">
+    
+  </div>
+
+  <div class="input-wrapper">
+    <label for="uploadImage">আপলোড ইমেজ :</label>
+    <input type="file" id="uploadImage" accept="image/*">
+  </div>
+
+  <div class="input-wrapper">
+    <label for="name">আপনার নাম:</label>
+    <input type="text" id="name" placeholder="আপনার নাম">
+  </div>
+
+  <div class="input-wrapper">
+    <label for="post">আপনার পদবি</label>
+    <input type="text" id="post" placeholder="যেমন:-সভাপতি , সম্পাদক,……..">
+  </div>
+
+  <div class="poster">
+    <div class="download" id="previewContainer">
+      <img src="https://i.ibb.co.com/39sdBQ8x/20251112-212714.png">
+      <div class="uploadImagePreview" id="preview"></div>
+      <div class="tBackground"></div>
+      <div class="inputNameView" id="nameView">মো শফিকুল ইসলাম</div>
+      <div class="inputPostView" id="postView">সাধারণ সম্পাদক, ১নং ওয়ার্ড গুজাদিয়া</div>
+      <div class="watermark">
+        <img src="/src/img/w1.png" alt="" />
+        
+      </div>
+    </div>
+  </div>
+
+  <button id="downloadBtn">পোস্টার ডাউনলোড করুন</button>
+  <p class="status" id="status"></p>
+
+<script src="../main.js"></script>
+</body>
+</html>
