@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LiveTV App</title>
     
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#0f0f0f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link id="manifest-link" rel="manifest" href="">
+
     <!-- TV Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='7' width='20' height='15' rx='2' ry='2'></rect><polyline points='17 2 12 7 7 2'></polyline></svg>">
     
@@ -107,6 +113,11 @@
 
         <!-- Right Side Icons -->
         <div class="flex items-center gap-1 sm:gap-2 z-10" id="rightNavContainer">
+            <!-- PWA Install Button -->
+            <button id="installAppBtn" class="hidden p-2 hover:bg-yt-hover rounded-full transition-colors relative group" title="Install LiveTV App">
+                <i data-lucide="download" class="w-5 h-5 text-blue-400 group-hover:text-blue-300"></i>
+                <span class="absolute top-1 right-1 w-2 h-2 bg-blue-500 rounded-full animate-ping"></span>
+            </button>
             <button id="aiChatBtn" class="p-2 hover:bg-yt-hover rounded-full transition-colors relative group" title="Ask AI Assistant">
                 <i data-lucide="sparkles" class="w-5 h-5 text-purple-400 group-hover:text-purple-300"></i>
                 <span class="absolute top-1 right-1 w-2 h-2 bg-purple-500 rounded-full animate-ping"></span>
@@ -253,6 +264,13 @@
 
     <!-- Overlay for closing chat on mobile -->
     <div id="chatBackdrop" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[55] hidden transition-opacity"></div>
+
+    <!-- PWA Update Toast -->
+    <div id="pwa-update-toast" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-yt-search border border-blue-500/30 text-white px-5 py-3 rounded-full shadow-2xl z-[70] flex items-center gap-4 animate-[popIn_0.3s_ease-out]">
+        <i data-lucide="refresh-cw" class="w-5 h-5 text-blue-400"></i>
+        <span class="text-sm font-medium whitespace-nowrap">New update available!</span>
+        <button onclick="window.location.reload(true)" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-full text-xs font-bold transition-colors whitespace-nowrap">Update Now</button>
+    </div>
 
     <script>
         // Initialize Lucide Icons
@@ -1057,9 +1075,97 @@
             if (e.key === 'Enter') handleSendChat();
         });
 
+        // --- PWA Setup & Installation Logic ---
+        function initPWA() {
+            // 1. Generate Manifest dynamically for 1-file setup
+            const manifestJSON = {
+                "name": "LiveTV App",
+                "short_name": "LiveTV",
+                "start_url": window.location.href.split('?')[0],
+                "display": "standalone",
+                "background_color": "#0f0f0f",
+                "theme_color": "#0f0f0f",
+                "icons": [
+                    {
+                        "src": "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b82f6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='2' y='7' width='20' height='15' rx='2' ry='2'/%3E%3Cpolyline points='17 2 12 7 7 2'/%3E%3C/svg%3E",
+                        "sizes": "192x192 512x512",
+                        "type": "image/svg+xml",
+                        "purpose": "any maskable"
+                    }
+                ]
+            };
+            const manifestBlob = new Blob([JSON.stringify(manifestJSON)], {type: 'application/manifest+json'});
+            document.getElementById('manifest-link').setAttribute('href', URL.createObjectURL(manifestBlob));
+
+            // 2. Handle Install Prompt
+            let deferredPrompt;
+            const installBtn = document.getElementById('installAppBtn');
+
+            window.addEventListener('beforeinstallprompt', (e) => {
+                // Prevent the mini-infobar from appearing on mobile
+                e.preventDefault();
+                deferredPrompt = e;
+                // Update UI notify the user they can install the PWA
+                installBtn.classList.remove('hidden');
+            });
+
+            installBtn.addEventListener('click', async () => {
+                if (deferredPrompt) {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        installBtn.classList.add('hidden');
+                        console.log('PWA Setup: User accepted the install prompt');
+                    }
+                    deferredPrompt = null;
+                }
+            });
+
+            window.addEventListener('appinstalled', () => {
+                installBtn.classList.add('hidden');
+                deferredPrompt = null;
+                console.log('PWA Setup: App was successfully installed');
+            });
+
+            // 3. Optional Service Worker Registration (Wrapped in try/catch as single-file Blob SWs are strictly governed by browser security policies)
+            try {
+                const swCode = `
+                    const CACHE_NAME = 'livetv-cache-v1';
+                    self.addEventListener('install', event => self.skipWaiting());
+                    self.addEventListener('activate', event => event.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', event => {
+                        // Pass-through fetch for dynamic content. Offline fallback setup.
+                        event.respondWith(fetch(event.request).catch(() => new Response('Offline mode.')));
+                    });
+                `;
+                const swBlob = new Blob([swCode], {type: 'text/javascript'});
+                const swUrl = URL.createObjectURL(swBlob);
+                
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.register(swUrl).then(registration => {
+                        registration.onupdatefound = () => {
+                            const installingWorker = registration.installing;
+                            if (installingWorker) {
+                                installingWorker.onstatechange = () => {
+                                    if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        // New update available, show update UI Toast
+                                        document.getElementById('pwa-update-toast').classList.remove('hidden');
+                                    }
+                                };
+                            }
+                        };
+                    }).catch(e => console.warn('PWA SW: Not supported in this secure iframe context.', e));
+                }
+            } catch(e) {
+                console.warn('PWA SW Context Blocked');
+            }
+        }
 
         // Initialize App
-        window.addEventListener('DOMContentLoaded', fetchAndParseM3U);
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchAndParseM3U();
+            initPWA();
+        });
 
     </script>
 </body>
