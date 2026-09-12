@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Typing Speed Test with History</title>
+    <title>Advanced Animated Typing Speed Test</title>
     <style>
         :root {
-            --background-color: #1a1a1a;
+            --background-color: #121212;
             --text-color: #e0e0e0;
             --subtle-text-color: #666;
             --primary-color: #f92672;
             --correct-color: #a6e22e;
-            --error-color: var(--primary-color);
-            --cursor-color: var(--primary-color);
-            --container-bg: #222;
+            --error-color: #ff5555;
+            --cursor-color: #f92672;
+            --container-bg: rgba(34, 34, 34, 0.85);
             --font-family: 'Fira Code', 'Courier New', Courier, monospace;
             --line-height: 2.2;
         }
@@ -26,7 +26,7 @@
             --correct-color: #50fa7b;
             --error-color: #ff5555;
             --cursor-color: #f8f8f2;
-            --container-bg: #22212c;
+            --container-bg: rgba(40, 42, 54, 0.85);
         }
 
         [data-theme='aether'] {
@@ -35,8 +35,8 @@
             --subtle-text-color: #4A3E4E;
             --primary-color: #9370DB;
             --correct-color: #DBA9A9;
-            --cursor-color: var(--primary-color);
-            --container-bg: #1a1a20;
+            --cursor-color: #9370DB;
+            --container-bg: rgba(26, 26, 32, 0.85);
         }
 
         * {
@@ -54,8 +54,10 @@
             align-items: center;
             min-height: 100vh;
             text-align: center;
-            transition: background-color 0.3s, color 0.3s;
             overflow-x: hidden;
+            transition: background-color 0.5s ease;
+            /* Gradient Background Animation */
+            background-image: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.03) 0%, transparent 80%);
         }
 
         #watermark {
@@ -71,6 +73,10 @@
         #watermark a {
             color: var(--subtle-text-color);
             text-decoration: none;
+            transition: color 0.3s;
+        }
+        #watermark a:hover {
+            color: var(--primary-color);
         }
         
         .container {
@@ -81,6 +87,18 @@
             align-items: center;
             gap: 1.5rem;
             padding: 1rem;
+            animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeInScale {
+            0% {
+                opacity: 0;
+                transform: scale(0.95) translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
         }
 
         .settings {
@@ -100,9 +118,16 @@
             flex-wrap: wrap;
             justify-content: center;
             background: var(--container-bg);
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            padding: 0.5rem 0.9rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .setting-group:hover {
+            border-color: rgba(255, 255, 255, 0.15);
         }
 
         .setting-group > span {
@@ -117,26 +142,28 @@
             font-family: inherit;
             cursor: pointer;
             font-size: 0.85rem;
-            padding: 0.2rem 0.4rem;
+            padding: 0.25rem 0.5rem;
             border-radius: 4px;
-            transition: color 0.2s, background-color 0.2s;
+            transition: all 0.25s ease;
         }
 
         .setting-group input {
             background: var(--background-color);
             color: var(--text-color);
             border: 1px solid var(--subtle-text-color);
-            padding: 0.2rem 0.5rem;
+            padding: 0.3rem 0.6rem;
             width: 110px;
         }
         
         .setting-group button.active {
             color: var(--primary-color);
             font-weight: bold;
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.08);
+            transform: scale(1.05);
         }
         .setting-group button:not(.active):hover {
             color: var(--text-color);
+            background: rgba(255, 255, 255, 0.04);
         }
 
         #theme-selector {
@@ -147,10 +174,17 @@
             padding: 0.3rem;
             font-family: inherit;
             cursor: pointer;
+            transition: border-color 0.2s;
         }
         
         #custom-text-container {
             width: 100%;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         #custom-text-input {
@@ -159,11 +193,16 @@
             background-color: var(--container-bg);
             color: var(--text-color);
             border: 1px solid var(--subtle-text-color);
-            border-radius: 5px;
+            border-radius: 8px;
             padding: 0.75rem;
             font-family: inherit;
             font-size: 0.95rem;
             resize: vertical;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        #custom-text-input:focus {
+            border-color: var(--primary-color);
         }
         
         #typing-area {
@@ -187,6 +226,7 @@
         .stats div span {
             color: var(--text-color);
             font-weight: bold;
+            transition: color 0.3s;
         }
 
         .words-container {
@@ -200,41 +240,62 @@
             max-height: calc(1.6rem * var(--line-height) * 3);
             overflow: hidden;
             text-align: left;
-            padding: 0 1rem;
+            padding: 1rem;
             background-color: var(--container-bg);
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            backdrop-filter: blur(12px);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: filter 0.3s ease;
         }
         
         .words-container.unfocused {
-            filter: blur(4px);
+            filter: blur(5px);
         }
         
         .words-container.unfocused::after {
-            content: 'Click to focus / Type to start';
+            content: 'Click here or press any key to focus';
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             font-size: 1.1rem;
             color: var(--text-color);
-            background: rgba(0,0,0,0.7);
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
+            background: rgba(0,0,0,0.8);
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
             z-index: 10;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            animation: pulseBanner 2s infinite ease-in-out;
+        }
+
+        @keyframes pulseBanner {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.03); }
         }
 
         #word-wrapper {
             position: relative;
-            transition: transform 0.2s ease-out;
+            transition: transform 0.25s cubic-bezier(0.1, 0.8, 0.3, 1);
             word-break: break-all;
         }
         
         #word-wrapper span {
             color: var(--subtle-text-color);
+            transition: color 0.15s ease;
         }
         #word-wrapper span.correct { color: var(--text-color); }
-        #word-wrapper span.incorrect { color: var(--error-color); text-decoration: underline; }
+        #word-wrapper span.incorrect { 
+            color: var(--error-color); 
+            text-decoration: underline;
+            animation: shakeChar 0.2s ease;
+        }
+
+        @keyframes shakeChar {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-2px); }
+            75% { transform: translateX(2px); }
+        }
 
         #cursor {
             position: absolute;
@@ -242,8 +303,15 @@
             height: 2.2rem;
             background-color: var(--cursor-color);
             border-radius: 2px;
-            transition: left 0.08s ease, top 0.08s ease;
+            transition: left 0.08s ease-out, top 0.08s ease-out;
             z-index: 5;
+            box-shadow: 0 0 8px var(--cursor-color);
+            animation: cursorBlink 1s infinite;
+        }
+
+        @keyframes cursorBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
         }
 
         #typing-input {
@@ -260,14 +328,24 @@
             width: 100%;
             max-width: 700px;
             background: var(--container-bg);
-            padding: 2rem;
-            border-radius: 10px;
+            backdrop-filter: blur(15px);
+            padding: 2.5rem;
+            border-radius: 14px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            animation: zoomInResult 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes zoomInResult {
+            0% { opacity: 0; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
         }
 
         #result-wpm {
             font-size: 4.5rem;
             color: var(--correct-color);
             font-weight: bold;
+            text-shadow: 0 0 20px rgba(166, 226, 46, 0.3);
         }
         
         #result-wpm .label {
@@ -303,13 +381,14 @@
             background-color: var(--primary-color);
             color: var(--background-color);
             border: none;
-            padding: 0.7rem 1.8rem;
-            border-radius: 5px;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
             cursor: pointer;
             font-size: 1.1rem;
             font-family: inherit;
             font-weight: bold;
-            transition: opacity 0.2s;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
         }
 
         #share-btn {
@@ -318,7 +397,12 @@
         }
 
         #restart-btn:hover, #share-btn:hover {
-            opacity: 0.9;
+            transform: translateY(-2px);
+            filter: brightness(1.15);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        #restart-btn:active, #share-btn:active {
+            transform: translateY(1px);
         }
 
         /* History Modal / Section */
@@ -326,30 +410,44 @@
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(5px);
             justify-content: center;
             align-items: center;
             z-index: 200;
+            animation: fadeIn 0.3s ease;
         }
         .history-content {
             background: var(--container-bg);
+            backdrop-filter: blur(15px);
             padding: 2rem;
-            border-radius: 8px;
+            border-radius: 12px;
             width: 90%;
             max-width: 600px;
             max-height: 80vh;
             overflow-y: auto;
             text-align: left;
             border: 1px solid var(--subtle-text-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: scaleUp 0.3s ease;
         }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.9); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
         .history-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 0.5rem;
         }
         .history-header h3 { color: var(--text-color); }
-        .close-history { background: none; border: none; color: var(--error-color); font-size: 1.2rem; cursor: pointer; }
+        .close-history { background: none; border: none; color: var(--error-color); font-size: 1.2rem; cursor: pointer; transition: transform 0.2s; }
+        .close-history:hover { transform: scale(1.2); }
         
         .history-list {
             list-style: none;
@@ -359,10 +457,14 @@
         }
         .history-item {
             background: var(--background-color);
-            padding: 0.8rem;
-            border-radius: 5px;
+            padding: 0.9rem;
+            border-radius: 8px;
             font-size: 0.9rem;
             border-left: 4px solid var(--primary-color);
+            transition: transform 0.2s;
+        }
+        .history-item:hover {
+            transform: translateX(4px);
         }
         .history-item .h-user { font-weight: bold; color: var(--primary-color); }
         .history-item .h-time { font-size: 0.75rem; color: var(--subtle-text-color); float: right; }
@@ -398,7 +500,7 @@
                 <button data-time="60" class="active">60s</button>
                 <button data-time="120">2m</button>
             </div>
-            <!-- Word Count Options (Initially Hidden) -->
+            <!-- Word Count Options -->
             <div class="setting-group" id="word-count-settings" style="display: none;">
                 <span>Words:</span>
                 <button data-words="10">10</button>
@@ -509,7 +611,7 @@
             };
 
             let state = {
-                testType: 'time', // 'time' or 'words'
+                testType: 'time',
                 timeLimit: 60,
                 timeLeft: 60,
                 wordCountLimit: 25,
@@ -545,7 +647,6 @@
                     localStorage.setItem('typingTestUsername', e.target.value.trim());
                 });
 
-                // Test Type Selector (Time vs Words)
                 elements.modeSelectorGroup.addEventListener('click', (e) => {
                     if (e.target.tagName === 'BUTTON') {
                         state.testType = e.target.dataset.type;
@@ -696,9 +797,7 @@
                     state.charIndex++;
                 }
 
-                // Update Word count progress if in word mode
                 if (state.testType === 'words') {
-                    const typedSoFar = typedValue.length;
                     const wordsTypedCount = typedValue.trim().split(/\s+/).filter(Boolean).length;
                     elements.timerEl.textContent = `${Math.min(wordsTypedCount, state.wordCountLimit)}/${state.wordCountLimit}`;
                     
