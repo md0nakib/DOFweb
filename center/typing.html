@@ -294,7 +294,12 @@
             color: var(--text-color);
         }
 
-        #restart-btn {
+        .result-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        #restart-btn, #share-btn {
             background-color: var(--primary-color);
             color: var(--background-color);
             border: none;
@@ -304,6 +309,16 @@
             font-size: 1.1rem;
             font-family: inherit;
             font-weight: bold;
+            transition: opacity 0.2s;
+        }
+
+        #share-btn {
+            background-color: var(--subtle-text-color);
+            color: var(--text-color);
+        }
+
+        #restart-btn:hover, #share-btn:hover {
+            opacity: 0.9;
         }
 
         /* History Modal / Section */
@@ -370,17 +385,30 @@
                 <span>User:</span>
                 <input type="text" id="username-input" placeholder="Enter Name">
             </div>
+            <div class="setting-group" id="mode-selector-group">
+                <span>Type:</span>
+                <button data-type="time" class="active">Time</button>
+                <button data-type="words">Words</button>
+            </div>
+            <!-- Time Options -->
             <div class="setting-group" id="time-settings">
                 <span>Time:</span>
                 <button data-time="15">15s</button>
                 <button data-time="30">30s</button>
                 <button data-time="60" class="active">60s</button>
                 <button data-time="120">2m</button>
-                <button data-time="300">5m</button>
+            </div>
+            <!-- Word Count Options (Initially Hidden) -->
+            <div class="setting-group" id="word-count-settings" style="display: none;">
+                <span>Words:</span>
+                <button data-words="10">10</button>
+                <button data-words="25" class="active">25</button>
+                <button data-words="50">50</button>
+                <button data-words="100">100</button>
             </div>
             <div class="setting-group" id="mode-settings">
                 <span>Mode:</span>
-                <button data-mode="words" class="active">Words</button>
+                <button data-mode="words" class="active">Normal</button>
                 <button data-mode="custom">Custom</button>
             </div>
             <div class="setting-group">
@@ -420,7 +448,10 @@
                 <div>Accuracy<span id="result-accuracy">0%</span></div>
                 <div>Raw WPM<span id="result-raw-wpm">0</span></div>
             </div>
-            <button id="restart-btn">Try Again</button>
+            <div class="result-actions">
+                <button id="restart-btn">Try Again</button>
+                <button id="share-btn">Copy Score 📋</button>
+            </div>
         </div>
     </div>
 
@@ -452,11 +483,15 @@
                 wordWrapper: document.getElementById('word-wrapper'),
                 typingInput: document.getElementById('typing-input'),
                 timerEl: document.getElementById('timer'),
+                timerDisplayContainer: document.getElementById('timer-display'),
                 wpmEl: document.getElementById('wpm'),
                 resultsEl: document.getElementById('results'),
                 restartBtn: document.getElementById('restart-btn'),
+                shareBtn: document.getElementById('share-btn'),
                 cursor: document.getElementById('cursor'),
+                modeSelectorGroup: document.getElementById('mode-selector-group'),
                 timeSettings: document.getElementById('time-settings'),
+                wordCountSettings: document.getElementById('word-count-settings'),
                 modeSettings: document.getElementById('mode-settings'),
                 themeSelector: document.getElementById('theme-selector'),
                 customTextContainer: document.getElementById('custom-text-container'),
@@ -474,8 +509,10 @@
             };
 
             let state = {
+                testType: 'time', // 'time' or 'words'
                 timeLimit: 60,
                 timeLeft: 60,
+                wordCountLimit: 25,
                 testMode: 'words',
                 charIndex: 0,
                 correctChars: 0,
@@ -503,14 +540,46 @@
                 elements.typingInput.addEventListener('blur', () => elements.wordsContainer.classList.add('unfocused'));
                 
                 elements.restartBtn.addEventListener('click', startGame);
+                elements.shareBtn.addEventListener('click', copyScoreToClipboard);
                 elements.usernameInput.addEventListener('input', (e) => {
                     localStorage.setItem('typingTestUsername', e.target.value.trim());
+                });
+
+                // Test Type Selector (Time vs Words)
+                elements.modeSelectorGroup.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        state.testType = e.target.dataset.type;
+                        elements.modeSelectorGroup.querySelector('.active').classList.remove('active');
+                        e.target.classList.add('active');
+
+                        if (state.testType === 'time') {
+                            elements.timeSettings.style.display = 'flex';
+                            elements.wordCountSettings.style.display = 'none';
+                            elements.timerDisplayContainer.innerHTML = 'Time: <span id="timer">' + state.timeLimit + '</span>s';
+                        } else {
+                            elements.timeSettings.style.display = 'none';
+                            elements.wordCountSettings.style.display = 'flex';
+                            elements.timerDisplayContainer.innerHTML = 'Words: <span id="timer">0/' + state.wordCountLimit + '</span>';
+                        }
+                        elements.timerEl = document.getElementById('timer');
+                        startGame();
+                    }
                 });
 
                 elements.timeSettings.addEventListener('click', (e) => {
                     if (e.target.tagName === 'BUTTON') {
                         state.timeLimit = parseInt(e.target.dataset.time, 10);
+                        state.timeLeft = state.timeLimit;
                         document.querySelector('#time-settings .active').classList.remove('active');
+                        e.target.classList.add('active');
+                        startGame();
+                    }
+                });
+
+                elements.wordCountSettings.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        state.wordCountLimit = parseInt(e.target.dataset.words, 10);
+                        document.querySelector('#word-count-settings .active').classList.remove('active');
                         e.target.classList.add('active');
                         startGame();
                     }
@@ -529,7 +598,6 @@
                 elements.themeSelector.addEventListener('change', (e) => setTheme(e.target.value));
                 elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
                 
-                // History modal control
                 elements.historyBtn.addEventListener('click', showHistory);
                 elements.closeHistoryBtn.addEventListener('click', () => elements.historyModal.style.display = 'none');
                 window.addEventListener('click', (e) => {
@@ -560,7 +628,11 @@
                     startTime: null,
                 });
                 
-                elements.timerEl.textContent = state.timeLeft;
+                if (state.testType === 'time') {
+                    elements.timerEl.textContent = state.timeLeft;
+                } else {
+                    elements.timerEl.textContent = `0/${state.wordCountLimit}`;
+                }
                 elements.wpmEl.textContent = '0';
                 elements.resultsEl.style.display = 'none';
                 elements.typingArea.style.display = 'flex';
@@ -585,8 +657,13 @@
                     state.currentText = elements.customTextInput.value.trim().replace(/\s+/g, ' ') || 'Please enter custom text above.';
                 } else {
                     let wordList = [];
-                    for (let i = 0; i < 15; i++) wordList = wordList.concat([...COMMON_WORDS]);
-                    state.currentText = shuffleArray(wordList).slice(0, 1000).join(' ');
+                    for (let i = 0; i < 20; i++) wordList = wordList.concat([...COMMON_WORDS]);
+                    let shuffled = shuffleArray(wordList);
+                    if (state.testType === 'words') {
+                        state.currentText = shuffled.slice(0, state.wordCountLimit).join(' ');
+                    } else {
+                        state.currentText = shuffled.slice(0, 300).join(' ');
+                    }
                 }
             }
             
@@ -600,7 +677,7 @@
             }
 
             function handleTyping(e) {
-                if (state.timeLeft === 0) return;
+                if (state.testType === 'time' && state.timeLeft === 0) return;
                 if (!state.isTestActive) startTimer();
 
                 const typedValue = elements.typingInput.value;
@@ -619,9 +696,21 @@
                     state.charIndex++;
                 }
 
+                // Update Word count progress if in word mode
+                if (state.testType === 'words') {
+                    const typedSoFar = typedValue.length;
+                    const wordsTypedCount = typedValue.trim().split(/\s+/).filter(Boolean).length;
+                    elements.timerEl.textContent = `${Math.min(wordsTypedCount, state.wordCountLimit)}/${state.wordCountLimit}`;
+                    
+                    if (wordsTypedCount >= state.wordCountLimit || state.charIndex === charSpans.length) {
+                        endGame();
+                        return;
+                    }
+                }
+
                 updateCursorPosition();
                 updateWPM();
-                if (state.charIndex === charSpans.length) endGame();
+                if (state.testType === 'time' && state.charIndex === charSpans.length) endGame();
             }
 
             function handleBackspace(e) {
@@ -635,6 +724,11 @@
                 else if (span.classList.contains('incorrect')) state.incorrectChars--;
                 span.classList.remove('correct', 'incorrect');
                 
+                if (state.testType === 'words') {
+                    const wordsTypedCount = elements.typingInput.value.trim().split(/\s+/).filter(Boolean).length;
+                    elements.timerEl.textContent = `${wordsTypedCount}/${state.wordCountLimit}`;
+                }
+
                 updateCursorPosition();
                 updateWPM();
             }
@@ -642,12 +736,14 @@
             function startTimer() {
                 state.isTestActive = true;
                 state.startTime = Date.now();
-                state.timerInterval = setInterval(() => {
-                    state.timeLeft--;
-                    elements.timerEl.textContent = state.timeLeft;
-                    updateWPM();
-                    if (state.timeLeft === 0) endGame();
-                }, 1000);
+                if (state.testType === 'time') {
+                    state.timerInterval = setInterval(() => {
+                        state.timeLeft--;
+                        elements.timerEl.textContent = state.timeLeft;
+                        updateWPM();
+                        if (state.timeLeft === 0) endGame();
+                    }, 1000);
+                }
             }
 
             function updateWPM() {
@@ -678,8 +774,8 @@
 
             function saveHistory(resultData) {
                 let history = JSON.parse(localStorage.getItem('typingTestHistory')) || [];
-                history.unshift(resultData); // সবার উপরে নতুনটি যোগ হবে
-                if (history.length > 50) history.pop(); // সর্বোচ্চ ৫০ টি রেকর্ড সেভ থাকবে
+                history.unshift(resultData);
+                if (history.length > 50) history.pop();
                 localStorage.setItem('typingTestHistory', JSON.stringify(history));
             }
 
@@ -700,7 +796,7 @@
                                 <span>WPM: <b>${item.wpm}</b></span>
                                 <span>Accuracy: <b>${item.accuracy}%</b></span>
                                 <span>Mode: <b>${item.mode}</b></span>
-                                <span>Time: <b>${item.timeLimit}s</b></span>
+                                <span>Config: <b>${item.config}</b></span>
                             </div>
                         `;
                         elements.historyList.appendChild(li);
@@ -709,13 +805,35 @@
                 elements.historyModal.style.display = 'flex';
             }
 
+            function copyScoreToClipboard() {
+                const wpmText = elements.resultWpm.textContent;
+                const accuracyText = elements.resultAccuracy.textContent;
+                const rawText = elements.resultRawWpm.textContent;
+                const configText = elements.resultInfo.textContent;
+                
+                const shareString = `🚀 Typing Test Result\n⚡ WPM: ${wpmText}\n🎯 Accuracy: ${accuracyText}\n📈 Raw WPM: ${rawText}\n⚙️ Config: ${configText}`;
+                
+                navigator.clipboard.writeText(shareString).then(() => {
+                    elements.shareBtn.textContent = 'Copied! ✅';
+                    setTimeout(() => {
+                        elements.shareBtn.textContent = 'Copy Score 📋';
+                    }, 2000);
+                });
+            }
+
             function endGame() {
                 clearInterval(state.timerInterval);
                 state.isTestActive = false;
                 elements.typingInput.blur();
                 elements.typingArea.style.display = 'none';
 
-                const timeTakenMin = (state.timeLimit - (state.timeLeft || 0)) / 60;
+                let timeTakenMin;
+                if (state.testType === 'time') {
+                    timeTakenMin = (state.timeLimit - (state.timeLeft || 0)) / 60;
+                } else {
+                    timeTakenMin = (Date.now() - state.startTime) / 1000 / 60;
+                }
+
                 const totalCharsTyped = state.correctChars + state.incorrectChars;
                 
                 const netWPM = timeTakenMin > 0 ? Math.round((state.correctChars / WPM_STANDARD_WORD_LENGTH) / timeTakenMin) : 0;
@@ -724,16 +842,16 @@
                 const finalWPM = Math.max(0, netWPM);
 
                 elements.resultWpm.innerHTML = `${finalWPM}<span class="label">WPM</span>`;
-                elements.resultInfo.textContent = `${state.timeLimit}s | ${state.testMode}`;
+                const configDesc = state.testType === 'time' ? `${state.timeLimit}s | ${state.testMode}` : `${state.wordCountLimit} words | ${state.testMode}`;
+                elements.resultInfo.textContent = configDesc;
                 elements.resultAccuracy.textContent = `${accuracy}%`;
                 elements.resultRawWpm.textContent = Math.max(0, rawWPM);
 
                 elements.resultsEl.style.display = 'flex';
 
-                // ডাটা সংরক্ষণ ফরম্যাট (Username, Timestamp, Full Details)
                 const username = elements.usernameInput.value.trim() || 'Anonymous';
                 const now = new Date();
-                const timestamp = now.toLocaleString(); // তারিখ ও সময় ফরম্যাট
+                const timestamp = now.toLocaleString();
 
                 const resultRecord = {
                     username: username,
@@ -741,9 +859,7 @@
                     wpm: finalWPM,
                     rawWpm: Math.max(0, rawWPM),
                     accuracy: accuracy,
-                    correctChars: state.correctChars,
-                    incorrectChars: state.incorrectChars,
-                    timeLimit: state.timeLimit,
+                    config: configDesc,
                     mode: state.testMode
                 };
 
