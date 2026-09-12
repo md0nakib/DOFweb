@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Typing Speed Test with History</title>
+    <style>
+        :root {
+            --background-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --subtle-text-color: #666;
+            --primary-color: #f92672;
+            --correct-color: #a6e22e;
+            --error-color: var(--primary-color);
+            --cursor-color: var(--primary-color);
+            --container-bg: #222;
+            --font-family: 'Fira Code', 'Courier New', Courier, monospace;
+            --line-height: 2.2;
+        }
+
+        [data-theme='dracula'] {
+            --background-color: #282a36;
+            --text-color: #f8f8f2;
+            --subtle-text-color: #6272a4;
+            --primary-color: #ff79c6;
+            --correct-color: #50fa7b;
+            --error-color: #ff5555;
+            --cursor-color: #f8f8f2;
+            --container-bg: #22212c;
+        }
+
+        [data-theme='aether'] {
+            --background-color: #101015;
+            --text-color: #E2B792;
+            --subtle-text-color: #4A3E4E;
+            --primary-color: #9370DB;
+            --correct-color: #DBA9A9;
+            --cursor-color: var(--primary-color);
+            --container-bg: #1a1a20;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: var(--font-family);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+        }
+
+        #watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            user-select: none;
+            z-index: 100;
+        }
+
+        #watermark a {
+            color: var(--subtle-text-color);
+            text-decoration: none;
+        }
+        
+        .container {
+            width: 95%;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            padding: 1rem;
+        }
+
+        .settings {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            color: var(--subtle-text-color);
+            width: 100%;
+        }
+        
+        .setting-group {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            background: var(--container-bg);
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .setting-group > span {
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        
+        .setting-group button, .setting-group input {
+            background: none;
+            border: none;
+            color: var(--subtle-text-color);
+            font-family: inherit;
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            transition: color 0.2s, background-color 0.2s;
+        }
+
+        .setting-group input {
+            background: var(--background-color);
+            color: var(--text-color);
+            border: 1px solid var(--subtle-text-color);
+            padding: 0.2rem 0.5rem;
+            width: 110px;
+        }
+        
+        .setting-group button.active {
+            color: var(--primary-color);
+            font-weight: bold;
+            background: rgba(255, 255, 255, 0.05);
+        }
+        .setting-group button:not(.active):hover {
+            color: var(--text-color);
+        }
+
+        #theme-selector {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            border: 1px solid var(--subtle-text-color);
+            border-radius: 4px;
+            padding: 0.3rem;
+            font-family: inherit;
+            cursor: pointer;
+        }
+        
+        #custom-text-container {
+            width: 100%;
+        }
+
+        #custom-text-input {
+            width: 100%;
+            height: 90px;
+            background-color: var(--container-bg);
+            color: var(--text-color);
+            border: 1px solid var(--subtle-text-color);
+            border-radius: 5px;
+            padding: 0.75rem;
+            font-family: inherit;
+            font-size: 0.95rem;
+            resize: vertical;
+        }
+        
+        #typing-area {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 800px;
+            font-size: 1.4rem;
+            padding: 0 0.5rem;
+            color: var(--subtle-text-color);
+        }
+
+        .stats div span {
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .words-container {
+            font-size: 1.6rem;
+            letter-spacing: 0.5px;
+            line-height: var(--line-height);
+            user-select: none;
+            position: relative;
+            width: 100%;
+            max-width: 950px;
+            max-height: calc(1.6rem * var(--line-height) * 3);
+            overflow: hidden;
+            text-align: left;
+            padding: 0 1rem;
+            background-color: var(--container-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        
+        .words-container.unfocused {
+            filter: blur(4px);
+        }
+        
+        .words-container.unfocused::after {
+            content: 'Click to focus / Type to start';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.1rem;
+            color: var(--text-color);
+            background: rgba(0,0,0,0.7);
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            z-index: 10;
+        }
+
+        #word-wrapper {
+            position: relative;
+            transition: transform 0.2s ease-out;
+            word-break: break-all;
+        }
+        
+        #word-wrapper span {
+            color: var(--subtle-text-color);
+        }
+        #word-wrapper span.correct { color: var(--text-color); }
+        #word-wrapper span.incorrect { color: var(--error-color); text-decoration: underline; }
+
+        #cursor {
+            position: absolute;
+            width: 2.5px;
+            height: 2.2rem;
+            background-color: var(--cursor-color);
+            border-radius: 2px;
+            transition: left 0.08s ease, top 0.08s ease;
+            z-index: 5;
+        }
+
+        #typing-input {
+            position: absolute;
+            left: -9999px;
+            opacity: 0;
+        }
+
+        .results {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 700px;
+            background: var(--container-bg);
+            padding: 2rem;
+            border-radius: 10px;
+        }
+
+        #result-wpm {
+            font-size: 4.5rem;
+            color: var(--correct-color);
+            font-weight: bold;
+        }
+        
+        #result-wpm .label {
+            font-size: 1.8rem;
+            color: var(--text-color);
+            font-weight: normal;
+            margin-left: 0.5rem;
+        }
+
+        .results-details {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 450px;
+            font-size: 1rem;
+        }
+        
+        .results-details div { color: var(--subtle-text-color); }
+        .results-details span {
+            display: block;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        #restart-btn {
+            background-color: var(--primary-color);
+            color: var(--background-color);
+            border: none;
+            padding: 0.7rem 1.8rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-family: inherit;
+            font-weight: bold;
+        }
+
+        /* History Modal / Section */
+        #history-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+        }
+        .history-content {
+            background: var(--container-bg);
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: left;
+            border: 1px solid var(--subtle-text-color);
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .history-header h3 { color: var(--text-color); }
+        .close-history { background: none; border: none; color: var(--error-color); font-size: 1.2rem; cursor: pointer; }
+        
+        .history-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+        .history-item {
+            background: var(--background-color);
+            padding: 0.8rem;
+            border-radius: 5px;
+            font-size: 0.9rem;
+            border-left: 4px solid var(--primary-color);
+        }
+        .history-item .h-user { font-weight: bold; color: var(--primary-color); }
+        .history-item .h-time { font-size: 0.75rem; color: var(--subtle-text-color); float: right; }
+        .history-item .h-details { margin-top: 0.4rem; color: var(--text-color); display: flex; gap: 1rem; flex-wrap: wrap; }
+
+        @media (max-width: 768px) {
+            .container { gap: 1rem; width: 98%; }
+            .settings { justify-content: center; }
+            .words-container { font-size: 1.3rem; }
+            #result-wpm { font-size: 3.5rem; }
+        }
+    </style>
+</head>
+<body data-theme="dracula">
+
+    <div class="container">
+        
+        <div class="settings">
+            <div class="setting-group" id="user-settings">
+                <span>User:</span>
+                <input type="text" id="username-input" placeholder="Enter Name">
+            </div>
+            <div class="setting-group" id="time-settings">
+                <span>Time:</span>
+                <button data-time="15">15s</button>
+                <button data-time="30">30s</button>
+                <button data-time="60" class="active">60s</button>
+                <button data-time="120">2m</button>
+                <button data-time="300">5m</button>
+            </div>
+            <div class="setting-group" id="mode-settings">
+                <span>Mode:</span>
+                <button data-mode="words" class="active">Words</button>
+                <button data-mode="custom">Custom</button>
+            </div>
+            <div class="setting-group">
+                <span>Theme:</span>
+                <select id="theme-selector">
+                    <option value="dark">Dark</option>
+                    <option value="dracula">Dracula</option>
+                    <option value="aether">Aether</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <button id="history-btn">History 📊</button>
+                <button id="fullscreen-btn" title="Toggle Fullscreen">Full Screen ⛶</button>
+            </div>
+        </div>
+        
+        <div id="custom-text-container" style="display: none;">
+            <textarea id="custom-text-input" placeholder="Paste your custom text here..."></textarea>
+        </div>
+        
+        <div id="typing-area">
+            <div class="stats">
+                <div id="timer-display">Time: <span id="timer">60</span>s</div>
+                <div id="wpm-display">WPM: <span id="wpm">0</span></div>
+            </div>
+            <div id="words-container" class="words-container unfocused">
+                <div id="word-wrapper"></div>
+                <div id="cursor"></div>
+            </div>
+        </div>
+        <input type="text" id="typing-input" autofocus>
+
+        <div id="results" class="results">
+            <h2 id="result-wpm">0<span class="label">WPM</span></h2>
+            <div class="results-details">
+                <div>Test Config<span id="result-info">60s | words</span></div>
+                <div>Accuracy<span id="result-accuracy">0%</span></div>
+                <div>Raw WPM<span id="result-raw-wpm">0</span></div>
+            </div>
+            <button id="restart-btn">Try Again</button>
+        </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="history-modal">
+        <div class="history-content">
+            <div class="history-header">
+                <h3>Typing History</h3>
+                <button class="close-history" id="close-history-btn">✕</button>
+            </div>
+            <ul class="history-list" id="history-list">
+                <!-- History items will be injected here -->
+            </ul>
+        </div>
+    </div>
+    
+    <div id="watermark">
+        <a href="https://github.com/akshdeepsingh7/typing-test" target="_blank" rel="noopener noreferrer">akshdeepsingh7/typing-test</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const COMMON_WORDS = ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what', 'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just', 'him', 'know', 'take', 'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us'];
+            const WPM_STANDARD_WORD_LENGTH = 5;
+
+            const elements = {
+                typingArea: document.getElementById('typing-area'),
+                wordsContainer: document.getElementById('words-container'),
+                wordWrapper: document.getElementById('word-wrapper'),
+                typingInput: document.getElementById('typing-input'),
+                timerEl: document.getElementById('timer'),
+                wpmEl: document.getElementById('wpm'),
+                resultsEl: document.getElementById('results'),
+                restartBtn: document.getElementById('restart-btn'),
+                cursor: document.getElementById('cursor'),
+                timeSettings: document.getElementById('time-settings'),
+                modeSettings: document.getElementById('mode-settings'),
+                themeSelector: document.getElementById('theme-selector'),
+                customTextContainer: document.getElementById('custom-text-container'),
+                customTextInput: document.getElementById('custom-text-input'),
+                usernameInput: document.getElementById('username-input'),
+                resultWpm: document.querySelector('#result-wpm'),
+                resultInfo: document.getElementById('result-info'),
+                resultAccuracy: document.getElementById('result-accuracy'),
+                resultRawWpm: document.getElementById('result-raw-wpm'),
+                fullscreenBtn: document.getElementById('fullscreen-btn'),
+                historyBtn: document.getElementById('history-btn'),
+                historyModal: document.getElementById('history-modal'),
+                closeHistoryBtn: document.getElementById('close-history-btn'),
+                historyList: document.getElementById('history-list'),
+            };
+
+            let state = {
+                timeLimit: 60,
+                timeLeft: 60,
+                testMode: 'words',
+                charIndex: 0,
+                correctChars: 0,
+                incorrectChars: 0,
+                isTestActive: false,
+                timerInterval: null,
+                currentText: '',
+                currentLine: 0,
+                startTime: null,
+            };
+
+            function init() {
+                loadTheme();
+                loadUser();
+                setupEventListeners();
+                startGame();
+            }
+
+            function setupEventListeners() {
+                document.addEventListener('keydown', () => elements.typingInput.focus());
+                elements.wordsContainer.addEventListener('click', () => elements.typingInput.focus());
+                elements.typingInput.addEventListener('input', handleTyping);
+                elements.typingInput.addEventListener('keydown', handleBackspace);
+                elements.typingInput.addEventListener('focus', () => elements.wordsContainer.classList.remove('unfocused'));
+                elements.typingInput.addEventListener('blur', () => elements.wordsContainer.classList.add('unfocused'));
+                
+                elements.restartBtn.addEventListener('click', startGame);
+                elements.usernameInput.addEventListener('input', (e) => {
+                    localStorage.setItem('typingTestUsername', e.target.value.trim());
+                });
+
+                elements.timeSettings.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        state.timeLimit = parseInt(e.target.dataset.time, 10);
+                        document.querySelector('#time-settings .active').classList.remove('active');
+                        e.target.classList.add('active');
+                        startGame();
+                    }
+                });
+
+                elements.modeSettings.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') {
+                        state.testMode = e.target.dataset.mode;
+                        document.querySelector('#mode-settings .active').classList.remove('active');
+                        e.target.classList.add('active');
+                        elements.customTextContainer.style.display = state.testMode === 'custom' ? 'block' : 'none';
+                        startGame();
+                    }
+                });
+
+                elements.themeSelector.addEventListener('change', (e) => setTheme(e.target.value));
+                elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
+                
+                // History modal control
+                elements.historyBtn.addEventListener('click', showHistory);
+                elements.closeHistoryBtn.addEventListener('click', () => elements.historyModal.style.display = 'none');
+                window.addEventListener('click', (e) => {
+                    if (e.target === elements.historyModal) elements.historyModal.style.display = 'none';
+                });
+            }
+
+            function loadUser() {
+                const savedUser = localStorage.getItem('typingTestUsername') || 'Guest';
+                elements.usernameInput.value = savedUser === 'Guest' ? '' : savedUser;
+            }
+
+            function toggleFullscreen() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => alert(err.message));
+                } else if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+
+            function startGame() {
+                clearInterval(state.timerInterval);
+                Object.assign(state, {
+                    timeLeft: state.timeLimit,
+                    charIndex: 0, correctChars: 0, incorrectChars: 0,
+                    isTestActive: false,
+                    currentLine: 0,
+                    startTime: null,
+                });
+                
+                elements.timerEl.textContent = state.timeLeft;
+                elements.wpmEl.textContent = '0';
+                elements.resultsEl.style.display = 'none';
+                elements.typingArea.style.display = 'flex';
+                elements.typingInput.value = '';
+                elements.wordWrapper.style.transform = 'translateY(0px)';
+                
+                generateText();
+                renderText();
+                updateCursorPosition();
+            }
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            function generateText() {
+                if (state.testMode === 'custom') {
+                    state.currentText = elements.customTextInput.value.trim().replace(/\s+/g, ' ') || 'Please enter custom text above.';
+                } else {
+                    let wordList = [];
+                    for (let i = 0; i < 15; i++) wordList = wordList.concat([...COMMON_WORDS]);
+                    state.currentText = shuffleArray(wordList).slice(0, 1000).join(' ');
+                }
+            }
+            
+            function renderText() {
+                elements.wordWrapper.innerHTML = '';
+                state.currentText.split('').forEach(char => {
+                    const charSpan = document.createElement('span');
+                    charSpan.innerText = char;
+                    elements.wordWrapper.appendChild(charSpan);
+                });
+            }
+
+            function handleTyping(e) {
+                if (state.timeLeft === 0) return;
+                if (!state.isTestActive) startTimer();
+
+                const typedValue = elements.typingInput.value;
+                const charSpans = elements.wordWrapper.querySelectorAll('span');
+                const typedChar = typedValue.slice(-1);
+                
+                if (state.charIndex < charSpans.length) {
+                    const expectedChar = charSpans[state.charIndex].innerText;
+                    if (typedChar === expectedChar) {
+                        charSpans[state.charIndex].classList.add('correct');
+                        state.correctChars++;
+                    } else {
+                        charSpans[state.charIndex].classList.add('incorrect');
+                        state.incorrectChars++;
+                    }
+                    state.charIndex++;
+                }
+
+                updateCursorPosition();
+                updateWPM();
+                if (state.charIndex === charSpans.length) endGame();
+            }
+
+            function handleBackspace(e) {
+                if (e.key !== 'Backspace' || state.charIndex === 0) return;
+                e.preventDefault();
+                state.charIndex--;
+                elements.typingInput.value = elements.typingInput.value.slice(0, -1);
+                
+                const span = elements.wordWrapper.querySelectorAll('span')[state.charIndex];
+                if (span.classList.contains('correct')) state.correctChars--;
+                else if (span.classList.contains('incorrect')) state.incorrectChars--;
+                span.classList.remove('correct', 'incorrect');
+                
+                updateCursorPosition();
+                updateWPM();
+            }
+
+            function startTimer() {
+                state.isTestActive = true;
+                state.startTime = Date.now();
+                state.timerInterval = setInterval(() => {
+                    state.timeLeft--;
+                    elements.timerEl.textContent = state.timeLeft;
+                    updateWPM();
+                    if (state.timeLeft === 0) endGame();
+                }, 1000);
+            }
+
+            function updateWPM() {
+                if (!state.isTestActive || !state.startTime) return;
+                const timeElapsed = (Date.now() - state.startTime) / 1000 / 60;
+                if (timeElapsed > 0) {
+                    const netWPM = Math.round((state.correctChars / WPM_STANDARD_WORD_LENGTH) / timeElapsed);
+                    elements.wpmEl.textContent = Math.max(0, netWPM);
+                }
+            }
+
+            function updateCursorPosition() {
+                const charSpans = elements.wordWrapper.querySelectorAll('span');
+                if (charSpans.length === 0) return;
+                const targetSpan = charSpans[state.charIndex] || charSpans[charSpans.length - 1];
+                
+                elements.cursor.style.top = `${targetSpan.offsetTop}px`;
+                elements.cursor.style.left = `${state.charIndex >= charSpans.length ? targetSpan.offsetLeft + targetSpan.offsetWidth : targetSpan.offsetLeft}px`;
+
+                const lineHeight = parseFloat(getComputedStyle(elements.wordsContainer).fontSize) * 2.2;
+                const currentLine = Math.floor(targetSpan.offsetTop / lineHeight);
+
+                if (currentLine > state.currentLine) {
+                    state.currentLine = currentLine;
+                    elements.wordWrapper.style.transform = `translateY(${-currentLine * lineHeight}px)`;
+                }
+            }
+
+            function saveHistory(resultData) {
+                let history = JSON.parse(localStorage.getItem('typingTestHistory')) || [];
+                history.unshift(resultData); // সবার উপরে নতুনটি যোগ হবে
+                if (history.length > 50) history.pop(); // সর্বোচ্চ ৫০ টি রেকর্ড সেভ থাকবে
+                localStorage.setItem('typingTestHistory', JSON.stringify(history));
+            }
+
+            function showHistory() {
+                let history = JSON.parse(localStorage.getItem('typingTestHistory')) || [];
+                elements.historyList.innerHTML = '';
+                
+                if (history.length === 0) {
+                    elements.historyList.innerHTML = '<li style="color:var(--subtle-text-color); text-align:center;">No history available yet!</li>';
+                } else {
+                    history.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'history-item';
+                        li.innerHTML = `
+                            <span class="h-user">${item.username}</span>
+                            <span class="h-time">${item.timestamp}</span>
+                            <div class="h-details">
+                                <span>WPM: <b>${item.wpm}</b></span>
+                                <span>Accuracy: <b>${item.accuracy}%</b></span>
+                                <span>Mode: <b>${item.mode}</b></span>
+                                <span>Time: <b>${item.timeLimit}s</b></span>
+                            </div>
+                        `;
+                        elements.historyList.appendChild(li);
+                    });
+                }
+                elements.historyModal.style.display = 'flex';
+            }
+
+            function endGame() {
+                clearInterval(state.timerInterval);
+                state.isTestActive = false;
+                elements.typingInput.blur();
+                elements.typingArea.style.display = 'none';
+
+                const timeTakenMin = (state.timeLimit - (state.timeLeft || 0)) / 60;
+                const totalCharsTyped = state.correctChars + state.incorrectChars;
+                
+                const netWPM = timeTakenMin > 0 ? Math.round((state.correctChars / WPM_STANDARD_WORD_LENGTH) / timeTakenMin) : 0;
+                const rawWPM = timeTakenMin > 0 ? Math.round((totalCharsTyped / WPM_STANDARD_WORD_LENGTH) / timeTakenMin) : 0;
+                const accuracy = totalCharsTyped > 0 ? Math.round((state.correctChars / totalCharsTyped) * 100) : 0;
+                const finalWPM = Math.max(0, netWPM);
+
+                elements.resultWpm.innerHTML = `${finalWPM}<span class="label">WPM</span>`;
+                elements.resultInfo.textContent = `${state.timeLimit}s | ${state.testMode}`;
+                elements.resultAccuracy.textContent = `${accuracy}%`;
+                elements.resultRawWpm.textContent = Math.max(0, rawWPM);
+
+                elements.resultsEl.style.display = 'flex';
+
+                // ডাটা সংরক্ষণ ফরম্যাট (Username, Timestamp, Full Details)
+                const username = elements.usernameInput.value.trim() || 'Anonymous';
+                const now = new Date();
+                const timestamp = now.toLocaleString(); // তারিখ ও সময় ফরম্যাট
+
+                const resultRecord = {
+                    username: username,
+                    timestamp: timestamp,
+                    wpm: finalWPM,
+                    rawWpm: Math.max(0, rawWPM),
+                    accuracy: accuracy,
+                    correctChars: state.correctChars,
+                    incorrectChars: state.incorrectChars,
+                    timeLimit: state.timeLimit,
+                    mode: state.testMode
+                };
+
+                saveHistory(resultRecord);
+            }
+
+            function setTheme(themeName) {
+                document.body.dataset.theme = themeName;
+                localStorage.setItem('typingTestTheme', themeName);
+            }
+
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('typingTestTheme') || 'dracula';
+                elements.themeSelector.value = savedTheme;
+                setTheme(savedTheme);
+            }
+
+            init();
+        });
+    </script>
+</body>
+</html>
