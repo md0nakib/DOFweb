@@ -240,14 +240,21 @@
         #word-wrapper {
             position: relative;
             transition: transform 0.2s ease-out;
-            word-break: break-all;
+            word-break: break-word;
+            white-space: pre-wrap; /* Preserves space characters layout accurately */
         }
         
         #word-wrapper span {
             color: var(--subtle-text-color);
+            display: inline;
         }
         #word-wrapper span.correct { color: var(--text-color); }
-        #word-wrapper span.incorrect { color: var(--error-color); text-decoration: underline; }
+        #word-wrapper span.incorrect { 
+            color: var(--error-color); 
+            text-decoration: underline;
+            background-color: rgba(255, 85, 85, 0.25);
+            border-radius: 2px;
+        }
 
         #cursor {
             position: absolute;
@@ -475,7 +482,7 @@
                 <div id="cursor"></div>
             </div>
         </div>
-        <input type="text" id="typing-input" autofocus>
+        <input type="text" id="typing-input" autofocus autocomplete="off" autocapitalize="off" spellcheck="false">
 
         <div id="results" class="results">
             <h2 id="result-wpm">0<span class="label">WPM</span></h2>
@@ -493,7 +500,11 @@
         <div class="history-content">
             <div class="history-header">
                 <h3>Typing History & Stats Summary</h3>
-                <button class="close-history" id="close-history-btn">✕</button>
+                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                    <select id="history-user-filter" style="padding: 0.35rem; background: var(--background-color); color: var(--text-color); border: 1px solid var(--subtle-text-color); border-radius: 4px; font-size: 0.85rem; cursor: pointer;"></select>
+                    <button id="clear-history-btn" style="background: var(--error-color); color: #fff; border: none; padding: 0.35rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold;" title="Clear selected history">🗑️ Clear</button>
+                    <button class="close-history" id="close-history-btn">✕</button>
+                </div>
             </div>
             <!-- Average & Summary Cards -->
             <div class="history-summary">
@@ -600,6 +611,8 @@
                 historyModal: document.getElementById('history-modal'),
                 closeHistoryBtn: document.getElementById('close-history-btn'),
                 historyList: document.getElementById('history-list'),
+                historyUserFilter: document.getElementById('history-user-filter'),
+                clearHistoryBtn: document.getElementById('clear-history-btn'),
                 userModal: document.getElementById('user-modal'),
                 modalExistingUsers: document.getElementById('modal-existing-users'),
                 modalUsernameInput: document.getElementById('modal-username-input'),
@@ -648,6 +661,7 @@
                         elements.typingInput.focus();
                     }
                 });
+
                 elements.wordsContainer.addEventListener('click', () => {
                     const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
                                         (elements.historyModal && elements.historyModal.style.display === 'flex');
@@ -655,8 +669,9 @@
                         elements.typingInput.focus();
                     }
                 });
+
+                // Primary Typing Handler (Handles typing forward, spacebar, and backspacing)
                 elements.typingInput.addEventListener('input', handleTyping);
-                elements.typingInput.addEventListener('keydown', handleBackspace);
                 elements.typingInput.addEventListener('focus', () => elements.wordsContainer.classList.remove('unfocused'));
                 elements.typingInput.addEventListener('blur', () => elements.wordsContainer.classList.add('unfocused'));
                 
@@ -695,9 +710,12 @@
                 elements.themeSelector.addEventListener('change', (e) => setTheme(e.target.value));
                 elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
                 
-                // History modal control
+                // History modal control & filter listeners
                 elements.historyBtn.addEventListener('click', showHistory);
                 elements.closeHistoryBtn.addEventListener('click', () => elements.historyModal.style.display = 'none');
+                elements.historyUserFilter.addEventListener('change', renderHistoryView);
+                elements.clearHistoryBtn.addEventListener('click', handleClearHistory);
+
                 window.addEventListener('click', (e) => {
                     if (e.target === elements.historyModal) elements.historyModal.style.display = 'none';
                 });
@@ -730,7 +748,6 @@
                 const savedUser = localStorage.getItem('typingTestUsername') || users[0] || 'Guest';
                 state.currentUser = savedUser;
 
-                // Populate top settings user dropdown
                 elements.userDropdown.innerHTML = '';
                 users.forEach(u => {
                     const opt = document.createElement('option');
@@ -740,13 +757,11 @@
                     elements.userDropdown.appendChild(opt);
                 });
                 
-                // Add option to create a new user directly
                 const addOpt = document.createElement('option');
                 addOpt.value = '__ADD_NEW__';
                 addOpt.textContent = '➕ Add New User...';
                 elements.userDropdown.appendChild(addOpt);
 
-                // Populate modal dropdown
                 elements.modalExistingUsers.innerHTML = '<option value="">-- Select Existing User --</option>';
                 users.forEach(u => {
                     const opt = document.createElement('option');
@@ -778,6 +793,7 @@
 
                 setUser(username);
                 elements.userModal.style.display = 'none';
+                elements.typingInput.focus();
             }
 
             function setUser(username) {
@@ -786,7 +802,6 @@
                 state.currentUser = cleanName;
                 localStorage.setItem('typingTestUsername', cleanName);
 
-                // Save new user persistently to local storage list
                 let users = JSON.parse(localStorage.getItem('typingTestUsersList')) || [];
                 if (!users.includes(cleanName)) {
                     users.push(cleanName);
@@ -849,7 +864,7 @@
                 elements.wordWrapper.innerHTML = '';
                 state.currentText.split('').forEach(char => {
                     const charSpan = document.createElement('span');
-                    charSpan.innerText = char;
+                    charSpan.textContent = char; // Use textContent to preserve space characters
                     elements.wordWrapper.appendChild(charSpan);
                 });
             }
@@ -859,42 +874,54 @@
                 const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
                                     (elements.historyModal && elements.historyModal.style.display === 'flex');
                 if (isModalOpen) return;
-                if (!state.isTestActive) startTimer();
 
                 const typedValue = elements.typingInput.value;
-                const charSpans = elements.wordWrapper.querySelectorAll('span');
-                const typedChar = typedValue.slice(-1);
                 
-                if (state.charIndex < charSpans.length) {
-                    const expectedChar = charSpans[state.charIndex].innerText;
-                    if (typedChar === expectedChar) {
-                        charSpans[state.charIndex].classList.add('correct');
-                        state.correctChars++;
-                    } else {
-                        charSpans[state.charIndex].classList.add('incorrect');
-                        state.incorrectChars++;
+                if (!state.isTestActive && typedValue.length > 0) {
+                    startTimer();
+                }
+
+                const charSpans = elements.wordWrapper.querySelectorAll('span');
+                
+                // Case 1: Typing characters forward (including spacebar)
+                if (typedValue.length > state.charIndex) {
+                    for (let i = state.charIndex; i < typedValue.length && i < charSpans.length; i++) {
+                        const typedChar = typedValue[i];
+                        const expectedChar = charSpans[i].textContent;
+
+                        if (typedChar === expectedChar) {
+                            charSpans[i].classList.add('correct');
+                            charSpans[i].classList.remove('incorrect');
+                            state.correctChars++;
+                        } else {
+                            charSpans[i].classList.add('incorrect');
+                            charSpans[i].classList.remove('correct');
+                            state.incorrectChars++;
+                        }
                     }
-                    state.charIndex++;
+                    state.charIndex = Math.min(typedValue.length, charSpans.length);
+                } 
+                // Case 2: Deleting characters backwards (Backspace)
+                else if (typedValue.length < state.charIndex) {
+                    for (let i = state.charIndex - 1; i >= typedValue.length; i--) {
+                        if (charSpans[i]) {
+                            if (charSpans[i].classList.contains('correct')) {
+                                state.correctChars = Math.max(0, state.correctChars - 1);
+                            } else if (charSpans[i].classList.contains('incorrect')) {
+                                state.incorrectChars = Math.max(0, state.incorrectChars - 1);
+                            }
+                            charSpans[i].classList.remove('correct', 'incorrect');
+                        }
+                    }
+                    state.charIndex = typedValue.length;
                 }
 
                 updateCursorPosition();
                 updateWPM();
-                if (state.charIndex === charSpans.length) endGame();
-            }
 
-            function handleBackspace(e) {
-                if (e.key !== 'Backspace' || state.charIndex === 0) return;
-                e.preventDefault();
-                state.charIndex--;
-                elements.typingInput.value = elements.typingInput.value.slice(0, -1);
-                
-                const span = elements.wordWrapper.querySelectorAll('span')[state.charIndex];
-                if (span.classList.contains('correct')) state.correctChars--;
-                else if (span.classList.contains('incorrect')) state.incorrectChars--;
-                span.classList.remove('correct', 'incorrect');
-                
-                updateCursorPosition();
-                updateWPM();
+                if (state.charIndex >= charSpans.length && charSpans.length > 0) {
+                    endGame();
+                }
             }
 
             function startTimer() {
@@ -920,15 +947,25 @@
             function updateCursorPosition() {
                 const charSpans = elements.wordWrapper.querySelectorAll('span');
                 if (charSpans.length === 0) return;
-                const targetSpan = charSpans[state.charIndex] || charSpans[charSpans.length - 1];
                 
-                elements.cursor.style.top = `${targetSpan.offsetTop}px`;
-                elements.cursor.style.left = `${state.charIndex >= charSpans.length ? targetSpan.offsetLeft + targetSpan.offsetWidth : targetSpan.offsetLeft}px`;
+                const isEnd = state.charIndex >= charSpans.length;
+                const targetSpan = charSpans[isEnd ? charSpans.length - 1 : state.charIndex];
+                
+                if (!targetSpan) return;
+
+                if (isEnd) {
+                    elements.cursor.style.top = `${targetSpan.offsetTop}px`;
+                    elements.cursor.style.left = `${targetSpan.offsetLeft + targetSpan.offsetWidth}px`;
+                } else {
+                    elements.cursor.style.top = `${targetSpan.offsetTop}px`;
+                    elements.cursor.style.left = `${targetSpan.offsetLeft}px`;
+                }
 
                 const lineHeight = parseFloat(getComputedStyle(elements.wordsContainer).fontSize) * 2.2;
                 const currentLine = Math.floor(targetSpan.offsetTop / lineHeight);
 
-                if (currentLine > state.currentLine) {
+                // Smoothly scroll text upward/downward on line changes
+                if (currentLine !== state.currentLine) {
                     state.currentLine = currentLine;
                     elements.wordWrapper.style.transform = `translateY(${-currentLine * lineHeight}px)`;
                 }
@@ -943,17 +980,46 @@
             }
 
             function showHistory() {
+                populateHistoryUserFilter();
+                renderHistoryView();
+                elements.historyModal.style.display = 'flex';
+            }
+
+            function populateHistoryUserFilter() {
+                const users = getUsersList();
+                elements.historyUserFilter.innerHTML = '';
+                
+                const allOpt = document.createElement('option');
+                allOpt.value = '__ALL__';
+                allOpt.textContent = '🌐 All Users';
+                elements.historyUserFilter.appendChild(allOpt);
+
+                users.forEach(u => {
+                    const opt = document.createElement('option');
+                    opt.value = u;
+                    opt.textContent = `👤 ${u}`;
+                    if (u === state.currentUser) opt.selected = true;
+                    elements.historyUserFilter.appendChild(opt);
+                });
+            }
+
+            function renderHistoryView() {
                 let history = getHistory();
+                const filterValue = elements.historyUserFilter.value || state.currentUser;
+
+                if (filterValue !== '__ALL__') {
+                    history = history.filter(item => item.username === filterValue);
+                }
+
                 elements.historyList.innerHTML = '';
                 
                 if (history.length === 0) {
-                    elements.historyList.innerHTML = '<li style="color:var(--subtle-text-color); text-align:center;">No history available yet!</li>';
+                    elements.historyList.innerHTML = '<li style="color:var(--subtle-text-color); text-align:center; padding: 1rem;">No history available for this view!</li>';
                     elements.avgWpmEl.textContent = '0';
                     elements.avgAccEl.textContent = '0%';
                     elements.totalTestsEl.textContent = '0';
                     elements.bestWpmEl.textContent = '0';
                 } else {
-                    // Calculate overall averages
                     const totalWpm = history.reduce((acc, curr) => acc + (curr.wpm || 0), 0);
                     const totalAcc = history.reduce((acc, curr) => acc + (curr.accuracy || 0), 0);
                     const bestWpm = Math.max(...history.map(item => item.wpm || 0));
@@ -979,7 +1045,21 @@
                         elements.historyList.appendChild(li);
                     });
                 }
-                elements.historyModal.style.display = 'flex';
+            }
+
+            function handleClearHistory() {
+                const filterValue = elements.historyUserFilter.value;
+                let history = getHistory();
+
+                if (history.length === 0) return;
+
+                if (filterValue === '__ALL__') {
+                    localStorage.removeItem('typingTestHistory');
+                } else {
+                    history = history.filter(item => item.username !== filterValue);
+                    localStorage.setItem('typingTestHistory', JSON.stringify(history));
+                }
+                renderHistoryView();
             }
 
             function endGame() {
