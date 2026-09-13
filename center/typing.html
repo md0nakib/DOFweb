@@ -555,34 +555,367 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const COMMON_WORDS = [
-                // General & Standard Words
-                'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at', 'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what', 'so', 'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just', 'him', 'know', 'take', 'people', 'into', 'year', 'your', 'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then', 'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also', 'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first', 'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these', 'give', 'day', 'most', 'us',
-                
-                // Descriptives & States
-                'Simple', 'Basic', 'Advanced', 'Common', 'Optional', 'Required', 'Correct', 'Incorrect', 'Expected', 'Available', 'Complete', 'Empty', 'Full', 'Disabled', 'Enabled', 'Similar', 'Different', 'Limited', 'Active', 'Inactive', 'Random', 'Primary', 'Secondary', 'Temporary', 'Permanent',
-                
-                // Action Words
-                'Create', 'Add', 'Define', 'Return', 'Change', 'Remove', 'Update', 'Set', 'Use', 'Call', 'Compare', 'Build', 'Start', 'Stop', 'Modify', 'Run', 'Pause', 'Cancel', 'Apply', 'Save', 'Load', 'Retrieve', 'Validate', 'Detect', 'Handle', 'Adjust', 'Configure',
-                
-                // Connector Words
-                'And', 'Or', 'But', 'Then', 'Also', 'However', 'Therefore', 'example',
-                
-                // Prepositions
-                'In', 'On', 'At', 'For', 'To', 'By', 'From', 'Inside', 'Outside', 'Above', 'Below', 'Under', 'Over', 'Before', 'After', 'With', 'Without', 'Next', 'Against',
-                
-                // Pronouns
-                'This', 'That', 'These', 'Those', 'It', 'They', 'You', 'We', 'All', 'He', 'She',
-                
-                // Common Verbs
-                'Check', 'See', 'Edit', 'Get', 'Show', 'Display', 'Open', 'Close', 'Allow', 'Block', 'Consider', 'Suggest',
-                
-                // Adverbs
-                'Always', 'Sometimes', 'Never', 'Usually', 'Quickly', 'Slowly', 'Frequently', 'Continuously',
-                
-                // Level-1 Programming & Reading Practice Words
-                'strong', 'smart', 'hardworking', 'JavaScript', 'popular', 'programming', 'language', 'easy', 'learn', 'book', 'teach', 'click', 'button', 'press', 'Ctrl', 'code', 'editor', 'English', 'difficult', 'exploring', 'easier', 'afraid', 'learning', 'reading', 'crucial', 'practice', 'yourself', 'output', 'truly', 'understand', 'explanations', 'programmer', 'hands-on', 'builds', 'skills', 'better', 'test', 'often', 'wait', 'program', 'ready', 'Small', 'tests', 'help', 'avoid', 'big', 'mistakes', 'later', 'working', 'files', 'aware', 'large', 'upload', 'download', 'important', 'install', 'software', 'starting', 'project', 'Collaborate', 'others', 'discussing', 'ideas', 'peers', 'perspectives', 'solutions', 'problems', 'face'
-            ];
+const COMMON_WORDS = [
+
+    // ==========================================
+    // GENERAL & STANDARD ENGLISH
+    // ==========================================
+    'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have',
+    'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you',
+    'do', 'at', 'this', 'but', 'his', 'by', 'from', 'they',
+    'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my',
+    'one', 'all', 'would', 'there', 'their', 'what', 'so',
+    'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go',
+    'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just',
+    'him', 'know', 'take', 'people', 'into', 'year', 'your',
+    'good', 'some', 'could', 'them', 'see', 'other', 'than',
+    'then', 'now', 'look', 'only', 'come', 'its', 'over',
+    'think', 'also', 'back', 'after', 'use', 'two', 'how',
+    'our', 'work', 'first', 'well', 'way', 'even', 'new',
+    'want', 'because', 'any', 'these', 'give', 'day', 'most',
+    'us',
+
+    // ==========================================
+    // DESCRIPTIVES & STATES
+    // ==========================================
+    'Simple', 'Basic', 'Advanced', 'Common', 'Optional',
+    'Required', 'Correct', 'Incorrect', 'Expected', 'Available',
+    'Complete', 'Empty', 'Full', 'Disabled', 'Enabled',
+    'Similar', 'Different', 'Limited', 'Active', 'Inactive',
+    'Random', 'Primary', 'Secondary', 'Temporary', 'Permanent',
+    'Public', 'Private', 'Open', 'Closed', 'Ready', 'Loading',
+    'Success', 'Failed', 'Valid', 'Invalid', 'Safe', 'Secure',
+    'Fast', 'Slow', 'Easy', 'Difficult', 'Important',
+
+    // ==========================================
+    // ACTION WORDS
+    // ==========================================
+    'Create', 'Add', 'Define', 'Return', 'Change', 'Remove',
+    'Update', 'Set', 'Use', 'Call', 'Compare', 'Build',
+    'Start', 'Stop', 'Modify', 'Run', 'Pause', 'Cancel',
+    'Apply', 'Save', 'Load', 'Retrieve', 'Validate', 'Detect',
+    'Handle', 'Adjust', 'Configure', 'Install', 'Open', 'Close',
+    'Edit', 'Delete', 'Select', 'Search', 'Find', 'Replace',
+    'Upload', 'Download', 'Send', 'Receive', 'Connect',
+    'Disconnect', 'Refresh', 'Submit', 'Reset', 'Clear',
+
+    // ==========================================
+    // CONNECTOR WORDS
+    // ==========================================
+    'And', 'Or', 'But', 'Then', 'Also', 'However',
+    'Therefore', 'Because', 'Example', 'Before', 'After',
+    'While', 'Where', 'When', 'Although', 'Between',
+
+    // ==========================================
+    // PREPOSITIONS
+    // ==========================================
+    'In', 'On', 'At', 'For', 'To', 'By', 'From',
+    'Inside', 'Outside', 'Above', 'Below', 'Under',
+    'Over', 'Before', 'After', 'With', 'Without',
+    'Next', 'Against', 'Through', 'Around', 'Between',
+
+    // ==========================================
+    // PRONOUNS
+    // ==========================================
+    'This', 'That', 'These', 'Those', 'It', 'They',
+    'You', 'We', 'All', 'He', 'She', 'Someone',
+    'Something', 'Anyone', 'Everyone',
+
+    // ==========================================
+    // COMMON VERBS
+    // ==========================================
+    'Check', 'See', 'Edit', 'Get', 'Show', 'Display',
+    'Open', 'Close', 'Allow', 'Block', 'Consider',
+    'Suggest', 'Create', 'Build', 'Write', 'Read',
+    'Learn', 'Teach', 'Practice', 'Test', 'Run',
+    'Debug', 'Fix', 'Improve', 'Develop', 'Design',
+
+    // ==========================================
+    // ADVERBS
+    // ==========================================
+    'Always', 'Sometimes', 'Never', 'Usually', 'Quickly',
+    'Slowly', 'Frequently', 'Continuously', 'Automatically',
+    'Successfully', 'Clearly', 'Directly', 'Finally',
+
+    // ==========================================
+    // PROGRAMMING BASICS
+    // ==========================================
+    'code', 'coding', 'program', 'programming', 'programmer',
+    'language', 'syntax', 'logic', 'algorithm', 'data',
+    'computer', 'software', 'hardware', 'developer',
+    'development', 'project', 'source', 'file', 'folder',
+    'input', 'output', 'process', 'system', 'application',
+    'app', 'tool', 'tools', 'editor', 'terminal', 'command',
+    'commands', 'debug', 'debugging', 'error', 'errors',
+    'warning', 'exception', 'solution', 'problem',
+
+    // ==========================================
+    // HTML
+    // ==========================================
+    'HTML', 'html', 'HyperText', 'Markup', 'Element',
+    'Elements', 'Tag', 'Tags', 'Attribute', 'Attributes',
+    'Document', 'Page', 'Webpage', 'Website', 'Structure',
+    'Semantic', 'Heading', 'Paragraph', 'Link', 'Anchor',
+    'Image', 'Images', 'Table', 'Form', 'Input', 'Label',
+    'Textarea', 'Select', 'Option', 'Button', 'Header',
+    'Footer', 'Main', 'Section', 'Article', 'Aside', 'Nav',
+    'Div', 'Span', 'Body', 'Head', 'Title', 'Meta',
+    'Script', 'Style', 'Class', 'ID', 'Content',
+    'Hyperlink', 'Viewport', 'DOCTYPE', 'Canvas', 'Video',
+    'Audio', 'Source', 'Iframe', 'List', 'Ordered',
+    'Unordered', 'ListItem', 'Details', 'Summary',
+    'Dialog', 'Template',
+
+    // ==========================================
+    // COMMON HTML TAGS
+    // ==========================================
+    'doctype', 'html', 'head', 'body', 'title', 'meta',
+    'link', 'style', 'script', 'header', 'nav', 'main',
+    'section', 'article', 'aside', 'footer', 'div', 'span',
+    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a',
+    'img', 'figure', 'figcaption', 'ul', 'ol', 'li',
+    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
+    'form', 'input', 'label', 'textarea', 'select',
+    'option', 'button', 'br', 'hr',
+
+    // ==========================================
+    // HTML ATTRIBUTES
+    // ==========================================
+    'class', 'id', 'style', 'href', 'src', 'alt', 'title',
+    'name', 'value', 'type', 'placeholder', 'required',
+    'disabled', 'readonly', 'checked', 'selected',
+    'target', 'rel', 'width', 'height', 'loading',
+    'autocomplete', 'action', 'method', 'for',
+
+    // ==========================================
+    // CSS
+    // ==========================================
+    'CSS', 'css', 'Cascading', 'Stylesheet', 'Styles',
+    'Selector', 'Selectors', 'Property', 'Properties',
+    'Value', 'Values', 'Color', 'Background', 'Border',
+    'Margin', 'Padding', 'Width', 'Height', 'Display',
+    'Position', 'Relative', 'Absolute', 'Fixed', 'Sticky',
+    'Static', 'Flex', 'Flexbox', 'Grid', 'Layout',
+    'Responsive', 'Mobile', 'Desktop', 'Media', 'Query',
+    'Font', 'Fonts', 'Size', 'Weight', 'Line', 'Spacing',
+    'Shadow', 'Opacity', 'Radius', 'Animation', 'Transition',
+    'Transform', 'Gradient', 'Pseudo', 'Hover', 'Focus',
+    'Before', 'After', 'Root', 'Variable', 'Variables',
+    'Inheritance', 'Specificity', 'Overflow', 'Visible',
+    'Hidden', 'Z-index', 'Box', 'Model', 'Outline',
+    'Cursor', 'Theme', 'Dark', 'Light', 'Center',
+    'Top', 'Bottom', 'Left', 'Right', 'Auto', 'None',
+
+    // ==========================================
+    // CSS VALUES & UNITS
+    // ==========================================
+    'px', 'em', 'rem', 'vh', 'vw', 'vmin', 'vmax',
+    'percent', 'deg', 's', 'ms', 'rgb', 'rgba', 'hex',
+    'transparent', 'inherit', 'initial', 'unset',
+    'solid', 'dashed', 'dotted', 'normal', 'bold',
+    'italic', 'uppercase', 'lowercase', 'capitalize',
+
+    // ==========================================
+    // JAVASCRIPT FUNDAMENTALS
+    // ==========================================
+    'JavaScript', 'javascript', 'JS', 'js',
+    'Variable', 'Variables', 'Let', 'Const', 'Var',
+    'String', 'Number', 'Boolean', 'Null', 'Undefined',
+    'Object', 'Objects', 'Array', 'Arrays', 'Function',
+    'Functions', 'Parameter', 'Parameters', 'Argument',
+    'Arguments', 'Return', 'Operator', 'Operators',
+    'Expression', 'Statement', 'Condition', 'Conditions',
+    'If', 'Else', 'Switch', 'Case', 'Loop', 'Loops',
+    'For', 'While', 'Do', 'Break', 'Continue', 'Scope',
+    'Global', 'Local', 'Block', 'Value', 'Type', 'Types',
+    'Data', 'Logic', 'Syntax', 'Error', 'Errors',
+    'Debug', 'Debugging', 'Variable', 'Constant',
+
+    // ==========================================
+    // JAVASCRIPT KEYWORDS
+    // ==========================================
+    'abstract', 'arguments', 'await', 'boolean', 'break',
+    'case', 'catch', 'class', 'const', 'continue',
+    'debugger', 'default', 'delete', 'do', 'else',
+    'enum', 'eval', 'export', 'extends', 'false',
+    'finally', 'for', 'function', 'if', 'implements',
+    'import', 'in', 'instanceof', 'interface', 'let',
+    'new', 'null', 'package', 'private', 'protected',
+    'public', 'return', 'static', 'super', 'switch',
+    'this', 'throw', 'true', 'try', 'typeof',
+    'var', 'void', 'while', 'with', 'yield',
+
+    // ==========================================
+    // JAVASCRIPT DOM
+    // ==========================================
+    'DOM', 'Document', 'Window', 'Element', 'Node',
+    'Nodes', 'Parent', 'Child', 'Children', 'Sibling',
+    'Selector', 'QuerySelector', 'QuerySelectorAll',
+    'GetElementById', 'GetElementsByClassName',
+    'CreateElement', 'AppendChild', 'RemoveChild',
+    'ReplaceChild', 'InnerHTML', 'InnerText',
+    'TextContent', 'SetAttribute', 'GetAttribute',
+    'RemoveAttribute', 'ClassList', 'Contains',
+    'Event', 'Events', 'Listener', 'EventListener',
+    'Click', 'Submit', 'Change', 'Input', 'Keydown',
+    'Keyup', 'Mouseover', 'Mouseout', 'Load',
+
+    // ==========================================
+    // JAVASCRIPT MODERN FEATURES
+    // ==========================================
+    'Arrow', 'ArrowFunction', 'Template', 'Literal',
+    'Destructuring', 'Spread', 'Rest', 'Default',
+    'Modules', 'Import', 'Export', 'Async', 'Await',
+    'Promise', 'Promises', 'Callback', 'Callbacks',
+    'Fetch', 'API', 'JSON', 'Parse', 'Stringify',
+    'Map', 'Set', 'WeakMap', 'WeakSet', 'Symbol',
+    'Iterator', 'Generator', 'Class', 'Constructor',
+    'Method', 'Methods', 'Instance', 'Prototype',
+    'Inheritance', 'Encapsulation',
+
+    // ==========================================
+    // JAVASCRIPT ARRAY METHODS
+    // ==========================================
+    'Push', 'Pop', 'Shift', 'Unshift', 'Slice',
+    'Splice', 'Concat', 'Join', 'Reverse', 'Sort',
+    'Includes', 'IndexOf', 'Find', 'FindIndex',
+    'Filter', 'Map', 'Reduce', 'ForEach', 'Some',
+    'Every', 'Flat', 'FlatMap',
+
+    // ==========================================
+    // JAVASCRIPT OBJECT METHODS
+    // ==========================================
+    'Keys', 'Entries', 'Values', 'Assign', 'Freeze',
+    'Create', 'Seal', 'HasOwn', 'Property',
+    'DefineProperty', 'GetOwnPropertyNames',
+
+    // ==========================================
+    // BROWSER & WEB APIs
+    // ==========================================
+    'Browser', 'Browsers', 'Chrome', 'Firefox', 'Edge',
+    'Safari', 'Console', 'Storage', 'LocalStorage',
+    'SessionStorage', 'Cookie', 'Cookies', 'Location',
+    'History', 'Navigator', 'Screen', 'Clipboard',
+    'Geolocation', 'Notification', 'Permission',
+    'Permissions', 'URL', 'SearchParams', 'WebSocket',
+    'Worker', 'ServiceWorker', 'Cache', 'IndexedDB',
+
+    // ==========================================
+    // WEB DEVELOPMENT
+    // ==========================================
+    'Frontend', 'Backend', 'Fullstack', 'Developer',
+    'Development', 'Web', 'Internet', 'Server',
+    'Client', 'Request', 'Response', 'HTTP', 'HTTPS',
+    'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'REST',
+    'RESTful', 'Endpoint', 'Route', 'Routing', 'API',
+    'Database', 'Authentication', 'Authorization',
+    'Session', 'Token', 'Security', 'Hosting',
+    'Domain', 'Deployment', 'Production',
+    'Environment', 'Localhost', 'Port', 'Network',
+    'Protocol', 'Server', 'Client',
+
+    // ==========================================
+    // API & JSON
+    // ==========================================
+    'API', 'JSON', 'REST', 'Endpoint', 'Fetch',
+    'Request', 'Response', 'Headers', 'Body',
+    'Status', 'StatusCode', 'Success', 'Failure',
+    'Data', 'Parse', 'Stringify', 'Object',
+    'Array', 'Authentication', 'Bearer', 'Token',
+
+    // ==========================================
+    // GIT & GITHUB
+    // ==========================================
+    'Git', 'GitHub', 'Repository', 'Repo', 'Commit',
+    'Push', 'Pull', 'Branch', 'Branches', 'Merge',
+    'Clone', 'Fork', 'Version', 'Control', 'Remote',
+    'Origin', 'Main', 'Master', 'Checkout', 'Status',
+    'Log', 'Diff', 'Stash', 'Reset', 'Revert',
+    'Tag', 'Release', 'Issue', 'PullRequest',
+
+    // ==========================================
+    // DEVELOPMENT TOOLS
+    // ==========================================
+    'Node', 'NodeJS', 'NPM', 'Package', 'Packages',
+    'Library', 'Libraries', 'Framework', 'Frameworks',
+    'Plugin', 'Plugins', 'Configuration', 'Config',
+    'Settings', 'Build', 'Builds', 'Compile',
+    'Compiler', 'Bundle', 'Bundler', 'Minify',
+    'Optimize', 'Performance', 'Testing', 'Unit',
+    'Integration', 'VSCode', 'Editor', 'Extension',
+    'Extensions', 'DevTools', 'Debugger',
+
+    // ==========================================
+    // FRONTEND TECHNOLOGIES
+    // ==========================================
+    'React', 'Vue', 'Angular', 'Svelte', 'NextJS',
+    'Nuxt', 'Bootstrap', 'Tailwind', 'jQuery',
+    'TypeScript', 'Webpack', 'Vite', 'Babel',
+    'ReactDOM', 'Component', 'Components', 'Props',
+    'State', 'Hook', 'Hooks', 'Router', 'Context',
+
+    // ==========================================
+    // DATABASE
+    // ==========================================
+    'Database', 'SQL', 'MySQL', 'PostgreSQL',
+    'MongoDB', 'Firebase', 'Supabase', 'Table',
+    'Column', 'Row', 'Query', 'Queries', 'Record',
+    'Records', 'Schema', 'Collection', 'Document',
+    'Index', 'PrimaryKey', 'ForeignKey', 'Insert',
+    'Update', 'Delete', 'Select', 'Create',
+
+    // ==========================================
+    // SECURITY
+    // ==========================================
+    'Security', 'Secure', 'Password', 'Username',
+    'Login', 'Logout', 'Authentication', 'Authorization',
+    'Encryption', 'Hash', 'HTTPS', 'SSL', 'TLS',
+    'Session', 'Token', 'Cookie', 'Permission',
+    'Access', 'Protection', 'Validation', 'Sanitize',
+
+    // ==========================================
+    // PERFORMANCE & SEO
+    // ==========================================
+    'Performance', 'Optimization', 'Optimize', 'Speed',
+    'Fast', 'Cache', 'Caching', 'Lazy', 'Loading',
+    'Compression', 'Minification', 'SEO', 'Search',
+    'Engine', 'Ranking', 'Keyword', 'Keywords',
+    'Metadata', 'Sitemap', 'Robots', 'Indexing',
+    'Accessibility', 'Semantic', 'Structure',
+
+    // ==========================================
+    // REAL PROJECT VOCABULARY
+    // ==========================================
+    'Website', 'Webapp', 'Dashboard', 'Homepage',
+    'Profile', 'Login', 'Register', 'Account',
+    'User', 'Users', 'Admin', 'Menu', 'Navbar',
+    'Sidebar', 'Card', 'Cards', 'Modal', 'Popup',
+    'Alert', 'Notification', 'Searchbar', 'Filter',
+    'Dropdown', 'Checkbox', 'Radio', 'Form',
+    'Validation', 'Message', 'Status', 'Settings',
+    'Profile', 'Upload', 'Download', 'Preview',
+    'Gallery', 'Image', 'File', 'Files', 'Folder',
+    'Dashboard', 'Analytics', 'Chart', 'Table',
+
+    // ==========================================
+    // LEVEL-1 PROGRAMMING & READING PRACTICE
+    // ==========================================
+    'strong', 'smart', 'hardworking', 'popular',
+    'easy', 'learn', 'book', 'teach', 'click',
+    'button', 'press', 'Ctrl', 'English', 'difficult',
+    'exploring', 'easier', 'afraid', 'learning',
+    'reading', 'crucial', 'practice', 'yourself',
+    'output', 'truly', 'understand', 'explanations',
+    'programmer', 'hands-on', 'builds', 'skills',
+    'better', 'test', 'often', 'wait', 'program',
+    'ready', 'Small', 'tests', 'help', 'avoid',
+    'big', 'mistakes', 'later', 'working', 'files',
+    'aware', 'large', 'upload', 'download',
+    'important', 'install', 'software', 'starting',
+    'project', 'Collaborate', 'others', 'discussing',
+    'ideas', 'peers', 'perspectives', 'solutions',
+    'problems', 'face'
+];
             const WPM_STANDARD_WORD_LENGTH = 5;
 
             const elements = {
