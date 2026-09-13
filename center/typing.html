@@ -634,8 +634,27 @@
             }
 
             function setupEventListeners() {
-                document.addEventListener('keydown', () => elements.typingInput.focus());
-                elements.wordsContainer.addEventListener('click', () => elements.typingInput.focus());
+                document.addEventListener('keydown', (e) => {
+                    const activeEl = document.activeElement;
+                    const isInputTarget = activeEl && (
+                        activeEl.tagName === 'INPUT' || 
+                        activeEl.tagName === 'TEXTAREA' || 
+                        activeEl.tagName === 'SELECT'
+                    );
+                    const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
+                                        (elements.historyModal && elements.historyModal.style.display === 'flex');
+
+                    if (!isInputTarget && !isModalOpen) {
+                        elements.typingInput.focus();
+                    }
+                });
+                elements.wordsContainer.addEventListener('click', () => {
+                    const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
+                                        (elements.historyModal && elements.historyModal.style.display === 'flex');
+                    if (!isModalOpen) {
+                        elements.typingInput.focus();
+                    }
+                });
                 elements.typingInput.addEventListener('input', handleTyping);
                 elements.typingInput.addEventListener('keydown', handleBackspace);
                 elements.typingInput.addEventListener('focus', () => elements.wordsContainer.classList.remove('unfocused'));
@@ -644,7 +663,9 @@
                 elements.restartBtn.addEventListener('click', startGame);
                 
                 elements.userDropdown.addEventListener('change', (e) => {
-                    if (e.target.value) {
+                    if (e.target.value === '__ADD_NEW__') {
+                        openUserModal();
+                    } else if (e.target.value) {
                         setUser(e.target.value);
                     }
                 });
@@ -687,12 +708,21 @@
             }
 
             function getUsersList() {
+                let savedUsers = JSON.parse(localStorage.getItem('typingTestUsersList')) || [];
                 let history = getHistory();
-                let users = new Set(history.map(item => item.username));
+                history.forEach(item => {
+                    if (item.username && !savedUsers.includes(item.username)) {
+                        savedUsers.push(item.username);
+                    }
+                });
                 const savedUser = localStorage.getItem('typingTestUsername');
-                if (savedUser) users.add(savedUser);
-                if (users.size === 0) users.add('Guest');
-                return Array.from(users);
+                if (savedUser && !savedUsers.includes(savedUser)) {
+                    savedUsers.push(savedUser);
+                }
+                if (savedUsers.length === 0) savedUsers.push('Guest');
+                
+                localStorage.setItem('typingTestUsersList', JSON.stringify(savedUsers));
+                return savedUsers;
             }
 
             function loadUserList() {
@@ -709,6 +739,12 @@
                     if (u === state.currentUser) opt.selected = true;
                     elements.userDropdown.appendChild(opt);
                 });
+                
+                // Add option to create a new user directly
+                const addOpt = document.createElement('option');
+                addOpt.value = '__ADD_NEW__';
+                addOpt.textContent = '➕ Add New User...';
+                elements.userDropdown.appendChild(addOpt);
 
                 // Populate modal dropdown
                 elements.modalExistingUsers.innerHTML = '<option value="">-- Select Existing User --</option>';
@@ -716,6 +752,7 @@
                     const opt = document.createElement('option');
                     opt.value = u;
                     opt.textContent = u;
+                    if (u === state.currentUser) opt.selected = true;
                     elements.modalExistingUsers.appendChild(opt);
                 });
             }
@@ -731,20 +768,31 @@
                 loadUserList();
                 elements.modalUsernameInput.value = '';
                 elements.userModal.style.display = 'flex';
+                elements.modalUsernameInput.focus();
             }
 
             function handleUserConfirm() {
                 const selectedExisting = elements.modalExistingUsers.value;
                 const typedName = elements.modalUsernameInput.value.trim();
-                const username = typedName || selectedExisting || 'Guest';
+                const username = typedName || selectedExisting || state.currentUser || 'Guest';
 
                 setUser(username);
                 elements.userModal.style.display = 'none';
             }
 
             function setUser(username) {
-                state.currentUser = username;
-                localStorage.setItem('typingTestUsername', username);
+                if (!username || !username.trim()) return;
+                const cleanName = username.trim();
+                state.currentUser = cleanName;
+                localStorage.setItem('typingTestUsername', cleanName);
+
+                // Save new user persistently to local storage list
+                let users = JSON.parse(localStorage.getItem('typingTestUsersList')) || [];
+                if (!users.includes(cleanName)) {
+                    users.push(cleanName);
+                    localStorage.setItem('typingTestUsersList', JSON.stringify(users));
+                }
+
                 loadUserList();
             }
 
@@ -808,6 +856,9 @@
 
             function handleTyping(e) {
                 if (state.timeLeft === 0) return;
+                const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
+                                    (elements.historyModal && elements.historyModal.style.display === 'flex');
+                if (isModalOpen) return;
                 if (!state.isTestActive) startTimer();
 
                 const typedValue = elements.typingInput.value;
