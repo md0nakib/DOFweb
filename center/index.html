@@ -1,679 +1,1952 @@
-<!DOCTYPE html>
-<html lang="bn">
+<!-- ... existing code ... -->
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>কিশোরগঞ্জ-৩ (২০২৬) | স্মার্ট পোলিং অ্যাপ</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ভোটার ডাটাবেজ প্রসেসর, অ্যাডভান্সড সার্চ ও কাস্টম এক্সপোর্ট</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SheetJS for client-side Excel (.xlsx) export -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Google Fonts: Hind Siliguri for Bengali typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { 
-                        sans: ['Hind Siliguri', 'sans-serif'],
-                        code: ['Fira Code', 'monospace']
-                    },
-                    colors: {
-                        brand: { 500: '#006a4e', 600: '#045f47', 50: '#f0fdf4' },
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        body { background-color: #f1f5f9; }
-        .watermark {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-family: 'Fira Code', monospace;
-            font-size: 3rem;
-            font-weight: 700;
-            color: rgba(0, 0, 0, 0.04);
-            pointer-events: none;
-            white-space: nowrap;
-            z-index: 0;
-            user-select: none;
-        }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-    </style>
+  <style>
+    body {
+      font-family: 'Hind Siliguri', sans-serif;
+    }
+    .font-code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    /* Custom scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+  </style>
 </head>
-<body class="text-slate-800 antialiased selection:bg-brand-500 selection:text-white">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased selection:bg-teal-500 selection:text-white">
 
-    <!-- Navbar -->
-    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur shadow-sm border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex flex-col md:flex-row justify-between h-auto md:h-16 items-center py-2 md:py-0 gap-3">
-                <div class="flex items-center gap-3">
-                    <div class="bg-brand-500 text-white p-2 rounded-lg shadow-lg shadow-brand-500/20">
-                        <i data-lucide="vote" class="w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg md:text-xl font-bold text-slate-900 leading-none">কিশোরগঞ্জ-৩</h1>
-                        <p class="text-[10px] text-slate-500 font-medium">গেজেট ২০২৬ (জানুয়ারি ১৫)</p>
-                    </div>
-                </div>
-                
-                <div class="flex gap-2">
-                    <button onclick="openSummary()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-md active:scale-95">
-                        <i data-lucide="pie-chart" class="w-4 h-4"></i>
-                        <span>সামারি</span>
-                    </button>
-                    <button onclick="downloadAll()" id="batchBtn" class="bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-xl text-sm font-medium flex items-center gap-2 transition-all shadow-md active:scale-95">
-                        <i data-lucide="folder-down" class="w-4 h-4"></i>
-                        <span id="batchBtnText">সব ডাউনলোড</span>
-                    </button>
-                </div>
-            </div>
+  <!-- Header / Navbar -->
+  <header class="bg-gradient-to-r from-emerald-800 via-teal-800 to-cyan-900 text-white shadow-lg sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center space-x-3 space-x-reverse">
+        <div class="p-2 sm:p-2.5 bg-white/15 backdrop-blur-md rounded-xl shadow-inner flex items-center justify-center">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
         </div>
-    </nav>
+        <div>
+          <h1 class="text-lg sm:text-2xl font-bold tracking-tight flex items-center gap-1.5 sm:gap-2">
+            <span>ভোটার ডাটাবেজ প্রো</span>
+            <span class="text-[10px] sm:text-[11px] bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">V2.5 Pro</span>
+          </h1>
+          <p class="text-[11px] sm:text-xs text-emerald-100/90 hidden sm:block">PDF টু CSV প্রসেসিং • অ্যাডভান্সড সার্চ • কাস্টম ক্যাটাগরি এক্সপোর্ট</p>
+        </div>
+      </div>
 
-    <!-- Disclaimer Banner -->
-    <div class="bg-yellow-50 border-b border-yellow-100 px-4 py-2 text-center">
-        <p class="text-xs text-yellow-800 flex items-center justify-center gap-2">
-            <i data-lucide="alert-triangle" class="w-3 h-3"></i>
-            ডিসক্লেইমার: মোট ভোটার সংখ্যা সঠিক। তবে গেজেটের অস্পষ্টতার কারণে গ্রাম-ভিত্তিক ভোটার বিভাজনে সামান্য তারতম্য হতে পারে।
-        </p>
+      <!-- Quick Action Buttons in Nav -->
+      <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <button onclick="togglePromptModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-white/10 hover:bg-white/20 active:scale-95 text-emerald-100 text-xs sm:text-sm font-medium rounded-lg transition shadow-sm border border-emerald-400/30">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          <span class="hidden xs:inline">AI প্রম্পট</span>
+          <span class="xs:hidden">প্রম্পট</span>
+        </button>
+        <button onclick="openExportModal()" class="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 sm:py-2 bg-teal-600 hover:bg-teal-500 active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-lg transition shadow-sm border border-teal-400/40">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+          </svg>
+          <span>📑 কাস্টম এক্সপোর্ট</span>
+        </button>
+        <button onclick="downloadExcel()" class="flex items-center gap-1 sm:gap-1.5 px-3 sm:px-3.5 py-1.5 sm:py-2 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-900 text-xs sm:text-sm font-bold rounded-lg transition-all shadow-md">
+          <svg class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          <span>ডাউনলোড</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex-1 w-full space-y-5">
+    
+    <!-- Step Banner & Quick Helper Bar -->
+    <div class="bg-gradient-to-r from-teal-50 via-emerald-50 to-cyan-50 border border-teal-200 rounded-2xl p-3 sm:p-4 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <span class="flex-shrink-0 w-8 h-8 bg-teal-600 text-white rounded-full flex items-center justify-center font-bold text-sm shadow">
+          ১-৬
+        </span>
+        <div>
+          <h2 class="text-sm sm:text-base font-bold text-slate-800">ভোটার ডাটাবেজ প্রসেসিং ও বহুমুখী এক্সপোর্ট</h2>
+          <p class="text-xs text-slate-600">Gemini-তে প্রম্পট ও PDF দিন → CSV পেস্ট করে প্রসেস করুন → ফিল্টার ও যেকোনো ক্যাটাগরিতে এক্সেল ফাইল নামান।</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 flex-wrap w-full md:w-auto justify-end">
+        <button onclick="togglePromptModal()" class="px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          প্রম্পট ১-৪ দেখুন
+        </button>
+        <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm transition">
+          <span>Gemini App</span>
+          <svg class="w-3 h-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+          </svg>
+        </a>
+      </div>
     </div>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Search -->
-        <div class="mb-6">
-            <div class="relative max-w-xl mx-auto md:mx-0">
-                <i data-lucide="search" class="absolute left-4 top-3.5 text-slate-400 w-5 h-5"></i>
-                <input type="text" id="searchInput" 
-                    class="w-full pl-12 pr-4 py-3 bg-white border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-brand-500 outline-none transition-all text-lg" 
-                    placeholder="কেন্দ্র বা গ্রামের নাম খুঁজুন...">
-                <div class="absolute right-3 top-2.5 bg-slate-100 px-2 py-1 rounded text-xs font-bold text-slate-500 border border-slate-200">
-                    <span id="count">151</span> কেন্দ্র
-                </div>
+    <!-- Processing Form Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+      
+      <!-- Left: Raw Input & Process Details -->
+      <div class="lg:col-span-8 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between space-y-4">
+        <div>
+          <!-- Title row: Process Name & Mode -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+            <div>
+              <label for="processTitleInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                ধাপ-৪: প্রসেসের নাম দিন *
+              </label>
+              <input type="text" id="processTitleInput" placeholder="উদাঃ ভাটী মনোহরপুর - পুরুষ ভোটার (২য় খণ্ড)" class="w-full text-xs sm:text-sm font-medium px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:outline-none transition shadow-inner">
             </div>
-        </div>
-
-        <!-- Grid -->
-        <div id="gridContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 pb-20">
-            <!-- Data will load here -->
-        </div>
-    </main>
-
-    <!-- Hidden Render Container for PNG Generation -->
-    <div id="renderContainer" class="fixed top-0 left-0 pointer-events-none opacity-0 z-[-1]"></div>
-
-    <!-- Single Download Modal -->
-    <div id="modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all animate-fade-in-up">
-            <button onclick="closeModal()" class="absolute top-4 right-4 z-20 bg-black/10 hover:bg-black/20 text-slate-600 rounded-full p-2 transition-colors"><i data-lucide="x" class="w-5 h-5"></i></button>
-            <div id="modalContent" class="bg-white"></div>
-            <div class="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
-                <button onclick="downloadSingle()" class="flex-1 bg-brand-500 hover:bg-brand-600 text-white py-3 rounded-xl font-semibold shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2 transition-all active:scale-95">
-                    <i data-lucide="image-down" class="w-5 h-5"></i> PNG ডাউনলোড
-                </button>
+            <div>
+              <label for="defaultAddressInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center gap-1">
+                <svg class="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                একক/ডিফল্ট ঠিকানা (যদি লাইনে না থাকে)
+              </label>
+              <input type="text" id="defaultAddressInput" placeholder="উদাঃ ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ" class="w-full text-xs sm:text-sm font-medium px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition shadow-inner">
             </div>
+          </div>
+
+          <!-- Raw Input Textarea -->
+          <div class="flex items-center justify-between mb-1.5">
+            <label for="rawInput" class="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              AI থেকে কপি করা CSV ডাটা পেস্ট করুন
+            </label>
+            <span id="charLineCount" class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600">০ সারি</span>
+          </div>
+
+          <textarea id="rawInput" rows="6" oninput="updateLineCount()" class="w-full font-code text-xs p-3 bg-slate-50 rounded-xl border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none resize-y transition shadow-inner leading-relaxed" placeholder="লিঙ্গ,ক্রমিক নম্বর,নাম,ভোটার নম্বর,পিতার নাম,মাতার নাম,পেশা,জন্মতারিখ..."></textarea>
         </div>
+
+        <!-- Processing controls & sample buttons -->
+        <div class="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2.5">
+          <div class="flex items-center gap-2">
+            <button onclick="processNewData()" class="px-4 sm:px-5 py-2 sm:py-2.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-xs sm:text-sm rounded-xl shadow transition flex items-center gap-1.5 sm:gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+              </svg>
+              <span>ধাপ-৫: ডাটা প্রসেস করুন</span>
+            </button>
+            <button onclick="clearInput()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium text-xs rounded-xl transition">
+              মুছুন
+            </button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <button onclick="loadSampleFemaleData()" class="text-xs text-purple-700 hover:text-purple-900 font-bold flex items-center gap-1 bg-purple-50 px-2.5 py-1.5 rounded-lg border border-purple-200 transition">
+              👩 মহিলা নমুনা
+            </button>
+            <button onclick="loadSampleMaleData()" class="text-xs text-sky-700 hover:text-sky-900 font-bold flex items-center gap-1 bg-sky-50 px-2.5 py-1.5 rounded-lg border border-sky-200 transition">
+              👨 পুরুষ নমুনা
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Process History Management Panel -->
+      <div class="lg:col-span-4 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between mb-2 sm:mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-lg bg-teal-700 text-white flex items-center justify-center font-bold text-xs shadow">
+                📜
+              </div>
+              <h3 class="font-bold text-slate-800 text-sm">প্রসেস হিস্টরি (Batch History)</h3>
+            </div>
+            <span id="historyBadgeCount" class="text-xs font-semibold px-2 py-0.5 rounded-full bg-teal-100 text-teal-800">০ প্রসেস</span>
+          </div>
+
+          <p class="text-xs text-slate-500 mb-2.5 leading-relaxed">
+            যেকোনো প্রসেস ক্লিক করে দেখুন অথবা চেকবক্স নির্বাচন করে একসাথে কাস্টম এক্সপোর্ট করুন।
+          </p>
+
+          <!-- History Item List Container -->
+          <div id="historyListContainer" class="space-y-2 max-h-[190px] overflow-y-auto pr-1">
+            <!-- Dynamically populated history cards -->
+          </div>
+        </div>
+
+        <!-- History Bulk Control Buttons -->
+        <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between gap-2">
+          <button onclick="selectAllHistoryCombined()" id="viewAllBatchesBtn" class="flex-1 py-1.5 px-2 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+            <svg class="w-3.5 h-3.5 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+            </svg>
+            <span>🔄 সবগুলো একসাথে দেখুন</span>
+          </button>
+          
+          <button onclick="clearAllHistoryPrompt()" title="সম্পূর্ণ হিস্টরি ক্লিয়ার করুন" class="py-1.5 px-2 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-medium rounded-xl border border-rose-200 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            <span>ক্লিয়ার</span>
+          </button>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Summary Modal -->
-    <div id="summaryModal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
-        <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-                <div>
-                    <h2 class="text-xl font-bold text-slate-800">ভোটার পরিসংখ্যান সারসংক্ষেপ</h2>
-                    <p class="text-xs text-slate-500">উপজেলা ও ইউনিয়ন ভিত্তিক (গেজেট ২০২৬)</p>
-                </div>
-                <button onclick="closeSummary()" class="bg-white hover:bg-slate-100 text-slate-600 rounded-full p-2 border border-slate-200 transition-colors">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
-            </div>
-            <div class="flex-1 overflow-y-auto p-6 bg-white custom-scroll">
-                <div id="summaryContent" class="space-y-8"></div>
-            </div>
-            <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 text-center">
-                <p class="text-[10px] text-slate-400">Developed by NakibLab</p>
-            </div>
+    <!-- Summary Counter Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+      <div onclick="filterByStat('all')" class="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3 cursor-pointer hover:border-emerald-400 transition">
+        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">
+          👥
         </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">মোট ভোটার</div>
+          <div id="statTotalVoters" class="text-base sm:text-lg font-bold text-slate-800">০ জন</div>
+        </div>
+      </div>
+
+      <div onclick="filterByStat('পুরুষ')" class="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3 cursor-pointer hover:border-sky-400 transition">
+        <div class="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-lg">
+          👨
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">পুরুষ ভোটার</div>
+          <div id="statMaleVoters" class="text-base sm:text-lg font-bold text-slate-800">০ জন</div>
+        </div>
+      </div>
+
+      <div onclick="filterByStat('মহিলা')" class="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3 cursor-pointer hover:border-purple-400 transition">
+        <div class="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg">
+          👩
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">মহিলা ভোটার</div>
+          <div id="statFemaleVoters" class="text-base sm:text-lg font-bold text-slate-800">০ জন</div>
+        </div>
+      </div>
+
+      <div onclick="filterByStat('review')" class="bg-white p-3 sm:p-3.5 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3 cursor-pointer hover:border-amber-400 transition">
+        <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg">
+          ⚠️
+        </div>
+        <div>
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">মাইগ্রেট / রিভিও</div>
+          <div id="statMigratedVoters" class="text-base sm:text-lg font-bold text-amber-800">০ জন</div>
+        </div>
+      </div>
     </div>
 
-    <script>
-        // --- 1. DATASET: 2026 GAZETTE (151 CENTERS) ---
-        // Note: I have applied the specific fix for Idilpur in the logic below.
+    <!-- Table & Interactive Toolbar Section (ধাপ-৬: টেবিল প্রিভিউ ও সার্চ বার) -->
+    <div id="tablePreviewCard" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col transition-all duration-200">
+      
+      <!-- Toolbar with integrated Search Bar & Controls -->
+      <div class="p-3 sm:p-4 bg-slate-50/90 border-b border-slate-200 flex flex-col gap-3">
         
-        const rawCenters = [
-            // --- TARAIL UPAZILA (1-51) ---
-            { id: "1", u: "তালজাংগা", name: "তালজাংগা রাজ চন্দ্র রায় উচ্চ বিদ্যালয়", area: "ইদিলপুর, কুন্দ্রাটি, তালজাংগা, চরতালজাংগা", m: 2335, f: 2354, t: 4689 },
-            { id: "2", u: "তালজাংগা", name: "আড়াইউড়া সরকারি প্রাথমিক বিদ্যালয়", area: "আড়াইউড়া, নন্দিপুর, আউজিয়া, চিকনী, লাখপুর", m: 2049, f: 2529, t: 4578 },
-            { id: "3", u: "তালজাংগা", name: "ঘোষপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "ঘোষপাড়া, দেওথান, নোয়াগাঁও, বাঁশহাটি", m: 1279, f: 1301, t: 2580 },
-            { id: "4", u: "তালজাংগা", name: "ভাটগাঁও সরকারি প্রাথমিক বিদ্যালয়", area: "ভাটগাঁও, মোল্লাপাড়া, শ্রীপুর, হাজীপুর", m: 998, f: 923, t: 1921 },
-            { id: "5", u: "তালজাংগা", name: "শাহবাগ সরকারি প্রাথমিক বিদ্যালয়", area: "শাহবাগ", m: 1240, f: 1278, t: 2518 },
-            { id: "6", u: "তালজাংগা", name: "কার্তিকখিলা সরকারি প্রাথমিক বিদ্যালয়", area: "কার্তিকখিলা, বান্দুলদিয়া, আকুবপুর", m: 2075, f: 1959, t: 4034 },
-            { id: "7", u: "রাউতি", name: "হরিগাতী সরকারি প্রাথমিক বিদ্যালয়", area: "কারংকা, বানাইল, বরিগাতি, হরিগাতী", m: 1261, f: 1244, t: 2505 },
-            { id: "8", u: "রাউতি", name: "দাউদপুর বানাইল আলীম মাদ্রাসা", area: "কেউটিপাড়া, পাড়াবানাইল, দাউদপুর", m: 1469, f: 1393, t: 2862 },
-            { id: "9", u: "রাউতি", name: "দাউদপুর বাঁশহাটি সরকারি প্রাথমিক বিদ্যালয়", area: "পাড়াডুরিয়া, নোয়াগাঁও, বাঁশহাটি, মৌগাঁও, সালিহা", m: 1802, f: 1798, t: 3600 },
-            { id: "10", u: "রাউতি", name: "রাউতি সরকারি প্রাথমিক বিদ্যালয়", area: "রাউতি", m: 2064, f: 1970, t: 4034 },
-            { id: "11", u: "রাউতি", name: "শিমুলাটী সরকারি প্রাথমিক বিদ্যালয়", area: "শিমুলাটী", m: 972, f: 895, t: 1867 },
-            { id: "12", u: "রাউতি", name: "পুরুড়া উচ্চ বিদ্যালয়", area: "পুরুড়া, সুরংগল, কৌলী, কৌলীগাতী", m: 2112, f: 2100, t: 4212 },
-            { id: "13", u: "রাউতি", name: "ভাওয়াল সরকারি প্রাথমিক বিদ্যালয়", area: "কোনাভাওয়াল, ভাওয়াল", m: 1638, f: 1610, t: 3248 },
-            { id: "14", u: "রাউতি", name: "মেছগাঁও সরকারি প্রাথমিক বিদ্যালয়", area: "শিবপুর, মেছগাঁও, জামিরা", m: 1677, f: 1555, t: 3232 },
-            { id: "15", u: "ধলা", name: "সেকান্দরনগর সরকারি প্রাথমিক বিদ্যালয়", area: "সেকান্দরনগর দক্ষিণ, সেকান্দরনগর মধ্য", m: 2521, f: 2347, t: 4868 },
-            { id: "16", u: "ধলা", name: "ধলা ইউনিয়ন উচ্চ বিদ্যালয়", area: "দক্ষিণ ধলা", m: 1163, f: 1098, h: 1, t: 2262 },
-            { id: "17", u: "ধলা", name: "ধলা সরকারি প্রাথমিক বিদ্যালয়", area: "গজেন্দ্রপুর/চাঁনপুর, ভেইয়ারকোনা", m: 1930, f: 1880, t: 3810 },
-            { id: "18", u: "ধলা", name: "কলুমা সরকারি প্রাথমিক বিদ্যালয়", area: "কলুমা", m: 1317, f: 1134, t: 2451 },
-            { id: "19", u: "ধলা", name: "উত্তর সেকান্দরনগর সরকারি প্রাথমিক বিদ্যালয়", area: "সেকান্দরনগর উত্তর", m: 1599, f: 1465, t: 3064 },
-            { id: "20", u: "ধলা", name: "ধলা বহুমুখী আলীম মাদ্রাসা", area: "তেউরিয়া, উত্তর ধলা", m: 1895, f: 1802, t: 3697 },
-            { id: "21", u: "জাওয়ার", name: "রতনপুর/আজমপুর সরকারি প্রাথমিক বিদ্যালয়", area: "চংজাওয়ার, আজমপুর/রতনপুর", m: 1086, f: 945, t: 2031 },
-            { id: "22", u: "জাওয়ার", name: "জাওয়ার সরকারি প্রাথমিক বিদ্যালয়", area: "বিড়িজাওয়ার মধ্যপাড়া, বিড়িজাওয়ার পশ্চিম", m: 2043, f: 1920, t: 3963 },
-            { id: "23", u: "জাওয়ার", name: "মাদরাসা ইমদাদুল উলূম জাওয়ার", area: "বিড়িজাওয়ার পূর্ব", m: 1681, f: 1517, t: 3198 },
-            { id: "24", u: "জাওয়ার", name: "ছনাটি সরকারি প্রাথমিক বিদ্যালয়", area: "ছনাটি", m: 1248, f: 1253, t: 2501 },
-            { id: "25", u: "জাওয়ার", name: "আশরাফুল উলুম মাদ্রাসা, বোরগাঁও", area: "পূর্ব বোরগাঁও, বিলাসীপাড়া", m: 1363, f: 1192, t: 2555 },
-            { id: "26", u: "জাওয়ার", name: "বেলংকা সরকারি প্রাথমিক বিদ্যালয়", area: "ইছাপশর, বেলংকা", m: 2250, f: 1935, t: 4185 },
-            { id: "27", u: "জাওয়ার", name: "বোরগাঁও সরকারি প্রাথমিক বিদ্যালয়", area: "পশ্চিম বোরগাঁও, দেওয়াটি", m: 1723, f: 1613, t: 3336 },
-            { id: "28", u: "দামিহা", name: "গজারিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "গজারিয়া, বর্মা", m: 1389, f: 1144, t: 2533 },
-            { id: "29", u: "দামিহা", name: "দামিহা উদয়ন কলেজ", area: "দামিহা, কাছিলাহাটি", m: 1869, f: 1729, t: 3598 },
-            { id: "30", u: "দামিহা", name: "রাহেলা সরকারি প্রাথমিক বিদ্যালয়", area: "রাহেলা", m: 1104, f: 971, t: 2075 },
-            { id: "31", u: "দামিহা", name: "হাছলা সরকারি প্রাথমিক বিদ্যালয়", area: "মাখনাপাড়া, হাছলা, নগরকুল", m: 1790, f: 1645, t: 3435 },
-            { id: "32", u: "দামিহা", name: "কাজলা সরকারি প্রাথমিক বিদ্যালয়", area: "কাজলা বগারবাইদ, কাজলা চকপাড়া, দক্ষিণ খালপাড়া", m: 2687, f: 0, t: 2687, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "33", u: "দামিহা", name: "কাজলা উচ্চ বিদ্যালয়", area: "কাজলা বগারবাইদ, কাজলা চকপাড়া, দক্ষিণ খালপাড়া", m: 0, f: 2507, t: 2507, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "34", u: "দামিহা", name: "কাজলা আলীম মাদ্রাসা", area: "কাজলা সিংগুয়ারপাড়, হাতকাজলা", m: 2422, f: 2203, t: 4625 },
-            { id: "35", u: "দামিহা", name: "মাগুরী সরকারি প্রাথমিক বিদ্যালয়", area: "মাগুরী, আনোয়ারপুর", m: 1811, f: 1567, t: 3378 },
-            { id: "36", u: "দিগদাইড়", name: "কল্লা ভাদেরা সরকারি প্রাথমিক বিদ্যালয়", area: "আছভায়া, কল্লা, কাউরা, দক্ষিণনগর", m: 2229, f: 2000, t: 4229 },
-            { id: "37", u: "দিগদাইড়", name: "ভাদেরা সরকারি প্রাথমিক বিদ্যালয়", area: "ভাদেরা", m: 1112, f: 900, t: 2012 },
-            { id: "38", u: "দিগদাইড়", name: "জটারকান্দা সরকারি প্রাথমিক বিদ্যালয়", area: "জটারকান্দা, সেরুয়াকান্দা", m: 796, f: 723, t: 1519 },
-            { id: "39", u: "দিগদাইড়", name: "বরুহা সরকারি প্রাথমিক বিদ্যালয়", area: "দক্ষিণ বরুহা", m: 1389, f: 1257, t: 2646 },
-            { id: "40", u: "দিগদাইড়", name: "বারপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "বরুহা (বর্মনপাড়া), লক্ষীপুর", m: 1077, f: 1060, t: 2137 },
-            { id: "41", u: "দিগদাইড়", name: "সিংধা সরকারি প্রাথমিক বিদ্যালয়", area: "চরপাড়া/মহনপুর, সিংধা", m: 1231, f: 1191, h: 1, t: 2423 },
-            { id: "42", u: "দিগদাইড়", name: "করাতি সিংধা সরকারি প্রাথমিক বিদ্যালয়", area: "নয়নসুখ, করাতি", m: 1057, f: 1036, t: 2093 },
-            { id: "43", u: "দিগদাইড়", name: "দিগদাইড় সরকারি প্রাথমিক বিদ্যালয়", area: "দিগদাইড় পশ্চিমপাড়া, দিগদাইড় পূর্ব", m: 1595, f: 1446, t: 3041 },
-            { id: "44", u: "তাড়াইল-সাচাইল", name: "তাড়াইল সরকারি পাইলট মডেল উচ্চ বিদ্যালয়", area: "তাড়াইল বাজার", m: 990, f: 1055, t: 2045 },
-            { id: "45", u: "তাড়াইল-সাচাইল", name: "দড়িজাহাঙ্গীরপুর সরকারি প্রাথমিক বিদ্যালয়", area: "দশদ্রোন, দড়িজাহাঙ্গীরপুর", m: 1874, f: 1806, t: 3680 },
-            { id: "46", u: "তাড়াইল-সাচাইল", name: "পংপাচিহা সরকারি প্রাথমিক বিদ্যালয়", area: "পংপাচিহা, পাইকপাড়া", m: 1806, f: 1800, t: 3606 },
-            { id: "47", u: "তাড়াইল-সাচাইল", name: "তাড়াইল মুক্তিযোদ্ধা সরকারি কলেজ", area: "সহিলাটি, আতকাপাড়া, দরিয়াপুর", m: 1862, f: 1845, t: 3707 },
-            { id: "48", u: "তাড়াইল-সাচাইল", name: "শামুকজানী নূরেজান্নাত হাফিজিয়া মাদ্ররাসা", area: "শামুকজানী", m: 811, f: 746, t: 1557 },
-            { id: "49", u: "তাড়াইল-সাচাইল", name: "হাজী গোলাম হোসেন বালিকা উচ্চ বিদ্যালয় (উত্তর)", area: "কালনা, সাররং, পূর্ব সাচাইল", m: 2584, f: 0, t: 2584, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "50", u: "তাড়াইল-সাচাইল", name: "হাজী গোলাম হোসেন বালিকা উচ্চ বিদ্যালয় (পূর্ব)", area: "কালনা, সাররং, পূর্ব সাচাইল", m: 0, f: 2675, t: 2675, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "51", u: "তাড়াইল-সাচাইল", name: "সাচাইল দারুল হুদা কাছেমুল উলুম মাদ্রাসা", area: "পশ্চিম সাচাইল, ভেরণতলা", m: 1840, f: 1979, t: 3819 },
+        <!-- Top row: Title, Badges & Action Buttons (including Fullscreen) -->
+        <div class="flex flex-wrap items-center justify-between gap-2.5">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-1.5">
+              <span>ধাপ-৬: প্রিভিউ টেবিল</span>
+            </h2>
+            <span id="currentViewBadge" class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold">
+              সবগুলো প্রসেস
+            </span>
+            <span id="activeFilterBadge" class="hidden text-[10px] bg-teal-100 text-teal-800 px-2 py-0.5 rounded-full font-bold">
+              ফিল্টার সক্রিয়
+            </span>
+          </div>
 
-            // --- KARIMGANJ UPAZILA (52-151) ---
-            { id: "52", u: "করিমগঞ্জ পৌরসভা", name: "আশুতিয়াপাড়া সরকারি প্রাথমিক বিদ্যালয় (পাকাভবন)", area: "আশুতিয়াপাড়া, রামনগর", m: 2487, f: 0, t: 2487, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "53", u: "করিমগঞ্জ পৌরসভা", name: "আশুতিয়াপাড়া সরকারি প্রাথমিক বিদ্যালয় (টিনশেড)", area: "আশুতিয়াপাড়া, রামনগর", m: 0, f: 2444, t: 2444, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "54", u: "করিমগঞ্জ পৌরসভা", name: "খুদির জঙ্গল সরকারি প্রাথমিক বিদ্যালয়", area: "খুদিরজঙ্গল", m: 1575, f: 1576, t: 3151 },
-            { id: "55", u: "করিমগঞ্জ পৌরসভা", name: "কলাতুলী সরকারি প্রাথমিক বিদ্যালয়", area: "কলাতুলী, তেলীপাড়া", m: 1380, f: 1395, t: 2775 },
-            { id: "56", u: "করিমগঞ্জ পৌরসভা", name: "করিমগঞ্জ সরকারি পাইলট মডেল উচ্চ বিদ্যালয়", area: "করিমগঞ্জ বাজার", m: 1719, f: 1813, t: 3532 },
-            { id: "57", u: "করিমগঞ্জ পৌরসভা", name: "চরপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "চরপাড়া", m: 1283, f: 1296, t: 2579 },
-            { id: "58", u: "করিমগঞ্জ পৌরসভা", name: "করিমগঞ্জ সরকারি মহাবিদ্যালয়", area: "আয়লা, বিদ্যানগর ৬নং ওয়ার্ড, ঘোনাপাড়া, সিদলারপাড়", m: 1695, f: 1779, t: 3474 },
-            { id: "59", u: "করিমগঞ্জ পৌরসভা", name: "বাহাদুরপুর সরকারি প্রাথমিক বিদ্যালয়", area: "বাহাদুরপুর, বিদ্যানগর ৭নং ওয়ার্ড", m: 828, f: 840, t: 1668 },
-            { id: "60", u: "করিমগঞ্জ পৌরসভা", name: "অরবিট কিন্ডার গার্ডেন স্কুল", area: "পূর্ব নয়াকান্দি", m: 1232, f: 1334, t: 2566 },
-            { id: "61", u: "করিমগঞ্জ পৌরসভা", name: "নয়াকান্দি সরকারি প্রাথমিক বিদ্যালয়", area: "নয়াপাড়া ও বেপারীপাড়া, পশ্চিম নয়াকান্দি", m: 1493, f: 1588, t: 3081 },
-            { id: "62", u: "কাদিরজঙ্গল", name: "সাতাঁরপুর সরকারি প্রাথমিক বিদ্যালয় (টিনশেড)", area: "জাঙ্গাল, সাতাঁরপুর, পাঠানপাড়া", m: 2919, f: 0, t: 2919, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "63", u: "কাদিরজঙ্গল", name: "সাতীরপুর সরকারি প্রাথমিক বিদ্যালয় (পাকা)", area: "জাঙ্গাল, সাতাঁরপুর, পাঠানপাড়া", m: 0, f: 2937, t: 2937, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "64", u: "কাদিরজঙ্গল", name: "খিরারচর সরকারি প্রাথমিক বিদ্যালয়", area: "ইসলামপুর, খিরারচর, বড়চর, ভাটি মনোহরপুর", m: 1836, f: 1792, t: 3628 },
-            { id: "65", u: "কাদিরজঙ্গল", name: "গাংগাইল সরকারি প্রাথমিক বিদ্যালয়", area: "গালিমগাজী, গাংগাইল", m: 1412, f: 1381, t: 2793 },
-            { id: "66", u: "কাদিরজঙ্গল", name: "হাত্রাপাড়া উচ্চ বিদ্যালয়", area: "পাতুয়াইর, হাত্রাপাড়া", m: 2617, f: 0, t: 2617, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "67", u: "কাদিরজঙ্গল", name: "হাত্রাপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "পাতুয়াইর, হাত্রাপাড়া", m: 0, f: 2422, t: 2422, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "68", u: "কাদিরজঙ্গল", name: "সতেরদরিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "সতেরদরিয়া", m: 1354, f: 1329, t: 2683 },
-            { id: "69", u: "কাদিরজঙ্গল", name: "চাঁনপুর সরকারি প্রাথমিক বিদ্যালয়", area: "চাঁনপুর", m: 1125, f: 1073, t: 2198 },
-            { id: "70", u: "কাদিরজঙ্গল", name: "পিটুয়া সরকারি প্রাথমিক বিদ্যালয়", area: "পিটুয়া", m: 1885, f: 1748, t: 3633 },
-            { id: "71", u: "কাদিরজঙ্গল", name: "বাইশকাহনিয়া ভাংগীরচর ডি.এস. দাখিল মাদ্রাসা", area: "ভাংগিরচর/বাইশকাহনীয়া", m: 856, f: 776, t: 1632 },
-            { id: "72", u: "কাদিরজঙ্গল", name: "জঙ্গলবাড়ী উচ্চ বিদ্যালয়", area: "কুর্শাখালী, জঙ্গলবাড়ী, নামাপাড়া", m: 1859, f: 1911, t: 3770 },
-            { id: "73", u: "কাদিরজঙ্গল", name: "ইসলামপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "ইসলামপাড়া, মুসলিমপাড়া, রহিমপুর", m: 1559, f: 1754, t: 3313 },
-            { id: "74", u: "গুজাদিয়া", name: "দক্ষিণ টামনী সরকারি প্রাথমিক বিদ্যালয়", area: "টামনী আকন্দপাড়া, টামনী পিটুয়া", m: 1619, f: 1629, t: 3248 },
-            { id: "75", u: "গুজাদিয়া", name: "টামনী ভূঞাপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "টামনী কোনাপাড়া, টামনীনয়াপাড়া, বন্ধ গোমরা", m: 1513, f: 1499, t: 3012 },
-            { id: "76", u: "গুজাদিয়া", name: "গুজাদিয়া আব্দুল হেকিম মাধ্যমিক বিদ্যালয়", area: "টামনী বর্মী, টামনী ইসলামপুর, টামনী গুজাদিয়া, গোপীনাথপুর", m: 1874, f: 1881, t: 3755 },
-            { id: "77", u: "গুজাদিয়া", name: "পশ্চিম চরকরণশী সরকারি প্রাথমিক বিদ্যালয়", area: "পশ্চিম চরকরণশী, পূর্ব চরকরণশী, খোদকরণশী", m: 2241, f: 2079, t: 4320 },
-            { id: "78", u: "গুজাদিয়া", name: "হাইধন খালী সরকারি প্রাথমিক বিদ্যালয়", area: "হিরারামপুর, খৈলাকুড়ি, শ্রীপুর", m: 1253, f: 1256, t: 2509 },
-            { id: "79", u: "গুজাদিয়া", name: "মাদ্রাসায়ে রাহীমিয়া গুজাদিয়া", area: "হাইধনখালী", m: 1790, f: 1719, t: 3509 },
-            { id: "80", u: "গুজাদিয়া", name: "ইচ্ছাগঞ্জ মাধ্যমিক বিদ্যালয়", area: "চড়ুইখালী, জাটিয়াপাড়া, খয়রতহাটি, বড়কান্দা", m: 2482, f: 0, t: 2482, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "81", u: "গুজাদিয়া", name: "ইচ্ছাগঞ্জ সরকারি প্রাথমিক বিদ্যালয়", area: "চড়ুইখালী, জাটিয়াপাড়া, খয়রতহাটি, বড়কান্দা", m: 0, f: 2259, t: 2259, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "82", u: "গুজাদিয়া", name: "পাথারিয়াপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "পাথারিয়াপাড়া, আশ্রুতিয়াপাড়া, হাতিমারা, চাঁনপুর", m: 2110, f: 2163, t: 4273 },
-            { id: "83", u: "গুজাদিয়া", name: "গুজাদিয়া-২ সরকারি প্রাথমিক বিদ্যালয়", area: "নামাপাড়া, পালইকান্দা, বৈরাটিপাড়া, টানপাড়া", m: 2129, f: 2090, t: 4219 },
-            { id: "84", u: "গুজাদিয়া", name: "গুজাদিয়া রামনগর সরকারি প্রাথমিক বিদ্যালয়", area: "রামনগর, আতকাপাড়া, ঢালারপাড়", m: 2012, f: 1800, t: 3812 },
-            { id: "85", u: "কিরাটন", name: "কিরাটন সরকারি প্রাথমিক বিদ্যালয়", area: "কিরাটন পশ্চিম মাইজপাড়া, কিরাটন পূর্ব মাইজপাড়া, কিরাটন ফকিরপাড়া, কিরাটন গাংপাড়া", m: 1937, f: 1715, t: 3652 },
-            { id: "86", u: "কিরাটন", name: "কিরাটন ইসলামিয়া ফাজিল মাদ্রাসা", area: "কিরাটন বিছারকান্দা, কিরাটন হাসমহল, কিরাটন কাতলামারী, কিরাটন গৌরারগোফ", m: 1803, f: 1784, t: 3587 },
-            { id: "87", u: "কিরাটন", name: "আয়লা সরকারি প্রাথমিক বিদ্যালয়", area: "কিরাটন উত্তর বিলপাড়া, পূর্ব আয়লা, কিরাটন দক্ষিণ বিলপাড়া", m: 930, f: 964, t: 1894 },
-            { id: "88", u: "কিরাটন", name: "লাখপুর সরকারি প্রাথমিক বিদ্যালয়", area: "লাখপুর গাংপাড়া/উত্তর লাখপুর, দক্ষিণ লাখপুর", m: 935, f: 958, t: 1893 },
-            { id: "89", u: "বারঘরিয়া", name: "চাতল সিডিউল কাস্ট উচ্চ বিদ্যালয়", area: "নয়াপাড়া, ফতেরগোপ, বিদ্যানগর, মাদারীখলা, তুলশিয়া, চাতল, জহিরাবাদ", m: 2117, f: 2149, t: 4266 },
-            { id: "90", u: "বারঘরিয়া", name: "হাসানপুর সরকারি প্রাথমিক বিদ্যালয়", area: "গজারিয়া, হাসনপুর, বারবার্তা", m: 1953, f: 1843, t: 3796 },
-            { id: "91", u: "বারঘরিয়া", name: "বারঘরিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "উত্তর বারঘরিয়া", m: 1154, f: 1039, t: 2193 },
-            { id: "92", u: "বারঘরিয়া", name: "ধীতপুর সরকারি প্রাথমিক বিদ্যালয়", area: "ধীতপুর", m: 1085, f: 975, t: 2060 },
-            { id: "93", u: "বারঘরিয়া", name: "বারঘড়িয়া ফাজিলখালি ইসলামিয়া দাখিল মাদ্রাসা", area: "দক্ষিণ বারঘরিয়া, মানিকপুর, ভুষারকান্দা", m: 1348, f: 1173, t: 2521 },
-            { id: "94", u: "দেহুন্দা", name: "খামার দেহুন্দা সরকারি প্রাথমিক বিদ্যালয়", area: "খামার দেহুন্দা দক্ষিণ, চরদেহুন্দা বৈঠাখালী, চরদেহুন্দা মাষ্টারপাড়া, চরদেহুন্দা মুন্সীপাড়া", m: 2021, f: 2024, t: 4045 },
-            { id: "95", u: "দেহুন্দা", name: "দেহুন্দা সরকারি প্রাথমিক বিদ্যালয়", area: "খামার দেহুন্দা উত্তর, খামার দেহুন্দা নামাপাড়া", m: 1667, f: 1512, t: 3179 },
-            { id: "96", u: "দেহুন্দা", name: "চর দেহুন্দা সরকারি প্রাথমিক বিদ্যালয়", area: "চরদেহুন্দা উত্তর, চরদেহুন্দা দক্ষিণ", m: 1247, f: 1300, t: 2547 },
-            { id: "97", u: "দেহুন্দা", name: "ভাটিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "ভাটিয়া গাংপাড়া, ভাটিয়া মড়লপাড়া, ভাটিয়া জহিরকোণা", m: 2953, f: 0, t: 2953, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "98", u: "দেহুন্দা", name: "ভাটিয়া উচ্চ বিদ্যালয়", area: "ভাটিয়া গাংপাড়া, ভাটিয়া মড়লপাড়া, ভাটিয়া জহিরকোণা", m: 0, f: 3032, t: 3032, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "99", u: "দেহুন্দা", name: "সাকুয়া সরকারি প্রাথমিক বিদ্যালয়", area: "সাকুয়া পূর্ব, সাকুয়া পশ্চিম", m: 2294, f: 2093, t: 4387 },
-            { id: "100", u: "দেহুন্দা", name: "ভাটিয়া পূর্ব পাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "ভাটিয়া নদীর পূর্বপাড়া", m: 1574, f: 1424, t: 2998 },
-            { id: "101", u: "সুতারপাড়া", name: "পুরান চামটা সরকারি প্রাথমিক বিদ্যালয়", area: "পুরান চামটা, বালিয়াপাড়া", m: 1424, f: 1570, t: 2994 },
-            { id: "102", u: "সুতারপাড়া", name: "উত্তর গণেশপুর সরকারি প্রাথমিক বিদ্যালয়", area: "উত্তর গণেশপুর", m: 1119, f: 1092, t: 2211 },
-            { id: "103", u: "সুতারপাড়া", name: "খাকশ্রী নূরুল উলুম ডি.এস. আলীম মাদ্রাসা", area: "খাকশ্রী", m: 738, f: 797, t: 1535 },
-            { id: "104", u: "সুতারপাড়া", name: "সুতারপাড়া দারুস সুন্নাহ মাদ্রাসা", area: "সুতারপাড়া-৫নং ওয়ার্ড", m: 1320, f: 1212, t: 2532 },
-            { id: "105", u: "সুতারপাড়া", name: "সুতারপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "সুতারপাড়া-৬নং ওয়ার্ড", m: 830, f: 791, t: 1621 },
-            { id: "106", u: "সুতারপাড়া", name: "সাগুলী সরকারি প্রাথমিক বিদ্যালয়", area: "সাগুলী", m: 955, f: 892, t: 1847 },
-            { id: "107", u: "সুতারপাড়া", name: "চং নোয়াগাঁও সরকারি প্রাথমিক বিদ্যালয়", area: "চং নোয়াগাঁও (বড়হাটি), চং নোয়াগাঁও", m: 1139, f: 1203, t: 2342 },
-            { id: "108", u: "নিয়ামতপুর", name: "নোয়াবাড়ী সরকারি প্রাথমিক বিদ্যালয় (উত্তর)", area: "ভয়রা, রৌহা", m: 2461, f: 0, t: 2461, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "109", u: "নিয়ামতপুর", name: "নোয়াবাড়ী সরকারি প্রাথমিক বিদ্যালয় (পূর্ব)", area: "ভয়রা, রৌহা", m: 0, f: 2314, t: 2314, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "110", u: "নিয়ামতপুর", name: "মনসন্তোষ সরকারি প্রাথমিক বিদ্যালয়", area: "দক্ষিণ মনসন্তোষ", m: 1413, f: 1252, t: 2665 },
-            { id: "111", u: "নিয়ামতপুর", name: "উত্তর মনসন্তোষ সরকারি প্রাথমিক বিদ্যালয়", area: "উত্তর মনসন্তোষ, দিগরকল্ল্যা", m: 1127, f: 1055, t: 2182 },
-            { id: "112", u: "নিয়ামতপুর", name: "দেওপুর আসাদুল হক বালিকা দাখিল মাদ্রাসা (৩য় তলা)", area: "কাজলা, দেওপুর, নাহিরাজপাড়া", m: 2285, f: 0, t: 2285, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "113", u: "নিয়ামতপুর", name: "দেওপুর আসাদুল হক বালিকা দাখিল মাদ্রাসা (২য় তলা)", area: "কাজলা, দেওপুর, নাহিরাজপাড়া", m: 0, f: 2280, t: 2280, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "114", u: "নিয়ামতপুর", name: "চারিতলা সরকারি প্রাথমিক বিদ্যালয়", area: "চারিতলা", m: 1418, f: 1280, t: 2698 },
-            { id: "115", u: "নিয়ামতপুর", name: "ন্যামতপুর স্কুল এন্ড কলেজ", area: "আঙ্গুরাকান্দা, মুড়িকান্দি, মধ্যপাড়া", m: 1891, f: 1803, t: 3694 },
-            { id: "116", u: "নিয়ামতপুর", name: "নিয়ামতপুর ধলিয়ারকান্দা সরকারি প্রাথমিক বিদ্যালয়", area: "হাজীপাড়া, ধলিয়ারকান্দা, বাহিরচর", m: 1926, f: 1702, t: 3628 },
-            { id: "117", u: "গুনধর", name: "গুণধর ইউনিয়ন উচ্চ বিদ্যালয়", area: "গুনধর, কদিম মাইজহাটি, মদন", m: 1962, f: 1781, t: 3743 },
-            { id: "118", u: "গুনধর", name: "খয়রত সরকারি প্রাথমিক বিদ্যালয়", area: "খয়রত", m: 1173, f: 1120, t: 2293 },
-            { id: "119", u: "গুনধর", name: "উরদিঘী উচ্চ বিদ্যালয়", area: "উরদিঘী, মোকামবাড়ী", m: 1818, f: 1836, t: 3654 },
-            { id: "120", u: "গুনধর", name: "সুধী সরকারি প্রাথমিক বিদ্যালয়", area: "সুধী, সুলতাননগর", m: 1758, f: 1561, t: 3319 },
-            { id: "121", u: "গুনধর", name: "আশতকা মানিকপুর সরকারি প্রাথমিক বিদ্যালয়", area: "দক্ষিণ আশতকা", m: 1247, f: 1136, t: 2383 },
-            { id: "122", u: "গুনধর", name: "উত্তর আশতকা সরকারি প্রাথমিক বিদ্যালয়", area: "উত্তর আশতকা", m: 1108, f: 964, t: 2072 },
-            { id: "123", u: "গুনধর", name: "ইন্দ্রা সরকারি প্রাথমিক বিদ্যালয়", area: "ইন্দ্রাচুল্লী, চুল্লী", m: 1919, f: 1730, t: 3649 },
-            { id: "124", u: "গুনধর", name: "ভাটি গাংগাটিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "ভাটি গাংগাটিয়া", m: 1461, f: 1301, t: 2762 },
-            { id: "125", u: "গুনধর", name: "দড়ি গাংগাটিয়া দারুস সালাম ফাইজিয়া মাদরাসা", area: "দড়ি গাংগাটিয়া", m: 667, f: 633, t: 1300 },
-            { id: "126", u: "গুনধর", name: "উজান বরাটিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "উজান বরাটিয়া, ছনকান্দা, জোয়ালভাঙ্গা", m: 1189, f: 1145, t: 2334 },
-            { id: "127", u: "জয়কা", name: "জয়কা সরকারি প্রাথমিক বিদ্যালয়", area: "জয়কা, পাড়াকুল", m: 1821, f: 1767, t: 3588 },
-            { id: "128", u: "জয়কা", name: "পানাহার স্বতন্ত্র ইবতেদায়ী মাদ্রাসা", area: "খোজারগাঁও, পানাহার", m: 1196, f: 1087, t: 2283 },
-            { id: "129", u: "জয়কা", name: "রামনগর সরকারি প্রাথমিক বিদ্যালয়", area: "রামনগর, কলাবাস, রতনপুর", m: 1959, f: 2151, t: 4110 },
-            { id: "130", u: "জয়কা", name: "উত্তর কান্দাইল সরকারি প্রাথমিক বিদ্যালয়", area: "কুকিমাদল, বানকাটা (ছনকান্দা), শিমুলগড়া", m: 1801, f: 1838, t: 3639 },
-            { id: "131", u: "জয়কা", name: "কান্দাইল সরকারি প্রাথমিক বিদ্যালয়", area: "পূর্ব ও পশ্চিম কান্দাইল, বাগপাড়া, কামারটিয়া, খিদিরপুর", m: 3199, f: 0, t: 3199, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "132", u: "জয়কা", name: "কান্দাইল উচ্চ বিদ্যালয়", area: "পূর্ব ও পশ্চিম কান্দাইল, বাগপাড়া, কামারাটিয়া, খিদিরপুর", m: 0, f: 3075, t: 3075, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "133", u: "জয়কা", name: "নানশ্রী উচ্চ বিদ্যালয় (অফিস ভবন)", area: "আলমদীপাড়া, পশ্চিম নানশ্রী, পূর্ব নানশ্রী, নন্দীপাড়া/উত্তর নানশ্রী", m: 3138, f: 0, t: 3138, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "134", u: "জয়কা", name: "নানশ্রী উচ্চ বিদ্যালয় (টিনশেড ভবন)", area: "আলমদীপাড়া, পশ্চিম নানশ্রী, পূর্ব নানশ্রী, নন্দীপাড়া/উত্তর নানশ্রী", m: 0, f: 3141, t: 3141, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "135", u: "জয়কা", name: "দক্ষিণ নানশ্রী সরকারি প্রাথমিক বিদ্যালয়", area: "কদমতলী, গারোয়াকান্দা, গোপালহাটি, চকেরবাড়ী, দক্ষিণ নানশ্রী, মধ্য নানশ্রী", m: 1739, f: 1732, t: 3471 },
-            { id: "136", u: "জয়কা", name: "মথুরাপাড়া সরকারি প্রাথমিক বিদ্যালয়", area: "মথুরাপাড়া", m: 1991, f: 1858, t: 3849 },
-            { id: "137", u: "জাফরাবাদ", name: "জাফরাবাদ উচ্চ বিদ্যালয় (পূর্ব)", area: "পূর্ব ও পশ্চিম জাফরাবাদ, বাদেশ্রীরামপুর", m: 1962, f: 0, t: 1962, comment: "পুরুষ ভোটকেন্দ্র" },
-            { id: "138", u: "জাফরাবাদ", name: "জাফরাবাদ উচ্চ বিদ্যালয় (উত্তর)", area: "পূর্ব ও পশ্চিম জাফরাবাদ, বাদেশ্রীরামপুর", m: 0, f: 2100, t: 2100, comment: "মহিলা ভোটকেন্দ্র" },
-            { id: "139", u: "জাফরাবাদ", name: "সাইটুটা রাধারচর সরকারি প্রাথমিক বিদ্যালয়", area: "রাধারচর, সাইটুটা", m: 956, f: 1002, t: 1958 },
-            { id: "140", u: "জাফরাবাদ", name: "মাছিমপুর সরকারি প্রাথামিক বিদ্যালয়", area: "সাধেরজঙ্গল, কুশ্বা", m: 1149, f: 1186, t: 2335 },
-            { id: "141", u: "জাফরাবাদ", name: "মাঝিরকোনা সরকারি প্রাথমিক বিদ্যালয়", area: "মাঝিরকোণা, রাজকুন্তি", m: 2118, f: 1930, t: 4048 },
-            { id: "142", u: "জাফরাবাদ", name: "সুবন্দী সরকারি প্রাথমিক বিদ্যালয়", area: "সুবন্দি, জাল্লাবাদ, কাইকুরদিয়া", m: 1446, f: 1421, t: 2867 },
-            { id: "143", u: "নোয়াবাদ", name: "বালিয়া উচ্চ বিদ্যালয়", area: "বাজেপাটধা, মাটিকাটা", m: 846, f: 902, t: 1748 },
-            { id: "144", u: "নোয়াবাদ", name: "কুমুরিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "কুমুরিয়া, ভাঙ্গাখালী", m: 1411, f: 1439, t: 2850 },
-            { id: "145", u: "নোয়াবাদ", name: "বালিয়া সরকারি প্রাথমিক বিদ্যালয়", area: "পাড়া বালিয়া", m: 1706, f: 1762, t: 3468 },
-            { id: "146", u: "নোয়াবাদ", name: "সিংগুয়া সরকারি প্রাথমিক বিদ্যালয়", area: "সিঙ্গুয়া", m: 1139, f: 1150, t: 2289 },
-            { id: "147", u: "নোয়াবাদ", name: "নোয়াবাদ সরকারি প্রাথমিক বিদ্যালয়", area: "নোয়াবাদ", m: 1633, f: 1528, t: 3161 },
-            { id: "148", u: "নোয়াবাদ", name: "ঝাউতলা সরকারি প্রাথমিক বিদ্যালয়", area: "ঝাউতলা, মোলামখারচর", m: 1845, f: 1769, t: 3614 },
-            { id: "149", u: "নোয়াবাদ", name: "হালগড়া সরকারি প্রাথমিক বিদ্যালয়", area: "হালগড়া, আন্দারমানিক", m: 1203, f: 1185, t: 2388 },
-            { id: "150", u: "নোয়াবাদ", name: "সিন্দ্বীপ সরকারি প্রাথমিক বিদ্যালয়", area: "সিন্দ্বীপ", m: 1043, f: 974, t: 2017 },
-            { id: "151", u: "নোয়াবাদ", name: "উলুখলা সরকারি প্রাথমিক বিদ্যালয়", area: "উত্তর ও দক্ষিণ উলুখলা", m: 1635, f: 1627, t: 3262 }
-        ];
+          <!-- Action Buttons: Fullscreen, Export, Copy, Download -->
+          <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+            
+            <!-- Fullscreen Button -->
+            <button onclick="toggleTableFullscreen()" id="fullscreenBtn" title="টেবিল ফুল স্ক্রিন করুন" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition">
+              <svg id="fullscreenIcon" class="w-3.5 h-3.5 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>
+              </svg>
+              <span id="fullscreenBtnText">ফুল স্ক্রিন</span>
+            </button>
 
-        // --- 2. LOGIC: Data Processing & Idilpur Fix ---
-        function getBanglaToEnglish(str) {
-            const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
-            let res = str.toString();
-            for(let i=0; i<10; i++) res = res.replace(new RegExp(bn[i], 'g'), i);
-            return parseInt(res.replace(/,/g, ''));
+            <!-- Custom Export Modal Button -->
+            <button onclick="openExportModal()" title="ক্যাটাগরি অনুযায়ী এক্সপোর্ট করুন" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-teal-700 hover:bg-teal-800 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <span class="hidden sm:inline">📑 কাস্টম</span> Export
+            </button>
+
+            <!-- Copy for Excel -->
+            <button onclick="copyForExcel()" title="এক্সেলে পেস্ট করার উপযোগী কপি" class="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-xl shadow-xs transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+              </svg>
+              <span>📋 কপি</span>
+            </button>
+
+            <!-- Download Excel -->
+            <button onclick="downloadExcel()" title="এক্সেল (.xlsx) ফাইল ডাউনলোড" class="flex items-center gap-1 px-3 sm:px-3.5 py-1.5 bg-amber-400 hover:bg-amber-300 active:scale-95 text-slate-900 text-xs font-bold rounded-xl shadow-xs transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+              </svg>
+              <span>📥 এক্সেল</span>
+            </button>
+
+          </div>
+        </div>
+
+        <!-- Integrated Search Bar Row inside Table Preview -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2 pt-1 border-t border-slate-200/60 items-center">
+          
+          <!-- Fast All-in-One Search Input -->
+          <div class="md:col-span-6 lg:col-span-7 relative">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </div>
+            <input 
+              type="text" 
+              id="tableQuickSearch" 
+              oninput="applyAdvancedFilters()" 
+              placeholder="🔍 নাম, ভোটার নং, পিতা/মাতা বা এলাকা দিয়ে তাত্ক্ষণিক অনুসন্ধান..." 
+              class="w-full text-xs sm:text-sm pl-9 pr-8 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-teal-500 focus:outline-none transition shadow-inner"
+            >
+            <button 
+              onclick="document.getElementById('tableQuickSearch').value=''; applyAdvancedFilters();" 
+              title="সার্চ ক্লিয়ার করুন" 
+              class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-slate-600"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+          </div>
+
+          <!-- Quick Gender Filter Buttons & Toggle Advanced Filters -->
+          <div class="md:col-span-6 lg:col-span-5 flex items-center justify-between sm:justify-end gap-1.5 flex-wrap">
+            <div class="flex items-center gap-1 text-xs">
+              <button onclick="setQuickGender('all')" id="qgAll" class="px-2 py-1.5 rounded-lg font-medium border bg-teal-700 text-white border-teal-700 transition">সব</button>
+              <button onclick="setQuickGender('পুরুষ')" id="qgMale" class="px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition">👨 পুরুষ</button>
+              <button onclick="setQuickGender('মহিলা')" id="qgFemale" class="px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition">👩 মহিলা</button>
+              <button onclick="toggleQuickRemark()" id="qgRemark" title="শুধুমাত্র মাইগ্রেট বা মন্তব্য" class="px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition">⚠️ রিভিও</button>
+            </div>
+
+            <button 
+              onclick="toggleAdvancedFilterDrawer()" 
+              id="toggleAdvDrawerBtn"
+              class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-semibold flex items-center gap-1 border border-slate-300 transition"
+            >
+              <svg class="w-3.5 h-3.5 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+              </svg>
+              <span>ফিল্টার প্যানেল</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- Collapsible Detailed Field Filters Drawer -->
+        <div id="advancedFilterDrawer" class="hidden pt-2.5 border-t border-slate-200/70 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 text-xs">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">ভোটার নাম বা মন্তব্য</label>
+            <input type="text" id="advSearchName" oninput="applyAdvancedFilters()" placeholder="উদাঃ জহুরা খাতুন..." class="w-full text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">ভোটার নম্বর</label>
+            <input type="text" id="advSearchVoterNo" oninput="applyAdvancedFilters()" placeholder="উদাঃ ৪৮০২২৩..." class="w-full text-xs font-code px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">পিতা বা মাতার নাম</label>
+            <input type="text" id="advSearchParent" oninput="applyAdvancedFilters()" placeholder="উদাঃ আঃ বারিক..." class="w-full text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">নির্দিষ্ট এলাকা নির্বাচন</label>
+            <div class="flex gap-1.5">
+              <input type="text" id="advSearchAddress" oninput="applyAdvancedFilters()" placeholder="গ্রাম/মহল্লা..." class="w-full text-xs px-2.5 py-1.5 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+              <select id="advAreaSelect" onchange="applyAreaDropdownFilter(this.value)" class="text-xs bg-slate-100 border border-slate-300 rounded-lg px-2 py-1 max-w-[110px] focus:outline-none" title="এলাকা তালিকা">
+                <option value="">সকল</option>
+              </select>
+            </div>
+          </div>
+          <div class="sm:col-span-2 lg:col-span-4 flex justify-end">
+            <button onclick="resetAllFilters()" class="text-xs px-2.5 py-1 text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg font-semibold flex items-center gap-1 transition">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+              ফিল্টার ক্লিয়ার করুন
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Table Wrapper with adaptive height for fullscreen -->
+      <div id="tableScrollContainer" class="overflow-x-auto max-h-[500px] relative flex-1">
+        <table class="w-full text-left border-collapse text-xs sm:text-sm" id="mainDataTable">
+          <thead class="sticky top-0 bg-slate-100 text-slate-700 uppercase font-semibold text-[11px] sm:text-xs z-10 border-b border-slate-200 shadow-xs">
+            <tr id="tableHeaderRow">
+              <th class="px-3 py-2.5 text-center text-slate-500 w-10">#</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">লিঙ্গ</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">ক্রমিক নং</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">নাম</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">ভোটার নং</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">পিতা</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">মাতা</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">পেশা</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">জন্ম তারিখ</th>
+              <th class="px-3 py-2.5 whitespace-nowrap">ঠিকানা</th>
+              <th class="px-3 py-2.5 whitespace-nowrap text-center">অ্যাকশন</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-200 bg-white">
+            <!-- Dynamic rows will render here -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Footer / Summary -->
+      <div class="p-3 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
+        <div id="filterStatusText" class="font-medium">
+          প্রদর্শিত হচ্ছে ০ জন ভোটার
+        </div>
+        <div class="flex items-center gap-3 sm:gap-4 flex-wrap">
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> এক্সেলে সরাসরি কপিযোগ্য (Tab-separated)
+          </span>
+          <span class="inline-flex items-center gap-1.5 hidden sm:inline-flex">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span> UTF-8 সমর্থিত
+          </span>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- 📑 Custom Export Modal (আলাদা আলাদা Export প্যানেল) -->
+  <div id="exportModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full max-h-[92vh] flex flex-col border border-slate-200 overflow-hidden animate-in fade-in zoom-in duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-emerald-800 to-teal-800 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <div class="p-2 bg-white/15 rounded-lg">
+            <svg class="w-5 h-5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold">📑 আলাদা আলাদা এক্সপোর্ট (Custom Export)</h3>
+            <p class="text-xs text-emerald-100">শুধু সম্পূর্ণ ডাটাবেজ নয়, পছন্দমতো ক্যাটাগরি বেছে এক্সপোর্ট করুন</p>
+          </div>
+        </div>
+        <button onclick="closeExportModal()" class="text-emerald-100 hover:text-white p-1 rounded-lg hover:bg-white/10 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body / Options Selection -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
+        
+        <p class="text-slate-600 font-semibold">কোন ধরনের ডাটা এক্সপোর্ট করতে চান নির্বাচন করুন:</p>
+
+        <!-- Radio Selection Options -->
+        <div class="space-y-2.5">
+          
+          <!-- Option 1: All Voters -->
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="exportCategory" value="all" checked onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+            <div class="flex-1">
+              <div class="font-bold text-slate-800 flex items-center justify-between">
+                <span>☑ All Voters (সকল ভোটার)</span>
+                <span id="expCountAll" class="text-xs bg-slate-100 px-2 py-0.5 rounded-md text-slate-600">০ জন</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">ডাটাবেজের সব ব্যাচের সমস্ত ভোটারের সমন্বিত তালিকা।</p>
+            </div>
+          </label>
+
+          <!-- Option 2: Male -->
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="exportCategory" value="male" onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+            <div class="flex-1">
+              <div class="font-bold text-slate-800 flex items-center justify-between">
+                <span>👨 Male (শুধু পুরুষ ভোটার)</span>
+                <span id="expCountMale" class="text-xs bg-sky-100 px-2 py-0.5 rounded-md text-sky-800 font-bold">০ জন</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">শুধুমাত্র সকল পুরুষ ভোটারদের আলাদা শিট।</p>
+            </div>
+          </label>
+
+          <!-- Option 3: Female -->
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="exportCategory" value="female" onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+            <div class="flex-1">
+              <div class="font-bold text-slate-800 flex items-center justify-between">
+                <span>👩 Female (শুধু মহিলা ভোটার)</span>
+                <span id="expCountFemale" class="text-xs bg-purple-100 px-2 py-0.5 rounded-md text-purple-800 font-bold">০ জন</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">শুধুমাত্র সকল মহিলা ভোটারদের আলাদা শিট।</p>
+            </div>
+          </label>
+
+          <!-- Option 4: Selected Area -->
+          <div class="p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition space-y-2">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input type="radio" name="exportCategory" value="area" onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+              <div class="flex-1">
+                <div class="font-bold text-slate-800 flex items-center justify-between">
+                  <span>📍 Selected Area (নির্দিষ্ট এলাকা / গ্রাম)</span>
+                  <span id="expCountArea" class="text-xs bg-emerald-100 px-2 py-0.5 rounded-md text-emerald-800 font-bold">০ জন</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">নির্দিষ্ট কোনো গ্রাম বা মহল্লার ভোটার তালিকা।</p>
+              </div>
+            </label>
+            <div class="pl-7">
+              <select id="exportAreaDropdown" onchange="updateExportPreviewCount()" class="w-full text-xs p-2 bg-white border border-slate-300 rounded-lg focus:ring-1 focus:ring-teal-500 focus:outline-none">
+                <option value="">এলাকা নির্বাচন করুন...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Option 5: Search Result -->
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="exportCategory" value="search" onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+            <div class="flex-1">
+              <div class="font-bold text-slate-800 flex items-center justify-between">
+                <span>🔍 Search Result (বর্তমান অনুসন্ধানের ফলাফল)</span>
+                <span id="expCountSearch" class="text-xs bg-teal-100 px-2 py-0.5 rounded-md text-teal-800 font-bold">০ জন</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">সার্চ ও ফিল্টার প্যানেলে এই মুহূর্তে যা ফিল্টার করা আছে।</p>
+            </div>
+          </label>
+
+          <!-- Option 6: Current Process -->
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="exportCategory" value="current_batch" onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+            <div class="flex-1">
+              <div class="font-bold text-slate-800 flex items-center justify-between">
+                <span>📋 Current Process (চলতি ব্যাচ)</span>
+                <span id="expCountCurrentBatch" class="text-xs bg-slate-200 px-2 py-0.5 rounded-md text-slate-800 font-bold">০ জন</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">হিস্টরি থেকে বর্তমানে যে প্রসেসটি প্রদর্শিত হচ্ছে।</p>
+            </div>
+          </label>
+
+          <!-- Option 7: Multiple Processes -->
+          <div class="p-3 rounded-xl border border-slate-200 hover:bg-slate-50 transition space-y-2">
+            <label class="flex items-start gap-3 cursor-pointer">
+              <input type="radio" name="exportCategory" value="multi_batch" onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+              <div class="flex-1">
+                <div class="font-bold text-slate-800 flex items-center justify-between">
+                  <span>📂 Multiple Processes (একাধিক নির্বাচিত প্রসেস)</span>
+                  <span id="expCountMultiBatch" class="text-xs bg-cyan-100 px-2 py-0.5 rounded-md text-cyan-800 font-bold">০ জন</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-0.5">নিচের তালিকা থেকে আপনার পছন্দমতো প্রসেসগুলো টিক দিন।</p>
+              </div>
+            </label>
+            <div id="exportMultiBatchList" class="pl-7 max-h-28 overflow-y-auto space-y-1.5 pt-1">
+              <!-- Dynamically rendered checkboxes -->
+            </div>
+          </div>
+
+          <!-- Option 8: Need Review -->
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+            <input type="radio" name="exportCategory" value="review" onchange="updateExportPreviewCount()" class="mt-0.5 text-teal-600 focus:ring-teal-500">
+            <div class="flex-1">
+              <div class="font-bold text-amber-800 flex items-center justify-between">
+                <span>⚠️ Need Review (মাইগ্রেট / কর্তন / অসঙ্গতি)</span>
+                <span id="expCountReview" class="text-xs bg-amber-100 px-2 py-0.5 rounded-md text-amber-800 font-bold">০ জন</span>
+              </div>
+              <p class="text-[11px] text-slate-500 mt-0.5">যাদের নামে ‘মাইগ্রেট হয়েছে’, ‘কর্তন’ বা কোনো ফিল্ড অসম্পূর্ণ রয়েছে।</p>
+            </div>
+          </label>
+
+        </div>
+
+      </div>
+
+      <!-- Modal Footer with Export Actions -->
+      <div class="p-4 bg-slate-50 border-t border-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div class="text-xs font-bold text-slate-700">
+          নির্বাচিত মোট: <span id="selectedExportTotalBadge" class="text-teal-700">০ জন</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="executeCustomExport('copy')" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition">
+            📋 কপি এক্সেল
+          </button>
+          <button onclick="executeCustomExport('excel')" class="px-4 py-2 bg-amber-400 hover:bg-amber-300 text-slate-900 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow transition">
+            📥 ডাউনলোড এক্সেল (.xlsx)
+          </button>
+          <button onclick="executeCustomExport('csv')" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition">
+            CSV
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 💡 AI Prompt Hub & Step 1-3 Guide Modal (ধাপ ১, ২ ও ৩ পূর্ণাঙ্গ সহায়িকা) -->
+  <div id="promptModal" class="fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-center justify-center p-3 sm:p-5 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[92vh] flex flex-col border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-4 sm:p-5 bg-gradient-to-r from-teal-800 via-emerald-800 to-cyan-900 text-white flex items-center justify-between shadow-md">
+        <div class="flex items-center gap-2.5 sm:gap-3">
+          <div class="p-2 sm:p-2.5 bg-white/15 backdrop-blur-md rounded-xl shadow-inner flex items-center justify-center">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-base sm:text-lg font-bold flex items-center gap-2">
+              <span>ধাপ ১-৩: PDF থেকে CSV ডাটা তৈরির নিয়ম ও AI প্রম্পট</span>
+            </h3>
+            <p class="text-[11px] sm:text-xs text-emerald-100/90">Gemini-তে যেকোনো একটি প্রম্পট দিয়ে দ্রুত নির্ভুল CSV ডাটা তৈরি করে নিন</p>
+          </div>
+        </div>
+        <button onclick="togglePromptModal()" class="text-emerald-100 hover:text-white p-1.5 rounded-xl hover:bg-white/10 active:scale-95 transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Body (Steps 1, 2 and 3) -->
+      <div class="p-4 sm:p-6 overflow-y-auto space-y-6 text-xs sm:text-sm leading-relaxed">
+        
+        <!-- Step 1: Open AI App -->
+        <div class="bg-slate-50 p-3.5 sm:p-4 rounded-xl border border-slate-200/80 space-y-2">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <div class="flex items-center gap-2">
+              <span class="w-6 h-6 rounded-full bg-teal-700 text-white font-bold text-xs flex items-center justify-center shadow-xs">১</span>
+              <h4 class="font-bold text-slate-800 text-sm">ধাপ-১: যেকোনো AI অ্যাপ বা ওয়েবসাইট ওপেন করুন</h4>
+            </div>
+            <a href="https://gemini.google.com/app" target="_blank" rel="noopener noreferrer" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-semibold rounded-lg shadow-xs transition flex items-center gap-1">
+              <span>Google Gemini ওপেন করুন</span>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+            </a>
+          </div>
+          <p class="text-slate-600 text-xs pl-8">
+            সবচেয়ে ভালো ফলাফলের জন্য <strong class="text-slate-800">Gemini App</strong> বা <strong class="text-slate-800">gemini.google.com</strong> ওপেন করে একটি নতুন চ্যাট (New Chat) শুরু করুন।
+          </p>
+        </div>
+
+        <!-- Step 2: Upload PDF & Prompts -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-teal-700 text-white font-bold text-xs flex items-center justify-center shadow-xs">২</span>
+            <h4 class="font-bold text-slate-800 text-sm">ধাপ-২: ভোটার লিস্টের PDF আপলোড করুন ও নিচের যেকোনো একটি প্রম্পট দিন</h4>
+          </div>
+          <p class="text-slate-600 text-xs pl-8">
+            Gemini-তে প্লাস (+) বাটনে ক্লিক করে ভোটার লিস্টের PDF ফাইলটি যুক্ত করুন। এরপর নিচের যে প্রম্পটটি আপনার পছন্দ, তার পাশের <strong>"কপি প্রম্পট"</strong> বাটনে চাপ দিন এবং চ্যাটে পেস্ট করে সেন্ড করুন:
+          </p>
+
+          <!-- 4 Prompts Container -->
+          <div class="grid grid-cols-1 gap-3.5 pl-0 sm:pl-8 pt-1">
+            
+            <!-- Prompt-1 -->
+            <div class="bg-gradient-to-br from-emerald-50/70 to-teal-50/50 border border-emerald-200 rounded-xl p-3.5 space-y-2 shadow-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-emerald-900 text-xs sm:text-sm flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 bg-emerald-600 text-white rounded-md text-[11px] font-bold">Prompt-১</span>
+                  <span>বাংলা - আদর্শ ও বিস্তারিত নির্দেশিকা</span>
+                </span>
+                <button onclick="copyPromptText('promptText1')" class="px-2.5 py-1 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition shadow-xs flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                  <span>কপি প্রম্পট-১</span>
+                </button>
+              </div>
+              <div id="promptText1" class="text-xs text-slate-700 font-sans bg-white/90 p-3 rounded-lg border border-emerald-100 shadow-inner whitespace-pre-wrap leading-relaxed select-all">“দয়া করে সংযুক্ত PDF ফাইলটি সতর্কতার সাথে অধ্যয়ন করুন এবং এর অন্তর্নিহিত তথ্যাবলী সংগ্রহ করে একটি ‘Comma Separated Values’ (CSV) ছকে তালিকাভুক্ত করুন।
+তালিকা প্রস্তুতের ক্ষেত্রে নিম্নলিখিত ক্রমটি আবশ্যিকভাবে অনুসরণ করবেন:
+লিঙ্গ - ক্রমিক নম্বর - নাম - ভোটার নম্বর - পিতার নাম - মাতার নাম - পেশা - জন্মতারিখ - ঠিকানা
+বিশেষ নির্দেশিকা:
+যদি কোনো ভোটারের নামের স্থানে ‘মাইগ্রেট হয়েছে’, ‘কর্তন করা হয়েছে’ বা অনুরূপ কোনো মন্তব্য লিপিবদ্ধ থাকে, তবে নামের ঘরে ঠিক সেই মন্তব্যটিই হুবহু উল্লেখ করবেন এবং অবশিষ্ট ঘরগুলো শূন্য/খালি রাখবেন।
+তালিকাটি প্রথম থেকে শেষ পর্যন্ত সম্পূর্ণ হতে হবে। কোনো ভোটারের তথ্য যেন কোনোভাবেই বাদ না পড়ে, সে বিষয়ে বিশেষ মনোযোগ দিতে হবে।”</div>
+            </div>
+
+            <!-- Prompt-2 -->
+            <div class="bg-gradient-to-br from-sky-50/70 to-teal-50/50 border border-sky-200 rounded-xl p-3.5 space-y-2 shadow-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-sky-900 text-xs sm:text-sm flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 bg-sky-700 text-white rounded-md text-[11px] font-bold">Prompt-২</span>
+                  <span>বাংলা - সহজ ও সংক্ষিপ্ত</span>
+                </span>
+                <button onclick="copyPromptText('promptText2')" class="px-2.5 py-1 bg-sky-700 hover:bg-sky-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition shadow-xs flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                  <span>কপি প্রম্পট-২</span>
+                </button>
+              </div>
+              <div id="promptText2" class="text-xs text-slate-700 font-sans bg-white/90 p-3 rounded-lg border border-sky-100 shadow-inner whitespace-pre-wrap leading-relaxed select-all">“এই PDF-টি ভালোভাবে পড়ুন এবং CSV ফরম্যাটে ১ নম্বর থেকে শেষ পর্যন্ত সবগুলো ভোটারের তথ্য তালিকাভুক্ত করে দিন।
+ক্রম হবে:
+লিঙ্গ - ক্রমিক নং - নাম - ভোটার নং - পিতা - মাতা - পেশা - জন্ম তারিখ - ঠিকানা
+যদি কোনো তথ্য না থাকে, সেই ঘরটি খালি রাখবেন। তবে PDF-তে কোনো মন্তব্য বা বিশেষ লেখা থাকলে, যা লেখা আছে তা হুবহু নামের অংশে লিখে দেবেন।
+সকল ভোটারের সম্পূর্ণ তালিকা দিতে হবে। কোনো তথ্য বাদ দেওয়া যাবে না।”</div>
+            </div>
+
+            <!-- Prompt-3 -->
+            <div class="bg-gradient-to-br from-indigo-50/70 to-slate-50 border border-indigo-200 rounded-xl p-3.5 space-y-2 shadow-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-indigo-900 text-xs sm:text-sm flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 bg-indigo-700 text-white rounded-md text-[11px] font-bold">Prompt-৩</span>
+                  <span>English - Formal & Precise</span>
+                </span>
+                <button onclick="copyPromptText('promptText3')" class="px-2.5 py-1 bg-indigo-700 hover:bg-indigo-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition shadow-xs flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                  <span>কপি প্রম্পট-৩</span>
+                </button>
+              </div>
+              <div id="promptText3" class="text-xs text-slate-700 font-code bg-white/90 p-3 rounded-lg border border-indigo-100 shadow-inner whitespace-pre-wrap leading-relaxed select-all">“Carefully study the attached PDF and extract all voter information from the first page to the last. Create a complete CSV list in this exact order:
+Gender, Serial Number, Name, Voter Number, Father's Name, Mother's Name, Occupation, Date of Birth, Address
+Do not omit any voter.
+If a voter's name field contains a remark such as “Migrated”, “Deleted”, “Cancelled”, or any similar remark, write that exact remark in the Name field and leave all remaining fields empty.
+If any other information is missing, leave that field blank.
+Preserve the information exactly as written in the PDF.”</div>
+            </div>
+
+            <!-- Prompt-4 -->
+            <div class="bg-gradient-to-br from-purple-50/70 to-slate-50 border border-purple-200 rounded-xl p-3.5 space-y-2 shadow-xs">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-purple-900 text-xs sm:text-sm flex items-center gap-1.5">
+                  <span class="px-2 py-0.5 bg-purple-700 text-white rounded-md text-[11px] font-bold">Prompt-৪</span>
+                  <span>English - Concise & Direct</span>
+                </span>
+                <button onclick="copyPromptText('promptText4')" class="px-2.5 py-1 bg-purple-700 hover:bg-purple-800 active:scale-95 text-white font-semibold text-xs rounded-lg transition shadow-xs flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
+                  <span>কপি প্রম্পট-৪</span>
+                </button>
+              </div>
+              <div id="promptText4" class="text-xs text-slate-700 font-code bg-white/90 p-3 rounded-lg border border-purple-100 shadow-inner whitespace-pre-wrap leading-relaxed select-all">“Read the attached PDF carefully and list ALL voters in CSV format from beginning to end, without missing anyone.
+Order:
+Gender, Serial No., Name, Voter No., Father, Mother, Occupation, Date of Birth, Address
+If any information is missing, leave that field blank.
+If the Name field contains any remark (e.g. “Migrated”, “Deleted”, etc.), write the exact text in the Name field and leave all other fields blank.
+Keep the data exactly as shown in the PDF.”</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Step 3: Wait for AI output and copy -->
+        <div class="bg-amber-50/70 border border-amber-200 rounded-xl p-3.5 sm:p-4 space-y-2">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 rounded-full bg-amber-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">৩</span>
+            <h4 class="font-bold text-amber-900 text-sm">ধাপ-৩: AI-এর আউটপুটের জন্য অপেক্ষা করুন ও কপি করুন</h4>
+          </div>
+          <p class="text-slate-700 text-xs pl-8 leading-relaxed">
+            AI আপনার দেওয়া PDF পড়ে স্বয়ংক্রিয়ভাবে নিচের উদাহরণের মতো কমা সেপারেটেড (CSV) টেক্সট প্রদান করবে। আউটপুট শেষ হলে পুরো অংশটি কপি করুন এবং মডালটি বন্ধ করে <strong>ধাপ-৪</strong> এর বক্সে পেস্ট করে <strong>"ধাপ-৫: ডাটা প্রসেস করুন"</strong> বাটনে চাপ দিন।
+          </p>
+          <div class="pl-0 sm:pl-8">
+            <div class="bg-white p-2.5 rounded-lg border border-amber-200/80 font-code text-[11px] text-slate-600 overflow-x-auto">
+              মহিলা,০১,মোছাঃ জহুরা খাতুন,৪৮০২২৩৫০৫২৪৯,মোঃ কুতুব উদ্দিন,মোছাঃ রেহানা আক্তার,গৃহিনী,০৫/০৩/১৯৮৮,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"<br>
+              মহিলা,১৩,মাইগ্রেট হয়েছে,,,,,,,
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3.5 sm:p-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between">
+        <span class="text-xs text-slate-500 font-medium hidden sm:inline">প্রম্পট কপি হলে Gemini-তে পেস্ট করুন</span>
+        <button onclick="togglePromptModal()" class="px-5 py-2 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl transition shadow ml-auto">
+          বন্ধ করুন
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Confirmation Dialog Modal -->
+  <div id="confirmModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl border border-slate-200 space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-lg">
+          ⚠️
+        </div>
+        <div>
+          <h4 id="confirmTitle" class="font-bold text-slate-800 text-sm">আপনি কি নিশ্চিত?</h4>
+          <p id="confirmMessage" class="text-xs text-slate-500 mt-0.5">এই তথ্য স্থায়ীভাবে মুছে যাবে।</p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button id="confirmCancelBtn" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+          বাতিল
+        </button>
+        <button id="confirmActionBtn" class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow-sm transition">
+          হ্যাঁ, মুছুন
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-semibold border bg-emerald-800 text-white border-emerald-600 transition-all duration-300 transform translate-y-24 opacity-0">
+    <span id="toastIcon"></span>
+    <span id="toastMessage"></span>
+  </div>
+
+  <script>
+    // Exact column definitions matching the requested specifications
+    const TARGET_COLUMNS = [
+      { key: "gender", label: "লিঙ্গ", wch: 10 },
+      { key: "serial", label: "ক্রমিক নং", wch: 12 },
+      { key: "name", label: "নাম", wch: 28 },
+      { key: "voter_no", label: "ভোটার নং", wch: 22 },
+      { key: "father", label: "পিতা", wch: 24 },
+      { key: "mother", label: "মাতা", wch: 24 },
+      { key: "profession", label: "পেশা", wch: 16 },
+      { key: "dob", label: "জন্ম তারিখ", wch: 16 },
+      { key: "address", label: "ঠিকানা", wch: 36 }
+    ];
+
+    // Global in-memory state:
+    let processBatches = [];
+    let activeBatchId = 'all';
+
+    // Advanced search states
+    let quickGenderFilter = 'all'; // 'all', 'পুরুষ', 'মহিলা'
+    let quickRemarkOnly = false;
+
+    // Sample data for quick testing
+    const SAMPLE_FEMALE_CSV = `মহিলা,০১,মোছাঃ জহুরা খাতুন,৪৮০২২৩৫০৫২৪৯,মোঃ কুতুব উদ্দিন,মোছাঃ রেহানা আক্তার,গৃহিনী,০৫/০৩/১৯৮৮,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০২,মোছাঃ চাম্পা,৪৮০২২৩৫০৫৭৯৯,আঃ রশিদ,রাজার মা,গৃহিনী,১৫/০৩/১৯৫৭,"ভাটি মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০৩,মোছাঃ ইসমত আরা,৪৮০২২৩৫০৫৮০১,আঃ রহমান,মোছাঃ সুফিয়া খাতুন,গৃহিনী,০৭/০৭/১৯,"ভাটীমোহনপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০৪,মোসাঃ আমেনা,৪৮০২২৩৫০৫৮০৪,মিরসন,ফুলবানু,গৃহিনী,০৫/০৩/১৯৩৫,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০৫,মোছাঃ লায়লা খাতুন,৪৮০২২৩৫০৫৮০৭,মিরসন,ফুল বানু,গৃহিনী,০৫/০৩/১৯৩২,"ভাটি মনোহর পুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০৬,মোছাঃ বেদেনা,৪৮০২২৩৫০৫৮০৯,কিতাব আলী,সাজমন,গৃহিনী,১৫/০৩/১৯৭৮,"ভাটীমনোহার পুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০৭,মোছাঃ আনোয়ারা,৪৮০২২৩৫০৫৮১১,মুসলেহ উদ্দিন,আমেনা খাতুন,গৃহিনী,১৫/০৪/১৯৬২,"ভাটীমোহনপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০৮,মোছাঃ আম্বিয়া খাতুন,৪৮০২২৩৫০৫৮১২,আঃ মোতালিব,আমেনা,,,"করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,০৯,মোছাঃ ঝরনা আক্তার,৪৮০২২৩৫০৫৮১৪,মোঃ জন্মাত আলী,সাহেরা বানু,গৃহিনী,১৫/০৩/১৯৭৮,"ভাটি মনোহর পুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,১০,মোসাঃ রোকেয়া,৪৮০২২৩৫০৫৮১৬,সুলেমান মান,নুর জাহান,গৃহিনী,১৫/০৩/১৯৭৯,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,১১,মোছাঃ সখিনা,৪৮০২২৩৫০৫৮২৩,কিতাব আলী চ,জামেনা খাতুন,গৃহিনী,১৫/০৩/১৯৪২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,১২,মোছাঃ কামরুন্নাহার,৪৮০২২৩৫০৫৮২৫,ইউসুফ আলী,মোছাঃ জুবেদা খাতুন,গৃহিনী,০৫/০৩/১৯৮৪,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+মহিলা,১৩,মাইগ্রেট হয়েছে,,,,,,,`;
+
+    const SAMPLE_MALE_CSV = `পুরুষ,০১,মোঃ গাজী মিয়া,৪৮০২২৩৫০৫২৩১,মোঃ আঃ বারিক,মোছাঃ সখিনা,কৃষক,১০/০২/১৯৮৬,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০২,মোহাঃ আরজু মিয়া,৪৮০২২৩৫০৫৮০০,আঃ মন্নান,মোসাঃ চাম্পা,কৃষক,০৭/০৩/১৯৭৭,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০৩,মোহাঃ জাহাঙ্গীর মিয়া,৪৮০২২৩৫০৫৮০২,আঃ হেকিম,আমেনা বেগম,দিনমজুর,১৭/০৩/১৯৮২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০৪,মোঃ নজরুল ইসলাম,৪৮০২২৩৫০৫৮০৫,আবু মিয়া,লায়লা বানু,দিনমজুর,১৭/০৩/১৯৭২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০৫,মোঃ বাচ্চু মিয়া,৪৮০২২৩৫০৫৮০৮,দুখু মিয়া,আমেনা,দিনমজুর,০৩/০৫/১৯৬৭,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০৬,মোঃ মজলু মিয়া,৪৮০২২৩৫০৫৮১০,আঃ ছামাদ,তাহেশা বানু,কৃষক,১৫/০৩/১৯৪৭,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০৭,মোঃ বিল্লাল মিয়া,৪৮০২২৩৫০৫৮১৩,আঃ ছামাদ,তাহেশা বানু,কৃষক,১৫/০৩/১৯৬৭,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০৮,মোঃ মিলন মিয়া,৪৮০২২৩৫০৫৮১৫,ছামাদ,তাহেশা বানু,,,,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,০৯,আঃ কদ্দুছ,৪৮০২২৩৫০৫৮১৭,আঃ ছামাদ,তাহেশা বানু,কৃষক,০৫/০৭/১৯৭৭,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১০,মোঃ আঃ বারিক,৪৮০২২৩৫০৫৮২২,আঃ আজিদ,সাহেরা বানু,কৃষক,১৫/০৭/১৯১৭,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১১,মোঃ বাবুল মিয়া,৪৮০২২৩৫০৫৮২৪,আঃ বারিক,মোছাঃ সখিনা,কৃষক,১৫/০৭/১৯৭৫,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১২,আবুল হুসেন,৪৮০২২৩৫০৫৮২৬,আঃ বারিক,মোসাঃ সখিনা,কৃষক,১৭/০৩/১৯৮১,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১৩,মোঃ কামাল,৪৮০২২৩৫০৫৮২৭,ফজলুর রহমান,মোছাঃ আম্বিয়া খাতুন,কৃষক,০৭/০৩/১৯৮৯,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১৪,আবুল হোসেন,৪৮০২২৩৫০৯২৯৬,আঃ রশিদ,মোছাঃ আমেনা খাতুন,ব্যবসা,০১/০১/১৯৭১,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১৫,জহিরুল ইসলাম,৪৮০২২৩০০০০০১,আঃ মান্নান,চম্পা আক্তার,কৃষক,১০/০৫/১৯৮৫,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১৬,মোঃ আলমগীর,৪৮০২২৩০০০০০২,মোঃ বাচ্চু মিয়া,বেদেনা আক্তার,দিনমজুর,১২/০৭/১৯৯১,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১৭,মোঃ ফারুক মিয়া,৪৮০২২৩০০০০০৩,মোঃ আঃ মন্নান,মোছাঃ চম্পা আক্তার,কৃষক,২৫/০৯/১৯৮৬,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১৮,আজিজুল ইসলাম,৪৮০২২৩০০০০০৪,মোঃ মজলু মিয়া,মোছাঃ আনোয়ারা,ছাত্র/ছাত্রী,১২/০৭/১৯৯৪,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,১৯,মোঃ ডানা মিয়া,৪৮০২২৩০০০০০৭,সোহরাব উদ্দীন,আমেনা খাতুন,ব্যবসা,০১/০৩/১৯৯৪,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২০,মোঃ শফিকুর ইসলাম,৪৮০২২৩০০০০০৮,মোঃ আঃ মন্নাছ,পূর্নিমা আক্তার,ব্যবসা,০২/০৪/১৯৯০,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২১,মোঃ হিরন মিয়া,৪৮০২২৩০০০০০৯,মোঃ ইদ্রিস আলী,সেলিনা,ব্যবসা,০৫/০৯/১৯৯২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২২,মোঃ খোকন মিয়া,৪৮০২২৩০০০০১০,আঃ মন্নাফ,সাফিয়া আক্তার,কৃষক,১২/০২/১৯৯২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২৩,মোঃ সোহানুর রহমান সোহান,৪৮০২২৩০০০০১১,মোঃ আবুল কাশেম বাদল,মোছাঃ মরিয়ম,বেকার,০৫/০৪/১৯৯২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২৪,মোঃ নাছির মিয়া,৪৮০২২৩০০০০১২,মোঃ মজলু,মোছাঃ পারভীন,ব্যবসা,০১/০১/১৯৯৭,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২৫,তুহিন মিয়া,৪৮০২২৩০০০০১৫,রজলুর রহমান,আনোয়ারা খাতুন,ছাত্র/ছাত্রী,৩০/১১/২০০০,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২৬,মোঃ রাহিম,৪৮০২২৩০০০০১৬,মোঃ নজরুল ইসলাম,মৃত মোছাঃ সমলা,ব্যবসা,২৪/১০/২০০৪,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২৭,মোঃ মুবাশ্বির,৪৮০২২৩৫০৯২৯৭,মোঃ মিলন মিয়া,মোসাঃ রোকেয়া,ছাত্র/ছাত্রী,০১/০৫/২০০০,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২৮,মোঃ তুরাক মিয়া,৪৮০২২৩৫০৯২৯৮,মৃত ফজলুর রহমান,মোছাঃ আম্বিয়া খাতুন,ছাত্র/ছাত্রী,১২/০৪/২০০২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,২৯,মোঃ মাহাবুব মিয়া,৪৮০২২৩৫০৯৩০০,মোঃ বাবুল মিয়া,মোছাঃ কামরুন্নাহার,বেসরকারী চাকুরী,০১/০১/২০০২,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"
+পুরুষ,৩০,মোঃ নাঈম হাসান,৪৮০২২৩৫০৯৩০২,মোঃ বিল্লাল মিয়া,মোছাঃ ঝরনা আক্তার,ছাত্র/ছাত্রী,০১/০৭/২০০০,"ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ"`;
+
+    /**
+     * Parses standard CSV line handling quotation marks and commas
+     */
+    function parseCSVLine(text) {
+      if (text.includes('\t')) {
+        return text.split('\t').map(s => s.trim().replace(/^["']|["']$/g, ''));
+      }
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (char === '"' || char === "'") {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim().replace(/^["']|["']$/g, ''));
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      result.push(current.trim().replace(/^["']|["']$/g, ''));
+      return result;
+    }
+
+    /**
+     * Checks if a row indicates migrated, deleted, or cancelled
+     */
+    function isRemarkRow(text) {
+      if (!text) return false;
+      const lower = text.toLowerCase();
+      return lower.includes('মাইগ্রেট') || 
+             lower.includes('কর্তন') || 
+             lower.includes('বাতিল') || 
+             lower.includes('মৃত') || 
+             lower.includes('migrated') || 
+             lower.includes('deleted') || 
+             lower.includes('cancelled');
+    }
+
+    /**
+     * Parses raw input text and creates structured voter items
+     */
+    function parseRawInputToItems(rawText, fallbackAddress) {
+      const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      if (lines.length === 0) return [];
+
+      let startIndex = 0;
+      const firstLineLower = lines[0].toLowerCase();
+      if (firstLineLower.includes('লিঙ্গ') || firstLineLower.includes('নাম') || firstLineLower.includes('ভোটার') || firstLineLower.includes('gender')) {
+        startIndex = 1;
+      }
+
+      const items = [];
+      for (let i = startIndex; i < lines.length; i++) {
+        const parts = parseCSVLine(lines[i]);
+        if (parts.length < 2 && !parts[0]) continue;
+
+        const nameVal = parts[2] || parts[1] || '';
+        const isRemark = isRemarkRow(nameVal) || isRemarkRow(parts[0]);
+
+        const item = {
+          id: 'voter_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+          gender: parts[0] || (nameVal.includes('মোছাঃ') || nameVal.includes('বেগম') ? 'মহিলা' : 'পুরুষ'),
+          serial: parts[1] || `${items.length + 1}`,
+          name: nameVal,
+          voter_no: parts[3] || '',
+          father: parts[4] || '',
+          mother: parts[5] || '',
+          profession: parts[6] || '',
+          dob: parts[7] || '',
+          address: parts[8] || fallbackAddress || '',
+          isRemark: isRemark
+        };
+
+        items.push(item);
+      }
+      return items;
+    }
+
+    /**
+     * Processes new CSV data and stores as a batch in history
+     */
+    function processNewData() {
+      const rawText = document.getElementById('rawInput').value.trim();
+      let processTitle = document.getElementById('processTitleInput').value.trim();
+      const defaultAddr = document.getElementById('defaultAddressInput').value.trim();
+
+      if (!rawText) {
+        showToast("দয়া করে AI থেকে পাওয়া CSV ডাটা পেস্ট করুন!", "error");
+        return;
+      }
+
+      if (!processTitle) {
+        processTitle = `প্রসেস #${processBatches.length + 1} (${new Date().toLocaleTimeString('bn-BD')})`;
+      }
+
+      const items = parseRawInputToItems(rawText, defaultAddr);
+      if (items.length === 0) {
+        showToast("কোনো বৈধ ভোটার তথ্য পাওয়া যায়নি।", "error");
+        return;
+      }
+
+      const newBatch = {
+        id: 'batch_' + Date.now(),
+        title: processTitle,
+        defaultAddress: defaultAddr,
+        timestamp: new Date(),
+        items: items
+      };
+
+      processBatches.unshift(newBatch);
+      activeBatchId = newBatch.id;
+
+      // Reset input form
+      document.getElementById('rawInput').value = '';
+      document.getElementById('processTitleInput').value = '';
+      updateLineCount();
+
+      updateAreaDropdowns();
+      renderHistoryUI();
+      renderTable();
+      updateStats();
+      showToast(`সফলভাবে "${processTitle}" প্রসেস হয়েছে (${items.length} জন ভোটার)!`, "success");
+    }
+
+    /**
+     * Retrieves unique areas/addresses across all voters
+     */
+    function getUniqueAreas() {
+      const areas = new Set();
+      processBatches.forEach(batch => {
+        batch.items.forEach(item => {
+          if (item.address && item.address.trim().length > 0) {
+            areas.add(item.address.trim());
+          }
+        });
+      });
+      return Array.from(areas);
+    }
+
+    /**
+     * Updates area dropdowns in search & export modal
+     */
+    function updateAreaDropdowns() {
+      const areas = getUniqueAreas();
+      
+      // Search area dropdown
+      const searchSelect = document.getElementById('advAreaSelect');
+      if (searchSelect) {
+        const curVal = searchSelect.value;
+        searchSelect.innerHTML = '<option value="">সকল এলাকা</option>';
+        areas.forEach(area => {
+          const opt = document.createElement('option');
+          opt.value = area;
+          opt.textContent = area.length > 25 ? area.substring(0, 23) + '...' : area;
+          searchSelect.appendChild(opt);
+        });
+        searchSelect.value = curVal;
+      }
+
+      // Export modal area dropdown
+      const exportSelect = document.getElementById('exportAreaDropdown');
+      if (exportSelect) {
+        const curVal = exportSelect.value;
+        exportSelect.innerHTML = '<option value="">এলাকা নির্বাচন করুন...</option>';
+        areas.forEach(area => {
+          const opt = document.createElement('option');
+          opt.value = area;
+          opt.textContent = area;
+          exportSelect.appendChild(opt);
+        });
+        exportSelect.value = curVal;
+      }
+    }
+
+    /**
+     * Advanced Filtering Engine
+     */
+    function getFilteredItems() {
+      const allItems = getCurrentItems();
+      const qSearch = (document.getElementById('tableQuickSearch')?.value || '').toLowerCase().trim();
+      const sName = (document.getElementById('advSearchName')?.value || '').toLowerCase().trim();
+      const sVoterNo = (document.getElementById('advSearchVoterNo')?.value || '').toLowerCase().trim();
+      const sParent = (document.getElementById('advSearchParent')?.value || '').toLowerCase().trim();
+      const sAddr = (document.getElementById('advSearchAddress')?.value || '').toLowerCase().trim();
+
+      const hasActiveFilters = qSearch || sName || sVoterNo || sParent || sAddr || quickGenderFilter !== 'all' || quickRemarkOnly;
+      const filterBadge = document.getElementById('activeFilterBadge');
+      if (filterBadge) {
+        if (hasActiveFilters) {
+          filterBadge.classList.remove('hidden');
+        } else {
+          filterBadge.classList.add('hidden');
+        }
+      }
+
+      return allItems.filter(item => {
+        // Quick unified search bar query
+        if (qSearch) {
+          const combinedText = `${item.name || ''} ${item.voter_no || ''} ${item.father || ''} ${item.mother || ''} ${item.profession || ''} ${item.address || ''} ${item.dob || ''}`.toLowerCase();
+          if (!combinedText.includes(qSearch)) return false;
         }
 
-        function getEnglishToBangla(num) {
-            if(!num && num !== 0) return '০';
-            const bn = ['০','১','২','৩','৪','৫','৬','৭','৮','৯'];
-            return num.toString().split('').map(c => bn[c] || c).join('');
+        // Gender quick filter
+        if (quickGenderFilter !== 'all') {
+          if (!item.gender.includes(quickGenderFilter)) return false;
         }
 
-        const processedData = rawCenters.map(center => {
-            const villages = center.area.split(',').map(v => v.trim());
-            const totalVoters = center.t;
-            const totalMale = center.m;
-            const totalFemale = center.f;
-            const hijra = center.h || 0;
-            let areas = [];
+        // Remark / Review filter
+        if (quickRemarkOnly) {
+          if (!item.isRemark) return false;
+        }
 
-            // --- SPECIAL FIX FOR IDILPUR (CENTER 1) ---
-            if(center.id === "1") {
-                // Total M: 2335, F: 2354
-                // Idilpur: M: 85, F: 95
-                // Remaining: M: 2250, F: 2259
-                // Remaining Villages: 3
-                let remM = 2250, remF = 2259;
-                
-                villages.forEach((vName, idx) => {
-                    if(vName.includes("ইদিলপুর")) {
-                        areas.push({ name: vName, m: 85, f: 95, t: 180 });
-                    } else if(idx === villages.length - 1) {
-                        // Last one takes remainder
-                        areas.push({ name: vName, m: remM, f: remF, t: remM + remF });
-                    } else {
-                        // Distribute approx
-                        let mShare = Math.floor(2250 / 3);
-                        let fShare = Math.floor(2259 / 3);
-                        remM -= mShare; remF -= fShare;
-                        areas.push({ name: vName, m: mShare, f: fShare, t: mShare + fShare });
-                    }
-                });
-            } else {
-                // Default Distribution Logic
-                let remainingMale = totalMale;
-                let remainingFemale = totalFemale;
-                
-                areas = villages.map((vName, index) => {
-                    if (index === villages.length - 1) {
-                        return { name: vName, m: remainingMale, f: remainingFemale, t: remainingMale + remainingFemale };
-                    }
-                    const mShare = Math.floor(totalMale / villages.length);
-                    const fShare = Math.floor(totalFemale / villages.length);
-                    remainingMale -= mShare;
-                    remainingFemale -= fShare;
-                    return { name: vName, m: mShare, f: fShare, t: mShare + fShare };
-                });
-            }
+        // Detailed Name or remark
+        if (sName) {
+          const nameVal = (item.name || '').toLowerCase();
+          if (!nameVal.includes(sName)) return false;
+        }
 
-            return {
-                id: getEnglishToBangla(center.id),
-                name: center.name,
-                upazila: parseInt(center.id) <= 51 ? "তাড়াইল" : "করিমগঞ্জ",
-                union: center.u,
-                areas: areas,
-                total: center.t,
-                male: center.m,
-                female: center.f,
-                hijra: hijra,
-                comment: center.comment || "পুরুষ ও মহিলা ভোটকেন্দ্র"
-            };
+        // Detailed Voter No
+        if (sVoterNo) {
+          const vNo = (item.voter_no || '').toLowerCase();
+          if (!vNo.includes(sVoterNo)) return false;
+        }
+
+        // Detailed Parent
+        if (sParent) {
+          const f = (item.father || '').toLowerCase();
+          const m = (item.mother || '').toLowerCase();
+          if (!f.includes(sParent) && !m.includes(sParent)) return false;
+        }
+
+        // Detailed Address
+        if (sAddr) {
+          const addr = (item.address || '').toLowerCase();
+          if (!addr.includes(sAddr)) return false;
+        }
+
+        return true;
+      });
+    }
+
+    function applyAdvancedFilters() {
+      renderTable();
+    }
+
+    function toggleAdvancedFilterDrawer() {
+      const drawer = document.getElementById('advancedFilterDrawer');
+      const btn = document.getElementById('toggleAdvDrawerBtn');
+      if (!drawer) return;
+      const isHidden = drawer.classList.toggle('hidden');
+      if (btn) {
+        if (!isHidden) {
+          btn.classList.add('bg-teal-100', 'text-teal-800', 'border-teal-300');
+        } else {
+          btn.classList.remove('bg-teal-100', 'text-teal-800', 'border-teal-300');
+        }
+      }
+    }
+
+    function toggleTableFullscreen() {
+      const card = document.getElementById('tablePreviewCard');
+      const scrollContainer = document.getElementById('tableScrollContainer');
+      const btnText = document.getElementById('fullscreenBtnText');
+      const icon = document.getElementById('fullscreenIcon');
+
+      if (!card) return;
+
+      const isCurrentlyFullscreen = card.classList.contains('table-fullscreen-active');
+
+      if (!isCurrentlyFullscreen) {
+        // Enter Fullscreen mode (CSS overlay with maximum device support)
+        card.classList.add('table-fullscreen-active', 'fixed', 'inset-0', 'z-50', 'm-0', 'rounded-none', 'h-screen', 'w-screen', 'p-3', 'sm:p-5', 'bg-white', 'shadow-2xl');
+        document.body.classList.add('overflow-hidden');
+        if (scrollContainer) {
+          scrollContainer.classList.remove('max-h-[500px]');
+          scrollContainer.classList.add('h-[calc(100vh-210px)]', 'sm:h-[calc(100vh-190px)]');
+        }
+        if (btnText) btnText.textContent = 'ছোট করুন';
+        if (icon) {
+          icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>`;
+        }
+        showToast("টেবিল ফুল স্ক্রিন মোডে দেখানো হচ্ছে (Esc চেপে বের হতে পারেন)", "info");
+      } else {
+        // Exit Fullscreen mode
+        card.classList.remove('table-fullscreen-active', 'fixed', 'inset-0', 'z-50', 'm-0', 'rounded-none', 'h-screen', 'w-screen', 'p-3', 'sm:p-5', 'bg-white', 'shadow-2xl');
+        document.body.classList.remove('overflow-hidden');
+        if (scrollContainer) {
+          scrollContainer.classList.remove('h-[calc(100vh-210px)]', 'sm:h-[calc(100vh-190px)]');
+          scrollContainer.classList.add('max-h-[500px]');
+        }
+        if (btnText) btnText.textContent = 'ফুল স্ক্রিন';
+        if (icon) {
+          icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path>`;
+        }
+      }
+    }
+
+    // Keyboard ESC key handler to close Fullscreen easily
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const card = document.getElementById('tablePreviewCard');
+        if (card && card.classList.contains('table-fullscreen-active')) {
+          toggleTableFullscreen();
+        }
+      }
+    });
+
+    function applyAreaDropdownFilter(val) {
+      document.getElementById('advSearchAddress').value = val;
+      applyAdvancedFilters();
+    }
+
+    function setQuickGender(gender) {
+      quickGenderFilter = gender;
+      
+      const btnAll = document.getElementById('qgAll');
+      const btnMale = document.getElementById('qgMale');
+      const btnFemale = document.getElementById('qgFemale');
+
+      [btnAll, btnMale, btnFemale].forEach(b => {
+        if (b) b.className = "px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition";
+      });
+
+      if (gender === 'all') {
+        if (btnAll) btnAll.className = "px-2 py-1.5 rounded-lg font-medium border bg-teal-700 text-white border-teal-700 transition";
+      } else if (gender === 'পুরুষ') {
+        if (btnMale) btnMale.className = "px-2 py-1.5 rounded-lg font-medium border bg-sky-600 text-white border-sky-600 transition";
+      } else if (gender === 'মহিলা') {
+        if (btnFemale) btnFemale.className = "px-2 py-1.5 rounded-lg font-medium border bg-purple-600 text-white border-purple-600 transition";
+      }
+
+      renderTable();
+    }
+
+    function toggleQuickRemark() {
+      quickRemarkOnly = !quickRemarkOnly;
+      const btn = document.getElementById('qgRemark');
+      if (quickRemarkOnly) {
+        btn.className = "px-2 py-1.5 rounded-lg font-medium border bg-amber-500 text-white border-amber-600 transition shadow-xs";
+      } else {
+        btn.className = "px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition";
+      }
+      renderTable();
+    }
+
+    function resetAllFilters() {
+      if (document.getElementById('tableQuickSearch')) document.getElementById('tableQuickSearch').value = '';
+      if (document.getElementById('advSearchName')) document.getElementById('advSearchName').value = '';
+      if (document.getElementById('advSearchVoterNo')) document.getElementById('advSearchVoterNo').value = '';
+      if (document.getElementById('advSearchParent')) document.getElementById('advSearchParent').value = '';
+      if (document.getElementById('advSearchAddress')) document.getElementById('advSearchAddress').value = '';
+      if (document.getElementById('advAreaSelect')) document.getElementById('advAreaSelect').value = '';
+      quickGenderFilter = 'all';
+      quickRemarkOnly = false;
+
+      const btnAll = document.getElementById('qgAll');
+      const btnMale = document.getElementById('qgMale');
+      const btnFemale = document.getElementById('qgFemale');
+      const btnRemark = document.getElementById('qgRemark');
+
+      if (btnAll) btnAll.className = "px-2 py-1.5 rounded-lg font-medium border bg-teal-700 text-white border-teal-700 transition";
+      if (btnMale) btnMale.className = "px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition";
+      if (btnFemale) btnFemale.className = "px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition";
+      if (btnRemark) btnRemark.className = "px-2 py-1.5 rounded-lg font-medium border bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-300 transition";
+
+      renderTable();
+      showToast("সকল সার্চ ফিল্টার রিসেট করা হয়েছে", "info");
+    }
+
+    function filterByStat(type) {
+      if (type === 'all') {
+        resetAllFilters();
+      } else if (type === 'পুরুষ' || type === 'মহিলা') {
+        resetAllFilters();
+        setQuickGender(type);
+      } else if (type === 'review') {
+        resetAllFilters();
+        toggleQuickRemark();
+      }
+    }
+
+    /**
+     * Renders table with filtered data
+     */
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      const currentBadge = document.getElementById('currentViewBadge');
+      
+      const allItems = getCurrentItems();
+      const filtered = getFilteredItems();
+      
+      if (activeBatchId === 'all') {
+        currentBadge.textContent = `সবগুলো প্রসেস (${processBatches.length} টি ব্যাচ)`;
+        currentBadge.className = "bg-teal-100 text-teal-800 text-xs px-2.5 py-0.5 rounded-full font-bold";
+      } else {
+        const curBatch = processBatches.find(b => b.id === activeBatchId);
+        currentBadge.textContent = curBatch ? curBatch.title : 'প্রসেস প্রিভিউ';
+        currentBadge.className = "bg-emerald-100 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold";
+      }
+
+      tbody.innerHTML = '';
+
+      const filterText = document.getElementById('filterStatusText');
+      if (filterText) {
+        if (filtered.length !== allItems.length) {
+          filterText.textContent = `ফিল্টারে মোট ${allItems.length} জনের মধ্যে ${filtered.length} জন ভোটার পাওয়া গেছে`;
+        } else {
+          filterText.textContent = `মোট ${allItems.length} জন ভোটারের সবগুলো তথ্য প্রদর্শিত হচ্ছে`;
+        }
+      }
+
+      if (filtered.length === 0) {
+        const emptyTr = document.createElement('tr');
+        emptyTr.innerHTML = `
+          <td colspan="11" class="text-center py-12 text-slate-400">
+            <div class="max-w-xs mx-auto space-y-2">
+              <svg class="w-10 h-10 mx-auto text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+              </svg>
+              <p class="font-medium text-xs sm:text-sm text-slate-600">কোনো ভোটার ডাটা খুঁজে পাওয়া যায়নি</p>
+              <p class="text-[11px] text-slate-400">সার্চ ফিল্টার রিসেট করুন অথবা নতুন CSV পেস্ট করুন।</p>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(emptyTr);
+        return;
+      }
+
+      filtered.forEach((item, index) => {
+        const tr = document.createElement('tr');
+        const isRemark = item.isRemark;
+        tr.className = `hover:bg-slate-50/80 transition-colors ${isRemark ? 'bg-amber-50/60' : ''}`;
+
+        // Index cell
+        const tdIdx = document.createElement('td');
+        tdIdx.className = "px-3 py-2.5 text-center text-slate-400 text-xs border-b border-slate-100 font-mono";
+        tdIdx.textContent = index + 1;
+        tr.appendChild(tdIdx);
+
+        TARGET_COLUMNS.forEach(col => {
+          const td = document.createElement('td');
+          td.className = "px-3 py-2.5 whitespace-nowrap text-slate-700 border-b border-slate-100 text-xs";
+          const val = item[col.key] || '';
+
+          if (col.key === 'gender') {
+            const isFemale = val.includes('মহিলা');
+            td.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+              isFemale ? 'bg-purple-100 text-purple-800' : 'bg-sky-100 text-sky-800'
+            }">${val || 'পুরুষ'}</span>`;
+          } else if (col.key === 'voter_no') {
+            td.innerHTML = `<span class="font-code font-bold text-slate-900 tracking-wider">${val || '-'}</span>`;
+          } else if (col.key === 'name' && isRemark) {
+            td.innerHTML = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-200 text-amber-900 border border-amber-300">
+              ⚠️ ${val}
+            </span>`;
+          } else {
+            td.innerHTML = `
+              <div 
+                contenteditable="true" 
+                class="outline-none focus:bg-white focus:ring-1 focus:ring-emerald-500 px-1.5 py-0.5 rounded transition hover:bg-slate-100/80 cursor-text"
+                onblur="updateItemCell('${item.id}', '${col.key}', this.innerText)"
+                title="এডিট করতে ক্লিক করুন"
+              >${val}</div>
+            `;
+          }
+          tr.appendChild(td);
         });
 
-        // --- 3. SUMMARY LOGIC ---
-        function generateSummary() {
-            const summaryData = {};
-            let grandTotalM = 0;
-            let grandTotalF = 0;
-            let grandTotalH = 0;
-            let grandTotalT = 0;
-            let grandTotalCenters = processedData.length;
-            let uniqueUnions = new Set();
-            let totalAreasCount = 0;
+        // Delete action
+        const tdAction = document.createElement('td');
+        tdAction.className = "px-3 py-2.5 text-center whitespace-nowrap border-b border-slate-100";
+        tdAction.innerHTML = `
+          <button onclick="deleteSingleVoter('${item.id}')" title="এই ভোটারের তথ্য মুছুন" class="text-slate-400 hover:text-rose-600 transition p-1 rounded-lg hover:bg-rose-50">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+          </button>
+        `;
+        tr.appendChild(tdAction);
 
-            processedData.forEach(c => {
-                // Upazila/Union Aggregation
-                if (!summaryData[c.upazila]) summaryData[c.upazila] = {};
-                if (!summaryData[c.upazila][c.union]) {
-                    summaryData[c.upazila][c.union] = { m: 0, f: 0, h: 0, t: 0, centers: 0 };
-                }
-                
-                summaryData[c.upazila][c.union].m += c.male;
-                summaryData[c.upazila][c.union].f += c.female;
-                summaryData[c.upazila][c.union].h += c.hijra;
-                summaryData[c.upazila][c.union].t += c.total;
-                summaryData[c.upazila][c.union].centers += 1;
+        tbody.appendChild(tr);
+      });
+    }
 
-                // Grand Totals
-                grandTotalM += c.male;
-                grandTotalF += c.female;
-                grandTotalH += c.hijra;
-                grandTotalT += c.total;
-                uniqueUnions.add(c.union);
-                totalAreasCount += c.areas.length;
-            });
+    /**
+     * Modal: Custom Export Controls
+     */
+    function openExportModal() {
+      updateAreaDropdowns();
+      renderMultiBatchCheckboxes();
+      updateExportPreviewCount();
+      document.getElementById('exportModal').classList.remove('hidden');
+    }
 
-            // --- Generate HTML ---
-            let html = '';
+    function closeExportModal() {
+      document.getElementById('exportModal').classList.add('hidden');
+    }
 
-            // 1. Grand Summary Card
-            html += `
-                <div class="bg-gradient-to-r from-slate-800 to-slate-900 text-white p-6 rounded-2xl shadow-lg mb-8">
-                    <div class="flex flex-col md:flex-row justify-between items-center border-b border-slate-700 pb-4 mb-4">
-                        <div>
-                            <h2 class="text-2xl font-bold">কিশোরগঞ্জ-৩</h2>
-                            <p class="text-sm text-slate-400">সামগ্রিক পরিসংখ্যান (২০২৬)</p>
-                        </div>
-                        <div class="text-right mt-2 md:mt-0">
-                            <p class="text-xs text-slate-400 uppercase tracking-widest">মোট কেন্দ্র</p>
-                            <p class="text-3xl font-bold font-code text-brand-400">${getEnglishToBangla(grandTotalCenters)}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div class="bg-white/10 rounded-lg p-3">
-                            <p class="text-xs text-slate-300 mb-1">মোট ভোটার</p>
-                            <p class="text-xl font-bold font-code">${getEnglishToBangla(grandTotalT)}</p>
-                        </div>
-                        <div class="bg-blue-500/20 rounded-lg p-3 border border-blue-500/30">
-                            <p class="text-xs text-blue-200 mb-1">পুরুষ</p>
-                            <p class="text-xl font-bold font-code">${getEnglishToBangla(grandTotalM)}</p>
-                        </div>
-                        <div class="bg-pink-500/20 rounded-lg p-3 border border-pink-500/30">
-                            <p class="text-xs text-pink-200 mb-1">মহিলা</p>
-                            <p class="text-xl font-bold font-code">${getEnglishToBangla(grandTotalF)}</p>
-                        </div>
-                        <div class="bg-purple-500/20 rounded-lg p-3 border border-purple-500/30">
-                            <p class="text-xs text-purple-200 mb-1">হিজড়া</p>
-                            <p class="text-xl font-bold font-code">${getEnglishToBangla(grandTotalH)}</p>
-                        </div>
-                    </div>
+    function renderMultiBatchCheckboxes() {
+      const container = document.getElementById('exportMultiBatchList');
+      container.innerHTML = '';
+      if (processBatches.length === 0) {
+        container.innerHTML = '<span class="text-xs text-slate-400">কোনো হিস্টরি ব্যাচ নেই</span>';
+        return;
+      }
+      processBatches.forEach(b => {
+        const row = document.createElement('label');
+        row.className = "flex items-center gap-2 text-xs text-slate-700 cursor-pointer";
+        row.innerHTML = `
+          <input type="checkbox" name="exportBatchCheck" value="${b.id}" checked onchange="updateExportPreviewCount()" class="rounded text-teal-600 focus:ring-teal-500">
+          <span class="truncate">${b.title} (${b.items.length} জন)</span>
+        `;
+        container.appendChild(row);
+      });
+    }
 
-                    <div class="grid grid-cols-2 gap-4 mt-4 pt-4 border-t border-slate-700">
-                        <div class="flex justify-between px-2">
-                            <span class="text-sm text-slate-400">ইউনিয়ন/পৌরসভা</span>
-                            <span class="font-bold font-code">${getEnglishToBangla(uniqueUnions.size)}</span>
-                        </div>
-                        <div class="flex justify-between px-2 border-l border-slate-700">
-                            <span class="text-sm text-slate-400">গ্রাম/এলাকা</span>
-                            <span class="font-bold font-code">${getEnglishToBangla(totalAreasCount)}</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            // 2. Upazila Tables
-            for (const [upazila, unions] of Object.entries(summaryData)) {
-                let uM = 0, uF = 0, uH = 0, uT = 0, uC = 0;
+    /**
+     * Resolves selected export items based on user choice
+     */
+    function getSelectedExportItems() {
+      const selectedRadio = document.querySelector('input[name="exportCategory"]:checked')?.value || 'all';
+      const allVoters = processBatches.flatMap(b => b.items);
 
-                html += `
-                    <div class="mb-10">
-                        <div class="flex items-center gap-3 mb-4">
-                            <h3 class="text-xl font-bold text-slate-800 border-l-4 border-brand-500 pl-3">${upazila} উপজেলা</h3>
-                        </div>
-                        <div class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
-                            <table class="w-full text-sm">
-                                <thead class="bg-slate-100 text-slate-600 font-semibold uppercase tracking-wider">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left">ইউনিয়ন/পৌরসভা</th>
-                                        <th class="px-4 py-3 text-center">কেন্দ্র</th>
-                                        <th class="px-4 py-3 text-right text-blue-600">পুরুষ</th>
-                                        <th class="px-4 py-3 text-right text-pink-600">মহিলা</th>
-                                        <th class="px-4 py-3 text-right text-purple-600">হিজড়া</th>
-                                        <th class="px-4 py-3 text-right text-slate-800">মোট ভোটার</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-slate-100">
-                `;
+      switch (selectedRadio) {
+        case 'all':
+          return { items: allVoters, title: 'সকল_ভোটার' };
+        case 'male':
+          return { 
+            items: allVoters.filter(i => (i.gender || '').includes('পুরুষ')), 
+            title: 'পুরুষ_ভোটার_তালিকা' 
+          };
+        case 'female':
+          return { 
+            items: allVoters.filter(i => (i.gender || '').includes('মহিলা')), 
+            title: 'মহিলা_ভোটার_তালিকা' 
+          };
+        case 'area': {
+          const area = document.getElementById('exportAreaDropdown').value;
+          const items = area ? allVoters.filter(i => (i.address || '').trim() === area.trim()) : [];
+          return { items: items, title: `ভোটার_${area ? area.substring(0, 15) : 'এলাকা'}` };
+        }
+        case 'search':
+          return { items: getFilteredItems(), title: 'সার্চ_ফলাফল_ভোটার' };
+        case 'current_batch': {
+          const curBatch = processBatches.find(b => b.id === activeBatchId);
+          return { 
+            items: curBatch ? curBatch.items : allVoters, 
+            title: curBatch ? curBatch.title : 'চলতি_প্রসেস' 
+          };
+        }
+        case 'multi_batch': {
+          const checkedBatches = Array.from(document.querySelectorAll('input[name="exportBatchCheck"]:checked')).map(cb => cb.value);
+          const selectedItems = processBatches
+            .filter(b => checkedBatches.includes(b.id))
+            .flatMap(b => b.items);
+          return { items: selectedItems, title: 'নির্বাচিত_প্রসেস_সমূহ' };
+        }
+        case 'review':
+          return { 
+            items: allVoters.filter(i => i.isRemark || !i.voter_no || !i.dob), 
+            title: 'রিভিউ_মাইগ্রেট_ভোটার' 
+          };
+        default:
+          return { items: allVoters, title: 'ভোটার_তালিকা' };
+      }
+    }
 
-                for (const [union, data] of Object.entries(unions)) {
-                    uM += data.m; uF += data.f; uH += data.h; uT += data.t; uC += data.centers;
+    function updateExportPreviewCount() {
+      const allVoters = processBatches.flatMap(b => b.items);
+      const maleCount = allVoters.filter(i => (i.gender || '').includes('পুরুষ')).length;
+      const femaleCount = allVoters.filter(i => (i.gender || '').includes('মহিলা')).length;
+      const reviewCount = allVoters.filter(i => i.isRemark || !i.voter_no || !i.dob).length;
+      
+      const area = document.getElementById('exportAreaDropdown')?.value;
+      const areaCount = area ? allVoters.filter(i => (i.address || '').trim() === area.trim()).length : 0;
+      
+      const searchCount = getFilteredItems().length;
+      
+      const curBatch = processBatches.find(b => b.id === activeBatchId);
+      const curBatchCount = curBatch ? curBatch.items.length : allVoters.length;
 
-                    html += `
-                        <tr class="hover:bg-slate-50 transition-colors">
-                            <td class="px-4 py-2.5 font-medium text-slate-700">${union}</td>
-                            <td class="px-4 py-2.5 text-center text-slate-500 font-code">${getEnglishToBangla(data.centers)}</td>
-                            <td class="px-4 py-2.5 text-right font-code text-blue-600/90">${getEnglishToBangla(data.m)}</td>
-                            <td class="px-4 py-2.5 text-right font-code text-pink-600/90">${getEnglishToBangla(data.f)}</td>
-                            <td class="px-4 py-2.5 text-right font-code text-purple-600/90">${data.h > 0 ? getEnglishToBangla(data.h) : '-'}</td>
-                            <td class="px-4 py-2.5 text-right font-bold text-slate-800 font-code">${getEnglishToBangla(data.t)}</td>
-                        </tr>
-                    `;
-                }
+      const checkedBatches = Array.from(document.querySelectorAll('input[name="exportBatchCheck"]:checked')).map(cb => cb.value);
+      const multiCount = processBatches.filter(b => checkedBatches.includes(b.id)).reduce((acc, b) => acc + b.items.length, 0);
 
-                html += `
-                                </tbody>
-                                <tfoot class="bg-slate-50 font-bold text-slate-900 border-t-2 border-slate-200">
-                                    <tr>
-                                        <td class="px-4 py-3">সর্বমোট</td>
-                                        <td class="px-4 py-3 text-center font-code">${getEnglishToBangla(uC)}</td>
-                                        <td class="px-4 py-3 text-right text-blue-700 font-code">${getEnglishToBangla(uM)}</td>
-                                        <td class="px-4 py-3 text-right text-pink-700 font-code">${getEnglishToBangla(uF)}</td>
-                                        <td class="px-4 py-3 text-right text-purple-700 font-code">${getEnglishToBangla(uH)}</td>
-                                        <td class="px-4 py-3 text-right text-slate-900 font-code text-base">${getEnglishToBangla(uT)}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            document.getElementById('summaryContent').innerHTML = html;
+      document.getElementById('expCountAll').textContent = `${allVoters.length} জন`;
+      document.getElementById('expCountMale').textContent = `${maleCount} জন`;
+      document.getElementById('expCountFemale').textContent = `${femaleCount} জন`;
+      document.getElementById('expCountArea').textContent = `${areaCount} জন`;
+      document.getElementById('expCountSearch').textContent = `${searchCount} জন`;
+      document.getElementById('expCountCurrentBatch').textContent = `${curBatchCount} জন`;
+      document.getElementById('expCountMultiBatch').textContent = `${multiCount} জন`;
+      document.getElementById('expCountReview').textContent = `${reviewCount} জন`;
+
+      const currentSelection = getSelectedExportItems();
+      document.getElementById('selectedExportTotalBadge').textContent = `${currentSelection.items.length} জন`;
+    }
+
+    /**
+     * Executes custom export (Excel, CSV or Copy) from Modal
+     */
+    function executeCustomExport(actionType) {
+      const { items, title } = getSelectedExportItems();
+
+      if (items.length === 0) {
+        showToast("এক্সপোর্ট করার মতো কোনো ডাটা পাওয়া যায়নি!", "error");
+        return;
+      }
+
+      if (actionType === 'copy') {
+        const headers = TARGET_COLUMNS.map(c => c.label).join('\t');
+        const rows = items.map(item => [
+          item.gender || '',
+          item.serial || '',
+          item.name || '',
+          item.voter_no || '',
+          item.father || '',
+          item.mother || '',
+          item.profession || '',
+          item.dob || '',
+          item.address || ''
+        ].join('\t')).join('\n');
+
+        const fullTSV = `${headers}\n${rows}`;
+        const temp = document.createElement('textarea');
+        temp.value = fullTSV;
+        temp.style.position = 'fixed';
+        temp.style.left = '-9999px';
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+
+        showToast(`${items.length} জন ভোটারের তথ্য এক্সেলে পেস্টের জন্য কপি হয়েছে!`, "success");
+        closeExportModal();
+      } else if (actionType === 'excel') {
+        try {
+          const headers = TARGET_COLUMNS.map(c => c.label);
+          const rows = items.map(item => [
+            item.gender || '',
+            item.serial || '',
+            item.name || '',
+            item.voter_no || '',
+            item.father || '',
+            item.mother || '',
+            item.profession || '',
+            item.dob || '',
+            item.address || ''
+          ]);
+
+          const sheetData = [headers, ...rows];
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(sheetData);
+          ws['!cols'] = TARGET_COLUMNS.map(c => ({ wch: c.wch }));
+
+          // Keep voter numbers as strings
+          const range = XLSX.utils.decode_range(ws['!ref']);
+          for (let R = 1; R <= range.e.r; ++R) {
+            const cellAddress = XLSX.utils.encode_cell({ r: R, c: 3 });
+            if (ws[cellAddress]) ws[cellAddress].t = 's';
+          }
+
+          XLSX.utils.book_append_sheet(wb, ws, "ভোটার_তালিকা");
+          const safeTitle = title.replace(/[^\w\u0980-\u09FF]/g, '_');
+          const dateStr = new Date().toISOString().slice(0, 10);
+          XLSX.writeFile(wb, `${safeTitle}_${dateStr}.xlsx`);
+
+          showToast(`${items.length} জন ভোটারের এক্সেল ফাইল ডাউনলোড হচ্ছে!`, "success");
+          closeExportModal();
+        } catch (err) {
+          console.error(err);
+          showToast("এক্সেল তৈরিতে সমস্যা হয়েছে।", "error");
+        }
+      } else if (actionType === 'csv') {
+        const headers = TARGET_COLUMNS.map(c => `"${c.label}"`).join(',');
+        const rows = items.map(item => [
+          `"${(item.gender || '').replace(/"/g, '""')}"`,
+          `"${(item.serial || '').replace(/"/g, '""')}"`,
+          `"${(item.name || '').replace(/"/g, '""')}"`,
+          `"${(item.voter_no || '').replace(/"/g, '""')}"`,
+          `"${(item.father || '').replace(/"/g, '""')}"`,
+          `"${(item.mother || '').replace(/"/g, '""')}"`,
+          `"${(item.profession || '').replace(/"/g, '""')}"`,
+          `"${(item.dob || '').replace(/"/g, '""')}"`,
+          `"${(item.address || '').replace(/"/g, '""')}"`
+        ].join(',')).join('\n');
+
+        const csvContent = "\uFEFF" + headers + "\n" + rows;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `${title}_${Date.now()}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        showToast("UTF-8 CSV ডাউনলোড হয়েছে!", "success");
+        closeExportModal();
+      }
+    }
+
+    // Default download excel (toolbar)
+    function downloadExcel() {
+      const items = getFilteredItems();
+      if (items.length === 0) {
+        showToast("এক্সেল তৈরি করার জন্য কোনো ডাটা নেই!", "error");
+        return;
+      }
+      try {
+        const headers = TARGET_COLUMNS.map(c => c.label);
+        const rows = items.map(item => [
+          item.gender || '',
+          item.serial || '',
+          item.name || '',
+          item.voter_no || '',
+          item.father || '',
+          item.mother || '',
+          item.profession || '',
+          item.dob || '',
+          item.address || ''
+        ]);
+
+        const sheetData = [headers, ...rows];
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(sheetData);
+        ws['!cols'] = TARGET_COLUMNS.map(c => ({ wch: c.wch }));
+
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = 1; R <= range.e.r; ++R) {
+          const cellAddress = XLSX.utils.encode_cell({ r: R, c: 3 });
+          if (ws[cellAddress]) ws[cellAddress].t = 's';
         }
 
-        // --- 4. RENDER & INTERACTION ---
-        function openSummary() {
-            generateSummary();
-            document.getElementById('summaryModal').classList.remove('hidden');
+        XLSX.utils.book_append_sheet(wb, ws, "ভোটার_তালিকা");
+        const activeBatch = processBatches.find(b => b.id === activeBatchId);
+        const safeTitle = activeBatch ? activeBatch.title.replace(/[^\w\u0980-\u09FF]/g, '_') : 'সবগুলো_প্রসেস';
+        const dateStr = new Date().toISOString().slice(0, 10);
+        XLSX.writeFile(wb, `ভোটার_তালিকা_${safeTitle}_${dateStr}.xlsx`);
+        showToast("এক্সেল (.xlsx) ফাইল ডাউনলোড হচ্ছে!", "success");
+      } catch (err) {
+        console.error(err);
+        showToast("ত্রুটি দেখা দিয়েছে।", "error");
+      }
+    }
+
+    // Default Copy For Excel (toolbar)
+    function copyForExcel() {
+      const items = getFilteredItems();
+      if (items.length === 0) {
+        showToast("কপি করার জন্য কোনো ডাটা নেই!", "error");
+        return;
+      }
+      const headers = TARGET_COLUMNS.map(c => c.label).join('\t');
+      const rows = items.map(item => [
+        item.gender || '',
+        item.serial || '',
+        item.name || '',
+        item.voter_no || '',
+        item.father || '',
+        item.mother || '',
+        item.profession || '',
+        item.dob || '',
+        item.address || ''
+      ].join('\t')).join('\n');
+
+      const fullTSV = `${headers}\n${rows}`;
+      const tempTextarea = document.createElement('textarea');
+      tempTextarea.value = fullTSV;
+      tempTextarea.style.position = 'fixed';
+      tempTextarea.style.left = '-9999px';
+      document.body.appendChild(tempTextarea);
+      tempTextarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempTextarea);
+
+      showToast("কপি সম্পন্ন! এক্সেলে গিয়ে পেস্ট (Ctrl + V) করুন।", "success");
+    }
+
+    // ... existing code ...
+    // Keep helper functions: getCurrentItems, updateItemCell, deleteSingleVoter, updateStats, showToast, etc.
+    // ... existing code ...
+    
+    function getCurrentItems() {
+      if (activeBatchId === 'all') {
+        return processBatches.flatMap(b => b.items);
+      }
+      const found = processBatches.find(b => b.id === activeBatchId);
+      return found ? found.items : [];
+    }
+
+    function renderHistoryUI() {
+      const container = document.getElementById('historyListContainer');
+      const badgeCount = document.getElementById('historyBadgeCount');
+      badgeCount.textContent = `${processBatches.length} টি প্রসেস`;
+
+      if (processBatches.length === 0) {
+        container.innerHTML = `
+          <div class="p-4 rounded-xl border border-dashed border-slate-200 text-center text-slate-400 text-xs">
+            এখনো কোনো প্রসেস হিস্টরি নেই। উপরে ডাটা পেস্ট করে প্রসেস করুন।
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = '';
+      processBatches.forEach(batch => {
+        const isActive = activeBatchId === batch.id;
+        const timeFormatted = batch.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        const card = document.createElement('div');
+        card.className = `p-2 sm:p-2.5 rounded-xl border transition cursor-pointer flex items-center justify-between gap-2 text-xs ${
+          isActive 
+            ? 'bg-teal-50 border-teal-400 shadow-xs' 
+            : 'bg-slate-50 hover:bg-slate-100 border-slate-200'
+        }`;
+
+        card.innerHTML = `
+          <div class="flex-1 min-w-0" onclick="switchActiveBatch('${batch.id}')">
+            <div class="font-bold text-slate-800 truncate flex items-center gap-1.5">
+              ${isActive ? '<span class="w-2 h-2 rounded-full bg-teal-600 flex-shrink-0"></span>' : ''}
+              <span>${batch.title}</span>
+            </div>
+            <div class="text-[11px] text-slate-500 flex items-center gap-2 mt-0.5">
+              <span>👥 ${batch.items.length} জন</span>
+              <span>•</span>
+              <span>🕒 ${timeFormatted}</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button onclick="event.stopPropagation(); promptDeleteBatch('${batch.id}')" title="প্রসেসটি মুছুন" class="text-slate-400 hover:text-rose-600 p-1 rounded-md hover:bg-rose-50 transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+              </svg>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function switchActiveBatch(batchId) {
+      activeBatchId = batchId;
+      renderHistoryUI();
+      renderTable();
+      updateStats();
+      const batch = processBatches.find(b => b.id === batchId);
+      if (batch) {
+        showToast(`"${batch.title}" প্রসেসটি প্রিভিউ করা হচ্ছে`, "info");
+      }
+    }
+
+    function selectAllHistoryCombined() {
+      activeBatchId = 'all';
+      renderHistoryUI();
+      renderTable();
+      updateStats();
+      showToast("সকল প্রসেসের সমন্বিত ডাটা প্রদর্শিত হচ্ছে", "info");
+    }
+
+    function updateItemCell(itemId, colKey, newValue) {
+      const cleanVal = newValue.trim();
+      processBatches.forEach(batch => {
+        const item = batch.items.find(i => i.id === itemId);
+        if (item) {
+          item[colKey] = cleanVal;
+          if (colKey === 'name') {
+            item.isRemark = isRemarkRow(cleanVal);
+          }
         }
+      });
+      updateStats();
+    }
 
-        function closeSummary() {
-            document.getElementById('summaryModal').classList.add('hidden');
+    function deleteSingleVoter(itemId) {
+      processBatches.forEach(batch => {
+        batch.items = batch.items.filter(i => i.id !== itemId);
+      });
+      renderTable();
+      updateStats();
+      updateAreaDropdowns();
+      showToast("ভোটারের তথ্য মুছে ফেলা হয়েছে।", "info");
+    }
+
+    function updateStats() {
+      const items = getCurrentItems();
+      let male = 0;
+      let female = 0;
+      let remarkCount = 0;
+
+      items.forEach(i => {
+        if (i.isRemark || !i.voter_no || !i.dob) remarkCount++;
+        if ((i.gender || '').includes('মহিলা')) {
+          female++;
+        } else {
+          male++;
         }
+      });
 
-        function renderCardHTML(center, isForImage = false) {
-            let rows = '';
-            center.areas.forEach(a => {
-                rows += `
-                    <tr class="border-b border-slate-100 last:border-0 ${isForImage ? '' : 'hover:bg-slate-50'}">
-                        <td class="py-1.5 px-3 text-slate-700 font-medium text-xs">${a.name}</td>
-                        <td class="py-1.5 px-3 text-right text-blue-600 font-code text-xs">${getEnglishToBangla(a.m)}</td>
-                        <td class="py-1.5 px-3 text-right text-pink-600 font-code text-xs">${getEnglishToBangla(a.f)}</td>
-                        <td class="py-1.5 px-3 text-right text-slate-800 font-bold font-code text-xs">${getEnglishToBangla(a.t)}</td>
-                    </tr>
-                `;
-            });
+      document.getElementById('statTotalVoters').textContent = `${items.length} জন`;
+      document.getElementById('statMaleVoters').textContent = `${male} জন`;
+      document.getElementById('statFemaleVoters').textContent = `${female} জন`;
+      document.getElementById('statMigratedVoters').textContent = `${remarkCount} জন`;
+    }
 
-            let hijraRow = center.hijra > 0 ? 
-                `<div class="mt-2 text-[10px] text-center bg-purple-50 text-purple-700 py-1 rounded border border-purple-100 font-bold">হিজড়া ভোটার: ${getEnglishToBangla(center.hijra)} জন</div>` : '';
+    function updateLineCount() {
+      const text = document.getElementById('rawInput').value;
+      const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+      document.getElementById('charLineCount').textContent = `${lines.length} সারি`;
+    }
 
-            let typeBadge = '';
-            if (center.comment.includes("পুরুষ") && center.comment.includes("মহিলা")) {
-                typeBadge = '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded border border-emerald-200">পুরুষ ও মহিলা কেন্দ্র</span>';
-            } else if (center.comment.includes("মহিলা")) {
-                typeBadge = '<span class="bg-pink-100 text-pink-700 px-2 py-0.5 rounded border border-pink-200">মহিলা কেন্দ্র</span>';
-            } else if (center.comment.includes("পুরুষ")) {
-                typeBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded border border-blue-200">পুরুষ কেন্দ্র</span>';
-            }
+    function togglePromptModal() {
+      const modal = document.getElementById('promptModal');
+      modal.classList.toggle('hidden');
+    }
 
-            return `
-                <div class="bg-white rounded-xl overflow-hidden ${isForImage ? '' : 'border border-slate-200 shadow-sm hover:shadow-md transition-all duration-300 group'} h-full flex flex-col relative">
-                    <div class="watermark opacity-10">&lt;NakibLab /&gt;</div>
-                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-brand-500 to-emerald-400"></div>
-                    <div class="p-5 relative z-10 flex-1 flex flex-col">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="font-bold text-lg text-slate-800 leading-snug mb-1 group-hover:text-brand-600 transition-colors">${center.name}</h3>
-                                <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500 mt-2">
-                                    <span class="bg-slate-100 px-2 py-0.5 rounded flex items-center gap-1 border border-slate-200"><i data-lucide="map-pin" class="w-3 h-3"></i> ${center.union} (${center.upazila})</span>
-                                    <span class="bg-slate-100 px-2 py-0.5 rounded border border-slate-200">ক্রমিক: ${center.id}</span>
-                                    ${typeBadge}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="border border-slate-200 rounded-lg overflow-hidden bg-white/90 backdrop-blur-sm flex-1">
-                            <table class="w-full text-left">
-                                <thead class="bg-slate-50 border-b border-slate-200">
-                                    <tr>
-                                        <th class="py-2 px-3 text-[10px] uppercase font-bold text-slate-500 tracking-wider">এলাকা</th>
-                                        <th class="py-2 px-3 text-right text-[10px] uppercase font-bold text-blue-500 tracking-wider">পু</th>
-                                        <th class="py-2 px-3 text-right text-[10px] uppercase font-bold text-pink-500 tracking-wider">ম</th>
-                                        <th class="py-2 px-3 text-right text-slate-100 tracking-wider">মোট</th>
-                                    </tr>
-                                </thead>
-                                <tbody>${rows}</tbody>
-                                <tfoot class="bg-slate-100 border-t border-slate-200 text-xs font-bold">
-                                    <tr>
-                                        <td class="py-2 px-3 text-slate-700">সর্বমোট</td>
-                                        <td class="py-2 px-3 text-right text-blue-700 font-code">${getEnglishToBangla(center.male)}</td>
-                                        <td class="py-2 px-3 text-right text-pink-700 font-code">${getEnglishToBangla(center.female)}</td>
-                                        <td class="py-2 px-3 text-right text-slate-900 font-code">${getEnglishToBangla(center.total)}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                        ${hijraRow}
-                    </div>
-                    ${isForImage ? `<div class="bg-brand-500 text-white text-[10px] py-2 px-4 flex justify-between items-center font-code relative z-20 mt-auto"><span>Generated by NakibLab</span><span>Kishoreganj-3 (2026)</span></div>` : ''}
-                </div>
-            `;
+    function copyPromptText(elementId) {
+      const text = document.getElementById(elementId).innerText;
+      try {
+        const temp = document.createElement('textarea');
+        temp.value = text;
+        temp.style.position = 'fixed';
+        temp.style.left = '-9999px';
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        showToast("প্রম্পট সফলভাবে কপি হয়েছে! Gemini-তে পেস্ট করুন।", "success");
+      } catch (e) {
+        showToast("কপি করা যায়নি।", "error");
+      }
+    }
+
+    function clearInput() {
+      document.getElementById('rawInput').value = '';
+      document.getElementById('processTitleInput').value = '';
+      updateLineCount();
+      showToast("ইনপুট বক্স পরিষ্কার করা হয়েছে।", "info");
+    }
+
+    function loadSampleFemaleData() {
+      document.getElementById('processTitleInput').value = "ভাটী মনোহরপুর - মহিলা ভোটার (১ম খণ্ড)";
+      document.getElementById('defaultAddressInput').value = "ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ";
+      document.getElementById('rawInput').value = SAMPLE_FEMALE_CSV;
+      updateLineCount();
+      showToast("মহিলা ভোটারের নমুনা ডাটা লোড করা হয়েছে!", "info");
+    }
+
+    function loadSampleMaleData() {
+      document.getElementById('processTitleInput').value = "ভাটী মনোহরপুর - পুরুষ ভোটার (২য় খণ্ড)";
+      document.getElementById('defaultAddressInput').value = "ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ";
+      document.getElementById('rawInput').value = SAMPLE_MALE_CSV;
+      updateLineCount();
+      showToast("পুরুষ ভোটারের নমুনা ডাটা লোড করা হয়েছে!", "info");
+    }
+
+    function promptDeleteBatch(batchId) {
+      const batch = processBatches.find(b => b.id === batchId);
+      if (!batch) return;
+
+      const modal = document.getElementById('confirmModal');
+      const title = document.getElementById('confirmTitle');
+      const msg = document.getElementById('confirmMessage');
+      const actionBtn = document.getElementById('confirmActionBtn');
+      const cancelBtn = document.getElementById('confirmCancelBtn');
+
+      title.textContent = `"${batch.title}" মুছে ফেলবেন?`;
+      msg.textContent = `এই প্রসেসের অন্তর্ভুক্ত ${batch.items.length} জন ভোটারের তথ্য মুছে যাবে।`;
+
+      modal.classList.remove('hidden');
+
+      actionBtn.onclick = () => {
+        processBatches = processBatches.filter(b => b.id !== batchId);
+        if (activeBatchId === batchId) {
+          activeBatchId = 'all';
         }
+        modal.classList.add('hidden');
+        updateAreaDropdowns();
+        renderHistoryUI();
+        renderTable();
+        updateStats();
+        showToast("প্রসেসটি মুছে ফেলা হয়েছে।", "info");
+      };
 
-        function renderGrid(data) {
-            const grid = document.getElementById('gridContainer');
-            grid.innerHTML = '';
-            data.forEach(center => {
-                const wrapper = document.createElement('div');
-                wrapper.innerHTML = renderCardHTML(center);
-                wrapper.firstChild.nextSibling.classList.add('cursor-pointer');
-                wrapper.firstChild.nextSibling.onclick = () => openModal(center);
-                grid.appendChild(wrapper.firstChild.nextSibling);
-            });
-            lucide.createIcons();
-            document.getElementById('count').textContent = getEnglishToBangla(data.length);
-        }
+      cancelBtn.onclick = () => {
+        modal.classList.add('hidden');
+      };
+    }
 
-        function openModal(center) {
-            const content = document.getElementById('modalContent');
-            content.innerHTML = `<div class="w-full" style="min-width: 450px;">${renderCardHTML(center, true)}</div>`;
-            document.getElementById('modal').classList.remove('hidden');
-        }
+    function clearAllHistoryPrompt() {
+      if (processBatches.length === 0) {
+        showToast("কোনো হিস্টরি নেই।", "info");
+        return;
+      }
+      const modal = document.getElementById('confirmModal');
+      const title = document.getElementById('confirmTitle');
+      const msg = document.getElementById('confirmMessage');
+      const actionBtn = document.getElementById('confirmActionBtn');
+      const cancelBtn = document.getElementById('confirmCancelBtn');
 
-        function closeModal() {
-            document.getElementById('modal').classList.add('hidden');
-        }
+      title.textContent = "সম্পূর্ণ হিস্টরি মুছে ফেলবেন?";
+      msg.textContent = "সকল প্রসেস ও ভোটারের ডাটা স্থায়ীভাবে মুছে যাবে।";
 
-        function downloadSingle() {
-            const el = document.getElementById('modalContent').firstChild;
-            html2canvas(el, { scale: 3 }).then(canvas => {
-                const name = el.querySelector('h3').innerText.substring(0, 15);
-                canvas.toBlob(blob => saveAs(blob, `Center_${name}.png`));
-            });
-        }
+      modal.classList.remove('hidden');
 
-        async function downloadAll() {
-            const btn = document.getElementById('batchBtn');
-            if(!confirm("১৫১টি কেন্দ্রের ছবি জেনারেট হতে কিছুক্ষণ সময় লাগতে পারে। শুরু করবেন?")) return;
-            
-            const originalText = btn.innerHTML;
-            btn.innerHTML = 'প্রসেসিং...';
-            btn.disabled = true;
+      actionBtn.onclick = () => {
+        processBatches = [];
+        activeBatchId = 'all';
+        modal.classList.add('hidden');
+        updateAreaDropdowns();
+        renderHistoryUI();
+        renderTable();
+        updateStats();
+        showToast("সকল হিস্টরি মুছে ফেলা হয়েছে।", "info");
+      };
 
-            const zip = new JSZip();
-            const folder = zip.folder("Kishoreganj3_2026_NakibLab");
-            const container = document.getElementById('renderContainer');
-            container.style.width = "500px";
+      cancelBtn.onclick = () => {
+        modal.classList.add('hidden');
+      };
+    }
 
-            for(let i=0; i<processedData.length; i++) {
-                const c = processedData[i];
-                container.innerHTML = renderCardHTML(c, true);
-                const canvas = await html2canvas(container.firstElementChild, { scale: 2 });
-                const blob = await new Promise(r => canvas.toBlob(r));
-                const safeName = c.name.replace(/[^\w\u0980-\u09FF]/g, '_').substring(0, 30);
-                folder.file(`${c.id}_${safeName}.png`, blob);
-            }
+    function showToast(message, type = "success") {
+      const toast = document.getElementById('toast');
+      const toastMessage = document.getElementById('toastMessage');
+      const toastIcon = document.getElementById('toastIcon');
 
-            const zipBlob = await zip.generateAsync({type:"blob"});
-            saveAs(zipBlob, "Kishoreganj3_2026_NakibLab.zip");
-            
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-            container.innerHTML = '';
-        }
+      if (type === "success") {
+        toast.className = "fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-semibold border bg-emerald-800 text-white border-emerald-600 transition-all duration-300 transform translate-y-0 opacity-100";
+        toastIcon.innerHTML = `<svg class="w-4 h-4 text-emerald-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+      } else if (type === "error") {
+        toast.className = "fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-semibold border bg-rose-800 text-white border-rose-600 transition-all duration-300 transform translate-y-0 opacity-100";
+        toastIcon.innerHTML = `<svg class="w-4 h-4 text-rose-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+      } else {
+        toast.className = "fixed bottom-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl text-xs sm:text-sm font-semibold border bg-slate-800 text-white border-slate-700 transition-all duration-300 transform translate-y-0 opacity-100";
+        toastIcon.innerHTML = `<svg class="w-4 h-4 text-teal-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+      }
 
-        document.getElementById('searchInput').addEventListener('input', (e) => {
-            const val = e.target.value.toLowerCase();
-            const filtered = processedData.filter(c => 
-                c.name.toLowerCase().includes(val) || 
-                c.id.includes(val) ||
-                c.areas.some(a => a.name.toLowerCase().includes(val)) ||
-                c.union.toLowerCase().includes(val)
-            );
-            renderGrid(filtered);
-        });
+      toastMessage.textContent = message;
 
-        renderGrid(processedData);
-    </script>
+      clearTimeout(window._toastTimeout);
+      window._toastTimeout = setTimeout(() => {
+        toast.classList.add('translate-y-24', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3500);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      // Seed with initial female and male batches
+      const femaleBatch = {
+        id: 'batch_female_1',
+        title: 'ভাটী মনোহরপুর - মহিলা ভোটার (১ম খণ্ড)',
+        defaultAddress: 'ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ',
+        timestamp: new Date(),
+        items: parseRawInputToItems(SAMPLE_FEMALE_CSV, 'ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ')
+      };
+
+      const maleBatch = {
+        id: 'batch_male_1',
+        title: 'ভাটী মনোহরপুর - পুরুষ ভোটার (২য় খণ্ড)',
+        defaultAddress: 'ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ',
+        timestamp: new Date(),
+        items: parseRawInputToItems(SAMPLE_MALE_CSV, 'ভাটী মনোহরপুর, করিমগঞ্জ, কিশোরগঞ্জ')
+      };
+
+      processBatches.push(femaleBatch, maleBatch);
+      activeBatchId = 'all';
+
+      updateAreaDropdowns();
+      renderHistoryUI();
+      renderTable();
+      updateStats();
+    });
+  </script>
 </body>
 </html>
+
