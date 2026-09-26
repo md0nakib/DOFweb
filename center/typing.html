@@ -137,12 +137,12 @@
 
   <!-- Hidden proxy input capturing physical and mobile virtual keystrokes flawlessly without duplicates -->
   <textarea id="hiddenTypingInput" 
-    class="fixed opacity-0 pointer-events-none -left-[9999px] -top-[9999px] w-1 h-1 select-none" 
+    class="absolute opacity-0 w-1 h-1 pointer-events-auto -z-10 focus:outline-none" 
     autocapitalize="off" 
     autocomplete="off" 
     autocorrect="off" 
     spellcheck="false"
-    tabindex="-1"></textarea>
+    tabindex="0"></textarea>
 
   <!-- 🖥️ DESKTOP ১০%: CONTROL & INFORMATION PANEL -->
   <header id="controlPanel" class="w-full flex-none border-b border-slate-800 bg-slate-900/95 backdrop-blur-md z-30 desktop-panel-10 flex flex-col justify-center px-2 sm:px-4 py-1.5 transition-all">
@@ -800,6 +800,7 @@
       } else {
         targetText = sourceText.trim().replace(/\s+/g, ' ');
       }
+      targetText = targetText.normalize('NFC');
       targetChars = Array.from(targetText); // Accurate Bengali Unicode separation
       typedChars = [];
       renderTargetTextDisplay();
@@ -930,18 +931,32 @@
     }
 
     /**
-     * SINGLE-POINT-OF-TRUTH KEYSTROKE PIPELINE
-     * Completely eliminates double typing and multiple backspace cuts!
+     * BULLETPROOF SINGLE-POINT-OF-TRUTH KEYSTROKE ENGINE
+     * Completely eliminates double typing, double spacing, and multi-backspace cuts!
      */
+    let lastActionTime = 0;
+    let lastActionType = '';
+    let lastActionKey = '';
+
     function processInputChar(char) {
-      if (testStatus === 'completed') return;
+      if (!char || testStatus === 'completed') return;
+      const normalized = char.normalize('NFC');
+
+      // Deduplication guard against simultaneous keydown + input twin events
+      const now = performance.now();
+      if (lastActionType === 'char' && lastActionKey === normalized && (now - lastActionTime) < 55) {
+        return;
+      }
+      lastActionTime = now;
+      lastActionType = 'char';
+      lastActionKey = normalized;
 
       if (testStatus === 'idle') {
         startTypingSession();
       }
 
       if (typedChars.length < targetChars.length) {
-        typedChars.push(char);
+        typedChars.push(normalized);
         playKeySound();
         renderTargetTextDisplay();
         updateMetricsLive();
@@ -955,6 +970,15 @@
     function processBackspace() {
       if (testStatus === 'completed') return;
 
+      // Deduplication guard for backspace
+      const now = performance.now();
+      if (lastActionType === 'backspace' && (now - lastActionTime) < 55) {
+        return;
+      }
+      lastActionTime = now;
+      lastActionType = 'backspace';
+      lastActionKey = 'Backspace';
+
       if (typedChars.length > 0) {
         typedChars.pop();
         playKeySound();
@@ -963,7 +987,7 @@
       }
     }
 
-    // Physical Keyboard handling via hidden input with preventDefault to eliminate duplicates
+    // Physical Keyboard handling
     hiddenInput.addEventListener('keydown', (e) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
@@ -985,14 +1009,22 @@
         return;
       }
 
-      if (e.key && e.key.length === 1) {
+      if (e.key && e.key.length === 1 && !e.isComposing) {
         e.preventDefault();
         processInputChar(e.key);
         return;
       }
     });
 
-    // Mobile Virtual Keyboard and IME fallback
+    // Mobile Virtual Keyboard & IME Fallback (Avro, Bijoy, Gboard)
+    hiddenInput.addEventListener('beforeinput', (e) => {
+      if (e.inputType === 'deleteContentBackward') {
+        e.preventDefault();
+        processBackspace();
+        hiddenInput.value = '';
+      }
+    });
+
     hiddenInput.addEventListener('input', (e) => {
       if (e.inputType === 'deleteContentBackward') {
         processBackspace();
@@ -1008,6 +1040,7 @@
       }
     });
 
+    // Focus Router
     window.addEventListener('keydown', (e) => {
       if (e.target && ['TEXTAREA', 'INPUT'].includes(e.target.tagName)) return;
 
