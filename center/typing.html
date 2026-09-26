@@ -1,202 +1,229 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn" class="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>TypeFlow — Custom Typing Test Machine</title>
+  <title>TypeFlow Pro — Custom / Blank Typing Test Machine</title>
+  
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Google Fonts -->
+  
+  <!-- Google Fonts: Hind Siliguri, JetBrains Mono, Inter, Roboto Mono, Space Mono, Playfair Display -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Roboto+Mono:wght@400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Roboto+Mono:wght@400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  
   <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
         extend: {
           fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-            'roboto-mono': ['Roboto Mono', 'monospace'],
-            'space-mono': ['Space Mono', 'monospace'],
-            serif: ['Playfair Display', 'serif'],
             hind: ['"Hind Siliguri"', 'sans-serif'],
-          },
-          colors: {
-            surface: {
-              50: '#f8fafc',
-              100: '#f1f5f9',
-              800: '#111827',
-              850: '#0d131f',
-              900: '#080d17',
-              950: '#030712'
-            }
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['Inter', 'sans-serif'],
+            'roboto-mono': ['"Roboto Mono"', 'monospace'],
+            'space-mono': ['"Space Mono"', 'monospace'],
+            serif: ['"Playfair Display"', 'serif'],
           }
         }
       }
     }
   </script>
+
   <style>
-    /* Custom Scrollbars */
+    /* CSS Variables controlled dynamically by theme pickers */
+    :root {
+      --color-correct: #10b981;
+      --color-wrong: #f43f5e;
+      --color-wrong-bg: rgba(244, 63, 94, 0.22);
+      --color-caret: #6366f1;
+      --color-muted: #64748b;
+      --bg-main: #070d18;
+      --bg-panel: #0d1527;
+      --text-main: #f1f5f9;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+    }
+
+    /* Custom subtle scrollbars */
     ::-webkit-scrollbar {
-      width: 6px;
-      height: 6px;
+      width: 5px;
+      height: 5px;
     }
     ::-webkit-scrollbar-track {
-      background: rgba(0, 0, 0, 0.05);
+      background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: rgba(140, 140, 160, 0.3);
+      background: rgba(148, 163, 184, 0.25);
       border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: rgba(140, 140, 160, 0.5);
+      background: rgba(148, 163, 184, 0.45);
     }
 
-    /* Caret & Cursor Styles */
-    @keyframes blink-animation {
-      0%, 49% { opacity: 1; }
+    /* Caret Keyframes */
+    @keyframes cursor-blink {
+      0%, 48% { opacity: 1; }
       50%, 100% { opacity: 0; }
     }
-    @keyframes pulse-smooth {
+    @keyframes cursor-smooth-pulse {
       0%, 100% { opacity: 1; transform: scaleY(1); }
-      50% { opacity: 0.3; transform: scaleY(0.92); }
+      50% { opacity: 0.25; transform: scaleY(0.88); }
     }
 
     .cursor-line {
       display: inline-block;
-      width: 2.5px;
-      margin-left: -1px;
-      margin-right: -1.5px;
-      vertical-align: text-bottom;
-      animation: blink-animation 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    .cursor-block {
-      display: inline;
-      padding: 0 1px;
-      border-radius: 2px;
-      animation: pulse-smooth 1.1s ease-in-out infinite;
-    }
-    .cursor-underline {
-      display: inline;
-      border-bottom-width: 3px;
-      border-bottom-style: solid;
-      animation: blink-animation 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-    .cursor-pulse {
-      display: inline-block;
       width: 3px;
       margin-left: -1px;
       margin-right: -2px;
-      border-radius: 9999px;
-      animation: pulse-smooth 0.8s ease-in-out infinite;
+      vertical-align: text-bottom;
+      background-color: var(--color-caret);
+      animation: cursor-blink 0.95s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
-    /* Word Break and Flow Optimization */
-    .typing-word {
+    .cursor-block {
+      display: inline;
+      background-color: var(--color-caret) !important;
+      color: #000000 !important;
+      border-radius: 2px;
+      animation: cursor-smooth-pulse 1s ease-in-out infinite;
+    }
+
+    .cursor-underline {
+      display: inline;
+      border-bottom: 3.5px solid var(--color-caret);
+      animation: cursor-blink 0.95s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .cursor-pulse {
+      display: inline-block;
+      width: 3.5px;
+      border-radius: 9999px;
+      margin-left: -1px;
+      margin-right: -2.5px;
+      background-color: var(--color-caret);
+      animation: cursor-smooth-pulse 0.75s ease-in-out infinite;
+    }
+
+    /* Character & Word Layout */
+    .word-token {
       display: inline-block;
       white-space: pre;
-      margin-bottom: 0.35em;
+      margin-bottom: 0.4em;
     }
     .char-node {
       position: relative;
-      transition: color 0.08s ease, background-color 0.08s ease;
+      transition: color 0.05s ease, background-color 0.05s ease;
     }
     
-    /* Subtle glow for dark modes */
-    .glow-accent {
-      box-shadow: 0 0 15px -3px var(--accent-color, rgba(99, 102, 241, 0.3));
+    /* Strict 10% / 90% desktop height breakdown */
+    @media (min-width: 1024px) {
+      .desktop-panel-10 {
+        height: 10vh !important;
+        max-height: 10vh !important;
+      }
+      .desktop-arena-90 {
+        height: 90vh !important;
+        max-height: 90vh !important;
+      }
     }
   </style>
 </head>
-<body class="bg-surface-950 text-slate-100 h-screen flex flex-col overflow-hidden font-sans select-none antialiased transition-colors duration-300" id="appBody">
+<body id="appBody" class="h-screen w-screen flex flex-col overflow-hidden font-hind select-none antialiased transition-colors duration-300">
 
-  <!-- Hidden proxy input for touch & seamless keyboard capture -->
+  <!-- Hidden proxy input capturing physical and mobile virtual keystrokes flawlessly -->
   <textarea id="hiddenTypingInput" 
-    class="absolute opacity-0 pointer-events-none -left-[9999px] -top-[9999px] w-1 h-1" 
+    class="absolute opacity-0 pointer-events-none -left-[9999px] -top-[9999px] w-1 h-1 select-none" 
     autocapitalize="off" 
     autocomplete="off" 
     autocorrect="off" 
-    spellcheck="false"></textarea>
+    spellcheck="false"
+    tabindex="-1"></textarea>
 
-  <!-- 10% TOP CONTROL & INFORMATION PANEL -->
-  <header id="controlPanel" class="w-full h-auto min-h-[58px] lg:h-[10vh] flex-none border-b border-slate-800/80 bg-surface-900/95 backdrop-blur-md z-30 flex items-center transition-all duration-200">
-    <div class="w-full max-w-[1920px] mx-auto px-3 sm:px-5 py-1.5 lg:py-0 flex flex-col justify-center h-full">
+  <!-- 🖥️ DESKTOP ১০%: CONTROL & INFORMATION PANEL -->
+  <header id="controlPanel" class="w-full flex-none border-b border-slate-800/80 bg-slate-900/95 backdrop-blur-md z-30 flex items-center desktop-panel-10 min-h-[58px] transition-all px-2 sm:px-4 lg:px-6">
+    <div class="w-full flex flex-col justify-center h-full gap-1.5 py-1 lg:py-0">
       
-      <!-- Top Row: Branding, Live Clock, Primary Stats, Fullscreen and Fast Controls -->
-      <div class="flex items-center justify-between gap-2 md:gap-3 flex-wrap lg:flex-nowrap">
+      <!-- Primary Bar: Branding, Live Info, Quick Controls, Prominent Fullscreen & Start/End Button -->
+      <div class="flex items-center justify-between gap-1.5 sm:gap-2.5 flex-wrap lg:flex-nowrap">
         
-        <!-- Brand & Clock -->
-        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <!-- Left: Logo & Live Date/Time Clock -->
+        <div class="flex items-center gap-2 shrink-0">
           <div class="flex items-center gap-2">
-            <span class="p-1 sm:p-1.5 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
+            <span class="p-1.5 rounded-lg bg-indigo-600/25 text-indigo-400 border border-indigo-500/40 flex items-center justify-center">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <rect x="2" y="4" width="20" height="16" rx="3" stroke-width="2"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
               </svg>
             </span>
-            <div>
-              <h1 class="font-bold text-xs sm:text-sm tracking-tight flex items-center gap-1 text-white">
-                TypeFlow <span class="text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-semibold hidden sm:inline-block">Pro</span>
-              </h1>
-              <div id="liveClock" class="text-[9px] sm:text-[11px] font-mono text-slate-400 leading-none">--:--:--</div>
+            <div class="leading-tight">
+              <div class="flex items-center gap-1">
+                <span class="font-extrabold text-xs sm:text-sm tracking-tight text-white">TypeFlow</span>
+                <span class="text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-bold hidden sm:inline-block">PRO</span>
+              </div>
+              <!-- Date & Time Requirement -->
+              <div id="liveClock" class="text-[9px] sm:text-[11px] font-mono text-slate-400 truncate">--:--:--</div>
             </div>
           </div>
         </div>
 
-        <!-- Desktop Central Controls & Settings Hub (Visible on lg+) -->
+        <!-- Center Desktop Controls (Font, Cursor, Mode, Duration) -->
         <div class="hidden lg:flex items-center gap-2 shrink-0">
-          <!-- Font Size Stepper -->
-          <div class="flex items-center bg-slate-800/80 border border-slate-700/60 rounded-lg p-0.5 text-xs">
-            <button id="btnFontDec" title="Decrease Font Size" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A−</button>
-            <span id="lblFontSize" class="px-1.5 font-mono text-slate-300 text-xs font-medium min-w-[2.8rem] text-center">26px</span>
-            <button id="btnFontInc" title="Increase Font Size" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A+</button>
+          
+          <!-- Font Size Stepper (+ / -) -->
+          <div class="flex items-center bg-slate-800/90 border border-slate-700/70 rounded-lg p-0.5 text-xs shadow-inner">
+            <button id="btnFontDec" title="ফন্ট সাইজ কমান (A-)" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold cursor-pointer">A−</button>
+            <span id="lblFontSize" class="px-1.5 font-mono text-indigo-300 text-xs font-bold min-w-[2.8rem] text-center">28px</span>
+            <button id="btnFontInc" title="ফন্ট সাইজ বাড়ান (A+)" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold cursor-pointer">A+</button>
           </div>
 
-          <!-- Font Family Selector -->
+          <!-- Font Selection (Hind Siliguri as first-class citizen) -->
           <div class="relative">
-            <select id="selFontFamily" class="bg-slate-800/80 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2 py-1 pr-6 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
-              <option value="font-hind">হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
+            <select id="selFontFamily" class="bg-slate-800/90 border border-slate-700/70 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
+              <option value="font-hind" selected>হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
               <option value="font-mono">JetBrains Mono</option>
-              <option value="font-sans">Inter Sans</option>
+              <option value="font-sans">Inter (Modern Sans)</option>
               <option value="font-roboto-mono">Roboto Mono</option>
               <option value="font-space-mono">Space Mono</option>
-              <option value="font-serif">Playfair Serif</option>
+              <option value="font-serif">Playfair Display</option>
             </select>
             <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
           </div>
 
-          <!-- Cursor Selector -->
+          <!-- Cursor Selection -->
           <div class="relative">
-            <select id="selCursorType" class="bg-slate-800/80 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2 py-1 pr-6 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+            <select id="selCursorType" class="bg-slate-800/90 border border-slate-700/70 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
               <option value="cursor-line">Caret: Line |</option>
               <option value="cursor-block">Caret: Block █</option>
               <option value="cursor-underline">Caret: Underline _</option>
-              <option value="cursor-pulse">Caret: Pulse</option>
+              <option value="cursor-pulse">Caret: Pulse •</option>
             </select>
             <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
           </div>
 
-          <!-- Mode / Timer Segmented Buttons (With Custom Timer Option) -->
-          <div class="flex items-center bg-slate-800/80 border border-slate-700/60 rounded-lg p-0.5 text-xs font-medium">
-            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="15">15s</button>
-            <button class="mode-btn px-2 py-1 rounded bg-indigo-600 text-white font-semibold shadow-sm transition" data-mode="30">30s</button>
-            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="60">60s</button>
-            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="120">120s</button>
-            <button id="btnCustomTimerDesktop" class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white flex items-center gap-1 transition" data-mode="custom">
-              <span id="lblCustomDesktop">Custom</span>
-              <svg class="w-2.5 h-2.5 text-indigo-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+          <!-- Timer Period / Modes (15s, 30s, 60s, 120s, Custom, Free) -->
+          <div class="flex items-center bg-slate-800/90 border border-slate-700/70 rounded-lg p-0.5 text-xs font-medium shadow-inner">
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="15">15s</button>
+            <button class="mode-btn px-2.5 py-1 rounded bg-indigo-600 text-white font-bold shadow transition" data-mode="30">30s</button>
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="60">60s</button>
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="120">120s</button>
+            <button id="btnCustomTimerTrigger" class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white flex items-center gap-1 transition" data-mode="custom">
+              <span id="lblCustomMode">Custom</span>
+              <svg class="w-2.5 h-2.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
             </button>
-            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="free">Free</button>
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="free">Free</button>
           </div>
 
-          <!-- Sound Effects Toggle -->
-          <button id="btnSoundToggle" title="Toggle Mechanical Key Sound" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/60 hover:bg-slate-700 border border-slate-700/60 transition">
+          <!-- Keyboard Audio Toggle -->
+          <button id="btnSoundToggle" title="ক্লিক সাউন্ড অন/অফ" class="p-2 text-slate-300 hover:text-white rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/70 transition shadow-inner">
             <svg id="soundIconOn" class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
             </svg>
@@ -207,76 +234,101 @@
           </button>
         </div>
 
-        <!-- Live Scoreboard Pills: WPM, Accuracy, Time Left, Prominent Fullscreen, and Main Actions -->
+        <!-- Right: Live Info (WPM, Accuracy, Top WPM, Total Tests, Time), Fullscreen & Start/End Button -->
         <div class="flex items-center gap-1.5 sm:gap-2 ml-auto lg:ml-0">
           
-          <!-- Live WPM Pill -->
-          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-inner">
+          <!-- Live Info: WPM -->
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-1 rounded-lg shadow-inner" title="বর্তমান গতি (Words Per Minute)">
             <span class="text-[9px] uppercase font-bold text-slate-400">WPM</span>
             <span id="metricWpm" class="font-mono text-xs sm:text-base font-black text-amber-400">0</span>
           </div>
 
-          <!-- Accuracy Pill -->
-          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-inner">
+          <!-- Live Info: Accuracy -->
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-1 rounded-lg shadow-inner" title="সঠিকতার হার (Accuracy)">
             <span class="text-[9px] uppercase font-bold text-slate-400">ACC</span>
             <span id="metricAcc" class="font-mono text-xs sm:text-base font-black text-emerald-400">100%</span>
           </div>
 
-          <!-- Timer / Duration Pill -->
-          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-inner">
+          <!-- Live Info: Time -->
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-1 rounded-lg shadow-inner" title="বাকি সময় / অতিবাহিত সময়">
             <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
-            <span id="metricTime" class="font-mono text-xs sm:text-base font-black text-indigo-300 min-w-[2rem] text-center">30s</span>
+            <span id="metricTime" class="font-mono text-xs sm:text-base font-black text-indigo-300 min-w-[2.2rem] text-center">30s</span>
           </div>
 
-          <!-- PROMINENT FULLSCREEN BUTTON (Always visible on mobile & desktop) -->
-          <button id="btnFullscreen" title="Toggle Fullscreen Mode" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-700/60 font-medium text-xs shadow-sm transition active:scale-95 cursor-pointer">
-            <svg id="fsIconEnter" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+          <!-- Live Info: Top WPM (Desktop Visible) -->
+          <div class="hidden xl:flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 py-1 rounded-lg shadow-inner" title="সর্বোচ্চ গতি">
+            <span class="text-[9px] uppercase font-bold text-amber-400/90">TOP</span>
+            <span id="metricTopWpm" class="font-mono text-xs sm:text-sm font-black text-amber-300">0</span>
+          </div>
+
+          <!-- Live Info: Total Tests (Desktop Visible) -->
+          <div class="hidden xl:flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 py-1 rounded-lg shadow-inner" title="মোট সম্পন্ন টেস্ট">
+            <span class="text-[9px] uppercase font-bold text-slate-400">TESTS</span>
+            <span id="metricTotalTests" class="font-mono text-xs sm:text-sm font-black text-slate-300">0</span>
+          </div>
+
+          <!-- 🔥 PROMINENT FULLSCREEN BUTTON (Always visible & highlighted on Desktop + Mobile) -->
+          <button id="btnFullscreen" 
+                  title="ফুল স্ক্রিন চালু / বন্ধ করুন" 
+                  class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-500/70 font-bold text-xs shadow-md transition active:scale-95 cursor-pointer">
+            <svg id="fsIconEnter" class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
             </svg>
             <svg id="fsIconExit" class="w-3.5 h-3.5 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5m0 0l4-4M15 4v4h4m0 0l-4-4M9 20v-4H5m0 0l4 4m6-4v4h4m0 0l-4-4"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 4v4H5m0 0l4-4M15 4v4h4m0 0l-4-4M9 20v-4H5m0 0l4 4m6-4v4h4m0 0l-4-4"/>
             </svg>
-            <span id="lblFullscreen" class="hidden sm:inline">Fullscreen</span>
+            <span id="lblFullscreenText" class="font-semibold text-xs">ফুলস্ক্রিন</span>
           </button>
 
-          <!-- Start / Restart Primary Action Button -->
-          <button id="btnMainAction" class="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-medium text-xs px-2.5 sm:px-3.5 py-1 rounded-lg shadow-md shadow-indigo-600/20 transition cursor-pointer">
-            <svg id="iconPlay" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            <span id="lblMainAction" class="font-semibold">Restart</span>
+          <!-- 🔘 START / END BUTTON (Explicit Start & End Toggle Requirement) -->
+          <button id="btnStartEndAction" 
+                  class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 transition cursor-pointer">
+            <span id="iconStartEnd">
+              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+            <span id="lblStartEndAction">Start</span>
           </button>
 
-          <!-- Custom Text / Settings Drawer Trigger -->
-          <button id="btnOpenCustomText" title="Custom Text & Presets" class="p-1 sm:p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+          <!-- Quick Restart Icon Button -->
+          <button id="btnQuickRestart" title="রিস্টার্ট টেস্ট (Tab / Esc)" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </button>
+
+          <!-- Custom Text / Presets Modal Button -->
+          <button id="btnOpenCustomText" title="কাস্টম টেক্সট ও প্রিসেট" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
           </button>
 
-          <!-- History Modal Button -->
-          <button id="btnOpenHistory" title="History & Logs" class="p-1 sm:p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+          <!-- History Logs Modal Button -->
+          <button id="btnOpenHistory" title="হিস্ট্রি ও পারফরম্যান্স লগ" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </button>
 
-          <!-- Settings Sheet Trigger -->
-          <button id="btnOpenSettings" title="Themes & Settings" class="p-1 sm:p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+          <!-- Appearance & Themes Button -->
+          <button id="btnOpenSettings" title="কালার, থিম ও সেটিংস" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
           </button>
+
         </div>
       </div>
 
-      <!-- Mobile Quick Ribbon: Compact mode switcher for small viewports -->
-      <div class="flex lg:hidden items-center justify-between gap-1.5 mt-1 pt-1 border-t border-slate-800/80 text-[11px] overflow-x-auto no-scrollbar">
+      <!-- Mobile Quick Ribbon: Mode buttons & quick stats on small screens -->
+      <div class="flex lg:hidden items-center justify-between gap-1 pt-1 border-t border-slate-800/80 text-[11px] overflow-x-auto no-scrollbar">
         <div class="flex items-center gap-1 font-medium flex-nowrap shrink-0">
           <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="15">15s</button>
-          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-indigo-600 text-white font-semibold shrink-0" data-mode="30">30s</button>
+          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-indigo-600 text-white font-bold shrink-0" data-mode="30">30s</button>
           <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="60">60s</button>
-          <button id="btnCustomTimerMobile" class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0 flex items-center gap-1" data-mode="custom">
-            <span id="lblCustomMobile">Custom</span>
+          <button id="btnMobileCustomTimer" class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="custom">
+            <span id="lblMobileCustomMode">Custom</span>
           </button>
           <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="free">Free</button>
         </div>
@@ -289,175 +341,167 @@
     </div>
   </header>
 
-  <!-- 90% MAIN TYPING ARENA -->
-  <main id="typingArena" class="flex-1 w-full lg:h-[90vh] flex flex-col justify-center items-center relative overflow-hidden cursor-text px-4 sm:px-8 md:px-12 py-3 lg:py-6">
+  <!-- ⌨️ MAIN TYPING PREVIEW — ৯০% (STRICT DISTRACTION-FREE TYPING ARENA) -->
+  <main id="typingArena" class="flex-1 w-full desktop-arena-90 flex flex-col justify-center items-center relative overflow-hidden cursor-text px-4 sm:px-8 md:px-12 py-3 lg:py-6">
     
-    <!-- Focus Guide / Click-to-focus prompt overlay when blurred -->
-    <div id="focusOverlay" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-surface-950/70 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none opacity-0">
-      <div class="px-5 py-3 rounded-2xl bg-indigo-600/90 text-white shadow-2xl flex items-center gap-3 text-sm font-medium tracking-wide animate-bounce pointer-events-auto cursor-pointer" id="btnFocusPrompt">
+    <!-- Focus Guide prompt when user clicks outside -->
+    <div id="focusOverlay" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/75 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none opacity-0">
+      <div class="px-5 py-3 rounded-2xl bg-indigo-600 text-white shadow-2xl flex items-center gap-3 text-sm font-semibold tracking-wide animate-bounce pointer-events-auto cursor-pointer" id="btnFocusPrompt">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
-        <span>Click or Tap anywhere to resume typing</span>
+        <span>টাইপিং চালু করতে এখানে ক্লিক বা ট্যাপ করুন</span>
       </div>
     </div>
 
     <!-- Active Text Preview Viewport -->
     <div class="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center relative">
       
-      <!-- Progress Bar (Time or Character progress) -->
-      <div class="w-full bg-slate-800/60 rounded-full h-1.5 mb-4 lg:mb-6 overflow-hidden border border-slate-700/40">
-        <div id="testProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all duration-150 w-0"></div>
+      <!-- Progress Bar (Time & Characters) -->
+      <div class="w-full bg-slate-800/80 rounded-full h-1.5 mb-4 lg:mb-6 overflow-hidden border border-slate-700/50">
+        <div id="testProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all duration-100 w-0"></div>
       </div>
 
-      <!-- Live Typing Container (90% viewport focus) -->
+      <!-- Live Typing Container (90% viewport focus, line wrapping without horizontal scroll) -->
       <div id="textDisplayBox" 
-           class="w-full max-h-[62vh] md:max-h-[72vh] overflow-y-auto px-2 py-3 select-none leading-relaxed transition-all scroll-smooth"
+           class="w-full max-h-[64vh] md:max-h-[74vh] overflow-y-auto px-2 py-3 select-none leading-relaxed transition-all scroll-smooth"
            tabindex="0"
-           aria-label="Typing test preview arena">
-        <!-- Words and characters will be dynamically rendered here -->
+           aria-label="Main Typing Preview Area">
+        <!-- Rendered character spans will populate here -->
       </div>
 
-      <!-- Quick Reset Shortcut Hint -->
-      <div class="mt-3 lg:mt-4 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+      <!-- Footer indicator: reset hotkey and character counters -->
+      <div class="mt-3 lg:mt-4 flex items-center justify-between text-xs text-slate-500 font-mono">
         <span class="flex items-center gap-1.5">
-          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">Tab</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold">Tab</kbd>
           <span>or</span>
-          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">Esc</kbd>
+          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold">Esc</kbd>
           <span>to restart test</span>
         </span>
-        <span id="charCountSummary">0 / 0 chars</span>
+        <span id="charCountSummary" class="text-slate-400 font-bold">0 / 0 chars</span>
       </div>
 
     </div>
-
   </main>
 
-  <div id="modalCustomText" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-surface-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomCard">
+  <!-- MODAL: Custom Text & Presets -->
+  <div id="modalCustomText" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomCard">
       
-      <!-- Header -->
       <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <h2 class="font-bold text-base text-white">Custom Text & Presets</h2>
+          <h2 class="font-bold text-base text-white">Custom Text & Presets (কাস্টম টেক্সট)</h2>
         </div>
         <button id="btnCloseCustomText" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
 
-      <!-- Presets quick buttons -->
       <div class="p-5 overflow-y-auto space-y-4">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Preset Quick Picks</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">প্রিসেট দ্রুত নির্বাচন করুন</label>
           <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="standard">
-              <span class="block font-semibold text-slate-200">Standard English</span>
-              <span class="text-[10px] text-slate-400">Common words & flow</span>
-            </button>
-            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="bangla">
-              <span class="block font-semibold text-emerald-300">বাংলা অনুশীলন</span>
+            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="bangla">
+              <span class="block font-bold text-emerald-400">বাংলা অনুশীলন</span>
               <span class="text-[10px] text-slate-400">হিন্দ শিলিগুড়ি ফন্ট</span>
             </button>
-            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="quotes">
-              <span class="block font-semibold text-slate-200">Famous Quotes</span>
-              <span class="text-[10px] text-slate-400">Inspirational & books</span>
+            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="standard">
+              <span class="block font-bold text-slate-200">Standard English</span>
+              <span class="text-[10px] text-slate-400">Common words & flow</span>
             </button>
-            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="code">
-              <span class="block font-semibold text-slate-200">Programming</span>
-              <span class="text-[10px] text-slate-400">JavaScript & symbols</span>
+            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="quotes">
+              <span class="block font-bold text-slate-200">Famous Quotes</span>
+              <span class="text-[10px] text-slate-400">Inspirational lines</span>
             </button>
-            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="blank">
-              <span class="block font-semibold text-slate-200">Blank Machine</span>
-              <span class="text-[10px] text-slate-400">Freeform typing</span>
+            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="code">
+              <span class="block font-bold text-slate-200">Programming</span>
+              <span class="text-[10px] text-slate-400">Code & syntax</span>
+            </button>
+            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="blank">
+              <span class="block font-bold text-amber-300">Blank Machine</span>
+              <span class="text-[10px] text-slate-400">ফাঁকা ক্যানভাস</span>
             </button>
           </div>
         </div>
 
         <div>
           <label for="txtCustomInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-            Or Paste Your Own Text
+            অথবা আপনার পছন্দের টেক্সট পেস্ট / টাইপ করুন
           </label>
-          <textarea id="txtCustomInput" rows="6" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed" placeholder="Paste or type any paragraph, code snippet, lyrics, or test sentences here..."></textarea>
+          <textarea id="txtCustomInput" rows="5" class="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-3 text-sm font-hind text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed" placeholder="এখানে যেকোনো বাংলা বা ইংরেজি অনুচ্ছেদ পেস্ট করুন..."></textarea>
           <div class="flex justify-between items-center text-xs text-slate-400 mt-1">
             <span id="customWordCharCount">0 characters • 0 words</span>
-            <button id="btnClearCustom" class="text-rose-400 hover:text-rose-300 transition">Clear text</button>
+            <button id="btnClearCustom" class="text-rose-400 hover:text-rose-300 transition">ক্লিয়ার করুন</button>
           </div>
         </div>
       </div>
 
-      <!-- Footer Buttons -->
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end gap-2">
-        <button id="btnCancelCustomText" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">Cancel</button>
-        <button id="btnApplyCustomText" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">Apply & Start Test</button>
+        <button id="btnCancelCustomText" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">বাতিল</button>
+        <button id="btnApplyCustomText" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">Apply & Start Test</button>
       </div>
 
     </div>
   </div>
 
-  <!-- Custom Timer Modal -->
+  <!-- MODAL: Custom Timer Picker -->
   <div id="modalCustomTimer" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-surface-900 border border-slate-700/80 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomTimerCard">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomTimerCard">
       <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke-width="2"/>
-            <path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/>
-          </svg>
-          <h2 class="font-bold text-base text-white">Custom Timer Duration</h2>
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+          <h2 class="font-bold text-base text-white">Custom Timer Duration (কাস্টম সময়)</h2>
         </div>
         <button id="btnCloseCustomTimer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
 
       <div class="p-5 space-y-4">
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Quick Duration Presets</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">দ্রুত প্রিসেট নির্বাচন</label>
           <div class="grid grid-cols-4 gap-2 text-xs">
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="45">45s</button>
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="90">90s</button>
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="180">3 min</button>
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="300">5 min</button>
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="45">45s</button>
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="90">90s</button>
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="180">3 min</button>
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="300">5 min</button>
           </div>
         </div>
 
         <div>
           <label for="numCustomTimerInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-            Or Enter Specific Seconds (5 to 3600 seconds)
+            অথবা সেকেন্ড লিখুন (৫ থেকে ৩৬০০ সেকেন্ড)
           </label>
           <div class="flex items-center gap-2">
             <input type="number" id="numCustomTimerInput" min="5" max="3600" step="5" value="45"
               class="w-full bg-slate-950/90 border border-slate-700 rounded-xl px-4 py-2.5 text-base font-mono text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. 45">
-            <span class="text-xs font-mono text-slate-400 uppercase">Sec</span>
+            <span class="text-xs font-mono text-slate-400 uppercase font-bold">Sec</span>
           </div>
-          <p class="text-[11px] text-slate-500 mt-1">Recommended: 15s to 300s for optimal typing fluency analysis.</p>
         </div>
       </div>
 
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end gap-2">
-        <button id="btnCancelCustomTimer" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">Cancel</button>
-        <button id="btnSetCustomTimer" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">Set & Start</button>
+        <button id="btnCancelCustomTimer" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">বাতিল</button>
+        <button id="btnSetCustomTimer" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">সেট করুন</button>
       </div>
     </div>
   </div>
 
-  <div id="modalSettings" class="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-surface-900 border border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden mt-auto sm:my-auto" id="modalSettingsCard">
+  <!-- MODAL: Settings & Color Themes -->
+  <div id="modalSettings" class="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden mt-auto sm:my-auto" id="modalSettingsCard">
       
-      <!-- Drawer Header -->
       <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-          <h2 class="font-bold text-base text-white">Appearance & Themes</h2>
+          <h2 class="font-bold text-base text-white">Appearance, Colors & Audio</h2>
         </div>
         <button id="btnCloseSettings" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
 
-      <!-- Settings Body -->
       <div class="p-5 overflow-y-auto space-y-5 text-sm">
         
         <!-- Theme Presets -->
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">Theme Palette</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">থিম প্যালেট (Theme Palette)</label>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
             <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-slate-950 flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="dark">
-              <span class="text-xs font-semibold text-slate-200">Cyber Dark</span>
+              <span class="text-xs font-bold text-slate-200">Cyber Dark</span>
               <div class="flex items-center gap-1">
                 <span class="w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700"></span>
                 <span class="w-3.5 h-3.5 rounded-full bg-emerald-400"></span>
@@ -465,7 +509,7 @@
               </div>
             </button>
             <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#1e1e2e] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="catppuccin">
-              <span class="text-xs font-semibold text-pink-200">Catppuccin</span>
+              <span class="text-xs font-bold text-pink-200">Catppuccin</span>
               <div class="flex items-center gap-1">
                 <span class="w-3.5 h-3.5 rounded-full bg-[#1e1e2e]"></span>
                 <span class="w-3.5 h-3.5 rounded-full bg-[#a6e3a1]"></span>
@@ -473,15 +517,15 @@
               </div>
             </button>
             <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#0f172a] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="nord">
-              <span class="text-xs font-semibold text-cyan-200">Nordic Frost</span>
+              <span class="text-xs font-bold text-cyan-200">Nordic Frost</span>
               <div class="flex items-center gap-1">
                 <span class="w-3.5 h-3.5 rounded-full bg-[#2e3440]"></span>
                 <span class="w-3.5 h-3.5 rounded-full bg-[#88c0d0]"></span>
                 <span class="w-3.5 h-3.5 rounded-full bg-[#bf616a]"></span>
               </div>
             </button>
-            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#0d1117] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="matrix">
-              <span class="text-xs font-semibold text-emerald-300">Matrix Hacker</span>
+            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#050a06] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="matrix">
+              <span class="text-xs font-bold text-emerald-300">Matrix Hacker</span>
               <div class="flex items-center gap-1">
                 <span class="w-3.5 h-3.5 rounded-full bg-black"></span>
                 <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
@@ -489,7 +533,7 @@
               </div>
             </button>
             <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#faf8f5] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="paper">
-              <span class="text-xs font-semibold text-amber-950">Paper Light</span>
+              <span class="text-xs font-bold text-amber-950">Paper Light</span>
               <div class="flex items-center gap-1">
                 <span class="w-3.5 h-3.5 rounded-full bg-[#eee9df]"></span>
                 <span class="w-3.5 h-3.5 rounded-full bg-emerald-600"></span>
@@ -497,7 +541,7 @@
               </div>
             </button>
             <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#282a36] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="dracula">
-              <span class="text-xs font-semibold text-purple-300">Dracula Vamp</span>
+              <span class="text-xs font-bold text-purple-300">Dracula Vamp</span>
               <div class="flex items-center gap-1">
                 <span class="w-3.5 h-3.5 rounded-full bg-[#282a36]"></span>
                 <span class="w-3.5 h-3.5 rounded-full bg-[#50fa7b]"></span>
@@ -507,36 +551,36 @@
           </div>
         </div>
 
-        <!-- Custom Character & Caret Colors -->
+        <!-- Correct & Wrong Text Color / Caret Color Picker Requirement -->
         <div class="border-t border-slate-800 pt-4">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">Custom Text & Caret Colors</label>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">Correct & Wrong Text Color/Theme</label>
           <div class="grid grid-cols-3 gap-2.5 text-xs">
-            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
-              <span class="text-slate-300 font-medium">Correct Text</span>
-              <input type="color" id="pickerCorrectColor" value="#34d399" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+            <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
+              <span class="text-slate-300 font-semibold">Correct Text</span>
+              <input type="color" id="pickerCorrectColor" value="#10b981" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
             </div>
-            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
-              <span class="text-slate-300 font-medium">Wrong Text</span>
+            <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
+              <span class="text-slate-300 font-semibold">Wrong Text</span>
               <input type="color" id="pickerWrongColor" value="#f43f5e" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
             </div>
-            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
-              <span class="text-slate-300 font-medium">Caret / Cursor</span>
-              <input type="color" id="pickerCaretColor" value="#818cf8" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+            <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
+              <span class="text-slate-300 font-semibold">Caret / Cursor</span>
+              <input type="color" id="pickerCaretColor" value="#6366f1" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
             </div>
           </div>
         </div>
 
-        <!-- Mobile Font & Caret Options (Visible inside settings for small screens) -->
+        <!-- Mobile Font & Caret Options inside Drawer -->
         <div class="border-t border-slate-800 pt-4 lg:hidden space-y-3">
           <div>
             <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Font Style</label>
             <select id="mobileSelFont" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5">
-              <option value="font-mono">JetBrains Mono</option>
               <option value="font-hind">হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
-              <option value="font-sans">Inter Sans</option>
+              <option value="font-mono">JetBrains Mono</option>
+              <option value="font-sans">Inter (Modern Sans)</option>
               <option value="font-roboto-mono">Roboto Mono</option>
               <option value="font-space-mono">Space Mono</option>
-              <option value="font-serif">Playfair Serif</option>
+              <option value="font-serif">Playfair Display</option>
             </select>
           </div>
           <div>
@@ -545,16 +589,16 @@
               <option value="cursor-line">Line |</option>
               <option value="cursor-block">Block █</option>
               <option value="cursor-underline">Underline _</option>
-              <option value="cursor-pulse">Smooth Pulse</option>
+              <option value="cursor-pulse">Smooth Pulse •</option>
             </select>
           </div>
         </div>
 
-        <!-- Keyboard Sounds Select -->
+        <!-- Mechanical Key Audio Type -->
         <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
           <div>
             <span class="block text-xs font-semibold text-slate-200">Mechanical Key Sounds</span>
-            <span class="text-[11px] text-slate-400">Synthesized tactile feedback clicks</span>
+            <span class="text-[11px] text-slate-400">কীবোর্ড টাইপিং সাউন্ড ফিডব্যাক</span>
           </div>
           <select id="selSoundType" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5">
             <option value="click">Mechanical Click</option>
@@ -566,60 +610,56 @@
 
       </div>
 
-      <!-- Close Drawer -->
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end">
-        <button id="btnDoneSettings" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">Done</button>
+        <button id="btnDoneSettings" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">Done</button>
       </div>
 
     </div>
   </div>
 
-  <div id="modalHistory" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-surface-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden" id="modalHistoryCard">
+  <!-- MODAL: History: Start/End Timestamp, Speed, Time, Accuracy -->
+  <div id="modalHistory" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden" id="modalHistoryCard">
       
-      <!-- Header -->
       <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <h2 class="font-bold text-base text-white">Test History & Performance</h2>
+          <h2 class="font-bold text-base text-white">Test History & Analytics (টাইপিং ইতিহাস)</h2>
         </div>
         <button id="btnCloseHistory" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
 
-      <!-- History Content -->
       <div class="p-5 flex-1 overflow-y-auto space-y-4">
         
-        <!-- Summary Cards -->
         <div class="grid grid-cols-3 gap-3">
-          <div class="bg-slate-800/50 border border-slate-700/60 p-3 rounded-xl text-center">
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl text-center">
             <div class="text-[10px] uppercase text-slate-400 font-bold">Best WPM</div>
             <div id="historyStatTopWpm" class="text-xl font-mono font-black text-amber-400 mt-0.5">0</div>
           </div>
-          <div class="bg-slate-800/50 border border-slate-700/60 p-3 rounded-xl text-center">
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl text-center">
             <div class="text-[10px] uppercase text-slate-400 font-bold">Avg WPM</div>
             <div id="historyStatAvgWpm" class="text-xl font-mono font-black text-indigo-400 mt-0.5">0</div>
           </div>
-          <div class="bg-slate-800/50 border border-slate-700/60 p-3 rounded-xl text-center">
-            <div class="text-[10px] uppercase text-slate-400 font-bold">Completed</div>
+          <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl text-center">
+            <div class="text-[10px] uppercase text-slate-400 font-bold">Total Tests</div>
             <div id="historyStatCount" class="text-xl font-mono font-black text-emerald-400 mt-0.5">0</div>
           </div>
         </div>
 
-        <!-- History Table / Items -->
         <div class="border border-slate-800 rounded-xl overflow-hidden">
           <div class="max-h-64 overflow-y-auto">
             <table class="w-full text-left text-xs">
-              <thead class="bg-slate-800/80 text-slate-400 sticky top-0 uppercase text-[10px] font-semibold border-b border-slate-700/80">
+              <thead class="bg-slate-800/90 text-slate-400 sticky top-0 uppercase text-[10px] font-bold border-b border-slate-700/80">
                 <tr>
-                  <th class="py-2.5 px-3">Date & Time</th>
+                  <th class="py-2.5 px-3">Start/End Timestamp</th>
                   <th class="py-2.5 px-3">Speed (WPM)</th>
                   <th class="py-2.5 px-3">Accuracy</th>
-                  <th class="py-2.5 px-3">Duration</th>
+                  <th class="py-2.5 px-3">Time</th>
                   <th class="py-2.5 px-3">Mode</th>
                 </tr>
               </thead>
               <tbody id="historyTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
-                <!-- Dynamically populated or empty placeholder -->
+                <!-- Records injected here -->
               </tbody>
             </table>
           </div>
@@ -627,10 +667,9 @@
 
       </div>
 
-      <!-- History Footer -->
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
-        <button id="btnClearHistory" class="text-xs text-rose-400 hover:text-rose-300 transition">Clear All History</button>
-        <button id="btnDoneHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">Close</button>
+        <button id="btnClearHistory" class="text-xs text-rose-400 hover:text-rose-300 transition font-semibold">ক্লিয়ার ইতিহাস</button>
+        <button id="btnDoneHistory" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">বন্ধ করুন</button>
       </div>
 
     </div>
@@ -638,97 +677,77 @@
 
   <script>
     /**
-     * Application State & Persistent Store
+     * Preset text repositories
      */
     const PRESET_TEXTS = {
-      standard: [
-        "The quick brown fox jumps over the lazy dog while the sun sets behind the distant emerald hills. Precision and continuous rhythm are the secrets to developing effortless keyboard fluency. As fingertips dance across the mechanical keys, muscle memory begins to replace conscious hesitation, transforming thought into swift digital expression without friction.",
-        "Success in typing is not merely about rushing fingers forward with reckless abandon; it is about establishing a continuous cadence that stays calm under pressure. When each keystroke lands accurately, speed naturally follows without strain or unnecessary tension.",
-        "Technology shapes the modern workplace, yet the humble mechanical keyboard remains one of our primary gateways into the digital cosmos. Mastering this tool transforms how programmers, writers, and visionaries manifest ideas into reality."
-      ],
       bangla: [
-        "জ্ঞান যেখানে সীমাবদ্ধ, বুদ্ধি সেখানে আড়ষ্ট, মুক্তি সেখানে অসম্ভব। নিয়মিত অনুশীলনের মাধ্যমেই যেকোনো বিষয়ে পারদর্শিতা ও নিখুঁত দক্ষতা অর্জন সম্ভব হয়।",
-        "আমাদের প্রিয় মাতৃভাষা বাংলা। কিবোর্ডে দ্রুত ও সঠিকভাবে টাইপ করার ক্ষমতা বর্তমান ডিজিটাল দুনিয়ায় কাজকে সহজ এবং গতিশীল করে তোলে।",
-        "মানুষের জীবনে বড় হওয়াটাই আসল নয়, বড় মনের মানুষ হওয়াটাই আসল কথা। সততা, নিষ্ঠা ও আত্মবিশ্বাস থাকলে সব কঠিন কাজই সহজ হয়ে যায়।"
+        "জ্ঞান যেখানে সীমাবদ্ধ, বুদ্ধি সেখানে আড়ষ্ট, মুক্তি সেখানে অসম্ভব। নিয়মিত অনুশীলনের মাধ্যমেই যেকোনো বিষয়ে পারদর্শিতা ও নিখুঁত দক্ষতা অর্জন সম্ভব হয়। কিবোর্ডে দ্রুত ও সঠিকভাবে টাইপ করার ক্ষমতা বর্তমান ডিজিটাল দুনিয়ায় কাজকে সহজ এবং গতিশীল করে তোলে।",
+        "আমাদের প্রিয় মাতৃভাষা বাংলা। রবীন্দ্রনাথ ঠাকুর ও কাজী নজরুল ইসলামের অমর সৃষ্টি আমাদের অহংকার। সততা, নিষ্ঠা ও আত্মবিশ্বাস থাকলে সব কঠিন কাজই সহজ হয়ে যায়। লক্ষ্য স্থির রেখে প্রতিদিন এগিয়ে চলাই সফলতার মূল চাবিকাঠি।",
+        "প্রযুক্তির যুগে কম্পিউটার ও ইন্টারনেটের সঠিক ব্যবহার জানা অত্যন্ত জরুরি। বাংলা টাইপিং চর্চা মননশীলতাকে বিকশিত করে এবং কর্মদক্ষতা বহুলাংশে বৃদ্ধি করে।"
+      ],
+      standard: [
+        "The quick brown fox jumps over the lazy dog while the sun sets behind the distant emerald hills. Precision and continuous rhythm are the secrets to developing effortless keyboard fluency.",
+        "Success in typing is not merely about rushing fingers forward with reckless abandon; it is about establishing a continuous cadence that stays calm under pressure. When each keystroke lands accurately, speed naturally follows.",
+        "Technology shapes the modern workplace, yet the humble mechanical keyboard remains one of our primary gateways into the digital cosmos. Mastering this tool transforms how programmers and writers manifest ideas into reality."
       ],
       quotes: [
         "Stay hungry, stay foolish. Never let the noise of others' opinions drown out your own inner voice. Have the courage to follow your heart and intuition.",
         "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Do not settle. As with all matters of the heart, you will know when you find it.",
-        "Simplicity is prerequisite for reliability. Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
-        "It does not matter how slowly you go as long as you do not stop. Life is really simple, but we insist on making it complicated."
+        "Simplicity is prerequisite for reliability. Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
       ],
       code: [
         "const calculateVelocity = (distance, time) => { if (time <= 0) return 0; const result = distance / time; return Math.round(result * 100) / 100; };",
-        "function createKeyboardListener(element) { const buffer = []; return element.addEventListener('keydown', (e) => { if (e.key === 'Backspace') { buffer.pop(); } else { buffer.push(e.key); } }); }",
-        "import React, { useState, useEffect } from 'react'; export default function Counter() { const [count, setCount] = useState(0); return <button onClick={() => setCount(c => c + 1)}>{count}</button>; }"
+        "function createKeyboardListener(element) { const buffer = []; return element.addEventListener('keydown', (e) => { if (e.key === 'Backspace') { buffer.pop(); } else { buffer.push(e.key); } }); }"
       ],
-      blank: "Type whatever you wish into this blank canvas. Create your own thoughts, draft essays, experiment with finger placements, or enjoy uninterrupted tactile rhythm without fear of mistakes."
+      blank: "আপনার ইচ্ছামতো যেকোনো কিছু টাইপ করুন। নতুন কোনো চিন্তা, রচনা বা মুক্ত টাইপিং অনুশীলন করতে পারেন সম্পূর্ণ স্বাচ্ছন্দ্যে।"
     };
 
     const THEMES = {
       dark: {
-        bg: '#080d17',
-        surface: '#0d131f',
-        panel: '#111827',
-        textMuted: '#64748b',
-        correct: '#34d399',
+        bg: '#070d18',
+        surface: '#0d1527',
+        correct: '#10b981',
         wrong: '#f43f5e',
-        wrongBg: 'rgba(244, 63, 94, 0.2)',
-        caret: '#818cf8',
-        textMain: '#e2e8f0'
+        caret: '#6366f1',
+        textMain: '#f1f5f9'
       },
       catppuccin: {
         bg: '#1e1e2e',
         surface: '#181825',
-        panel: '#24273a',
-        textMuted: '#6c7086',
         correct: '#a6e3a1',
         wrong: '#f38ba8',
-        wrongBg: 'rgba(243, 139, 168, 0.25)',
         caret: '#cba6f7',
         textMain: '#cdd6f4'
       },
       nord: {
         bg: '#242933',
         surface: '#2e3440',
-        panel: '#3b4252',
-        textMuted: '#677186',
         correct: '#88c0d0',
         wrong: '#bf616a',
-        wrongBg: 'rgba(191, 97, 106, 0.25)',
         caret: '#81a1c1',
         textMain: '#eceff4'
       },
       matrix: {
         bg: '#050a06',
         surface: '#08120b',
-        panel: '#0e1d13',
-        textMuted: '#2e5636',
         correct: '#10b981',
         wrong: '#ef4444',
-        wrongBg: 'rgba(239, 68, 68, 0.25)',
         caret: '#34d399',
         textMain: '#d1fae5'
       },
       paper: {
         bg: '#faf8f5',
-        surface: '#f1ede6',
-        panel: '#e5ded1',
-        textMuted: '#9a8d79',
+        surface: '#eee9df',
         correct: '#059669',
         wrong: '#dc2626',
-        wrongBg: 'rgba(220, 38, 38, 0.15)',
         caret: '#4f46e5',
         textMain: '#27272a'
       },
       dracula: {
         bg: '#282a36',
         surface: '#21222c',
-        panel: '#343746',
-        textMuted: '#6272a4',
         correct: '#50fa7b',
         wrong: '#ff5555',
-        wrongBg: 'rgba(255, 85, 85, 0.25)',
         caret: '#bd93f9',
         textMain: '#f8f8f2'
       }
@@ -736,18 +755,19 @@
 
     // State Variables
     let currentThemeKey = 'dark';
-    let currentFontSize = 26;
-    let currentFontFamily = 'font-hind'; // Default to Hind Siliguri
+    let currentFontSize = 28;
+    let currentFontFamily = 'font-hind'; // Default Hind Siliguri
     let currentCursorType = 'cursor-line';
     let currentMode = '30'; // 15, 30, 60, 120, 'custom', 'free'
-    let customTimerDuration = 45; // Default custom seconds
+    let customTimerDuration = 45;
     let currentSound = 'click';
 
     let testStatus = 'idle'; // 'idle', 'running', 'completed'
     let targetText = '';
     let targetChars = [];
     let typedChars = [];
-    let startTime = null;
+    let startTimestamp = null;
+    let endTimestamp = null;
     let timerInterval = null;
     let timeRemaining = 30;
     let timeElapsed = 0;
@@ -758,56 +778,7 @@
 
     let audioCtx = null;
 
-    function playKeySound() {
-      if (currentSound === 'none') return;
-      try {
-        if (!audioCtx) {
-          const AudioContext = window.AudioContext || window.webkitAudioContext;
-          if (AudioContext) audioCtx = new AudioContext();
-        }
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
-        if (!audioCtx) return;
-
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-
-        const now = audioCtx.currentTime;
-        if (currentSound === 'click') {
-          // Sharp mechanical click
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(1400, now);
-          osc.frequency.exponentialRampToValueAtTime(120, now + 0.035);
-          gain.gain.setValueAtTime(0.14, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
-          osc.start(now);
-          osc.stop(now + 0.035);
-        } else if (currentSound === 'thock') {
-          // Deep mechanical switch thock
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(320, now);
-          osc.frequency.exponentialRampToValueAtTime(80, now + 0.06);
-          gain.gain.setValueAtTime(0.25, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
-          osc.start(now);
-          osc.stop(now + 0.06);
-        } else if (currentSound === 'beep') {
-          // Soft bubble pop
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(600 + Math.random() * 100, now);
-          gain.gain.setValueAtTime(0.08, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-          osc.start(now);
-          osc.stop(now + 0.04);
-        }
-      } catch (err) {
-        // Audio might be blocked by browser policy before first interaction
-      }
-    }
-
+    // DOM Elements
     const bodyEl = document.getElementById('appBody');
     const liveClockEl = document.getElementById('liveClock');
     const textDisplayBox = document.getElementById('textDisplayBox');
@@ -828,8 +799,11 @@
     const btnFullscreen = document.getElementById('btnFullscreen');
     const fsIconEnter = document.getElementById('fsIconEnter');
     const fsIconExit = document.getElementById('fsIconExit');
-    const btnMainAction = document.getElementById('btnMainAction');
-    const lblMainAction = document.getElementById('lblMainAction');
+    const lblFullscreenText = document.getElementById('lblFullscreenText');
+    const btnStartEndAction = document.getElementById('btnStartEndAction');
+    const lblStartEndAction = document.getElementById('lblStartEndAction');
+    const iconStartEnd = document.getElementById('iconStartEnd');
+    const btnQuickRestart = document.getElementById('btnQuickRestart');
 
     // Metrics
     const metricWpm = document.getElementById('metricWpm');
@@ -851,14 +825,14 @@
     const btnClearCustom = document.getElementById('btnClearCustom');
 
     const modalCustomTimer = document.getElementById('modalCustomTimer');
-    const btnCustomTimerDesktop = document.getElementById('btnCustomTimerDesktop');
-    const btnCustomTimerMobile = document.getElementById('btnCustomTimerMobile');
+    const btnCustomTimerTrigger = document.getElementById('btnCustomTimerTrigger');
+    const btnMobileCustomTimer = document.getElementById('btnMobileCustomTimer');
     const btnCloseCustomTimer = document.getElementById('btnCloseCustomTimer');
     const btnCancelCustomTimer = document.getElementById('btnCancelCustomTimer');
     const btnSetCustomTimer = document.getElementById('btnSetCustomTimer');
     const numCustomTimerInput = document.getElementById('numCustomTimerInput');
-    const lblCustomDesktop = document.getElementById('lblCustomDesktop');
-    const lblCustomMobile = document.getElementById('lblCustomMobile');
+    const lblCustomMode = document.getElementById('lblCustomMode');
+    const lblMobileCustomMode = document.getElementById('lblMobileCustomMode');
 
     const modalSettings = document.getElementById('modalSettings');
     const btnOpenSettings = document.getElementById('btnOpenSettings');
@@ -882,101 +856,49 @@
     const historyStatAvgWpm = document.getElementById('historyStatAvgWpm');
     const historyStatCount = document.getElementById('historyStatCount');
 
-    function loadPersistedData() {
+    function playKeySound() {
+      if (currentSound === 'none') return;
       try {
-        const storedHistory = localStorage.getItem('typeflow_history');
-        if (storedHistory) testHistory = JSON.parse(storedHistory);
-
-        const storedTop = localStorage.getItem('typeflow_top_wpm');
-        if (storedTop) topWpm = parseInt(storedTop, 10) || 0;
-
-        const storedTotal = localStorage.getItem('typeflow_total_tests');
-        if (storedTotal) totalTestsCompleted = parseInt(storedTotal, 10) || 0;
-
-        const storedTheme = localStorage.getItem('typeflow_theme');
-        if (storedTheme && THEMES[storedTheme]) currentThemeKey = storedTheme;
-
-        const storedCustomSec = localStorage.getItem('typeflow_custom_duration');
-        if (storedCustomSec) {
-          customTimerDuration = parseInt(storedCustomSec, 10) || 45;
-          numCustomTimerInput.value = customTimerDuration;
-          updateCustomTimerLabels();
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) audioCtx = new AudioContext();
         }
-
-        const storedFont = localStorage.getItem('typeflow_font');
-        if (storedFont) currentFontFamily = storedFont;
-
-        const storedSize = localStorage.getItem('typeflow_fontsize');
-        if (storedSize) currentFontSize = parseInt(storedSize, 10) || 26;
-
-        const storedCursor = localStorage.getItem('typeflow_cursor');
-        if (storedCursor) currentCursorType = storedCursor;
-
-        const storedSound = localStorage.getItem('typeflow_sound');
-        if (storedSound) currentSound = storedSound;
-
-        const customCorrect = localStorage.getItem('typeflow_color_correct');
-        if (customCorrect && pickerCorrectColor) pickerCorrectColor.value = customCorrect;
-
-        const customWrong = localStorage.getItem('typeflow_color_wrong');
-        if (customWrong && pickerWrongColor) pickerWrongColor.value = customWrong;
-
-        const customCaret = localStorage.getItem('typeflow_color_caret');
-        if (customCaret && pickerCaretColor) pickerCaretColor.value = customCaret;
-
-      } catch (err) {
-        console.warn('Storage read fallback:', err);
-      }
-
-      updateMetricsHeader();
-    }
-
-    function applyTheme(themeKey) {
-      const theme = THEMES[themeKey] || THEMES.dark;
-      currentThemeKey = themeKey;
-
-      // Update custom root variables
-      const correctColor = (pickerCorrectColor && pickerCorrectColor.value) || theme.correct;
-      const wrongColor = (pickerWrongColor && pickerWrongColor.value) || theme.wrong;
-      const caretColor = (pickerCaretColor && pickerCaretColor.value) || theme.caret;
-
-      document.documentElement.style.setProperty('--color-correct', correctColor);
-      document.documentElement.style.setProperty('--color-wrong', wrongColor);
-      document.documentElement.style.setProperty('--color-wrong-bg', theme.wrongBg);
-      document.documentElement.style.setProperty('--color-caret', caretColor);
-      document.documentElement.style.setProperty('--accent-color', caretColor);
-
-      bodyEl.style.backgroundColor = theme.bg;
-      bodyEl.style.color = theme.textMain;
-
-      // Update control panel background
-      const panel = document.getElementById('controlPanel');
-      panel.style.backgroundColor = theme.surface;
-      panel.style.borderColor = `${theme.panel}cc`;
-
-      // Update modal backgrounds
-      ['modalCustomCard', 'modalSettingsCard', 'modalHistoryCard', 'modalCustomTimerCard'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.style.backgroundColor = theme.surface;
-          el.style.borderColor = theme.panel;
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
         }
-      });
+        if (!audioCtx) return;
 
-      // Update active highlight on theme buttons
-      document.querySelectorAll('.theme-btn').forEach(btn => {
-        if (btn.dataset.theme === themeKey) {
-          btn.classList.add('ring-2', 'ring-indigo-500', 'border-transparent');
-        } else {
-          btn.classList.remove('ring-2', 'ring-indigo-500', 'border-transparent');
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (currentSound === 'click') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1400, now);
+          osc.frequency.exponentialRampToValueAtTime(120, now + 0.03);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+          osc.start(now);
+          osc.stop(now + 0.03);
+        } else if (currentSound === 'thock') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(340, now);
+          osc.frequency.exponentialRampToValueAtTime(80, now + 0.05);
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+          osc.start(now);
+          osc.stop(now + 0.05);
+        } else if (currentSound === 'beep') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(650, now);
+          gain.gain.setValueAtTime(0.06, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+          osc.start(now);
+          osc.stop(now + 0.035);
         }
-      });
-
-      try {
-        localStorage.setItem('typeflow_theme', themeKey);
-      } catch (e) {}
-
-      renderTargetTextDisplay();
+      } catch (err) {}
     }
 
     function startLiveClock() {
@@ -996,47 +918,69 @@
       setInterval(update, 1000);
     }
 
+    function applyTheme(themeKey) {
+      const theme = THEMES[themeKey] || THEMES.dark;
+      currentThemeKey = themeKey;
+
+      const correctColor = pickerCorrectColor.value || theme.correct;
+      const wrongColor = pickerWrongColor.value || theme.wrong;
+      const caretColor = pickerCaretColor.value || theme.caret;
+
+      document.documentElement.style.setProperty('--color-correct', correctColor);
+      document.documentElement.style.setProperty('--color-wrong', wrongColor);
+      document.documentElement.style.setProperty('--color-caret', caretColor);
+      document.documentElement.style.setProperty('--bg-main', theme.bg);
+      document.documentElement.style.setProperty('--bg-panel', theme.surface);
+      document.documentElement.style.setProperty('--text-main', theme.textMain);
+
+      bodyEl.style.backgroundColor = theme.bg;
+      bodyEl.style.color = theme.textMain;
+
+      document.getElementById('controlPanel').style.backgroundColor = theme.surface;
+
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        if (btn.dataset.theme === themeKey) {
+          btn.classList.add('ring-2', 'ring-indigo-500', 'border-transparent');
+        } else {
+          btn.classList.remove('ring-2', 'ring-indigo-500', 'border-transparent');
+        }
+      });
+
+      renderTargetTextDisplay();
+    }
+
     function setFontSize(newSize) {
       currentFontSize = Math.min(Math.max(newSize, 16), 46);
       lblFontSize.textContent = `${currentFontSize}px`;
       textDisplayBox.style.fontSize = `${currentFontSize}px`;
-      try {
-        localStorage.setItem('typeflow_fontsize', currentFontSize);
-      } catch (e) {}
     }
 
     function setFontFamily(fontClass) {
-      textDisplayBox.classList.remove('font-mono', 'font-sans', 'font-roboto-mono', 'font-space-mono', 'font-serif', 'font-hind');
+      textDisplayBox.classList.remove('font-hind', 'font-mono', 'font-sans', 'font-roboto-mono', 'font-space-mono', 'font-serif');
       textDisplayBox.classList.add(fontClass);
       currentFontFamily = fontClass;
       selFontFamily.value = fontClass;
       mobileSelFont.value = fontClass;
-      try {
-        localStorage.setItem('typeflow_font', fontClass);
-      } catch (e) {}
     }
 
     function setCursorType(cursorClass) {
       currentCursorType = cursorClass;
       selCursorType.value = cursorClass;
       mobileSelCursor.value = cursorClass;
-      try {
-        localStorage.setItem('typeflow_cursor', cursorClass);
-      } catch (e) {}
       renderTargetTextDisplay();
     }
 
     function prepareText(sourceText) {
       if (!sourceText || sourceText.trim() === '') {
-        const randomList = PRESET_TEXTS.standard;
-        targetText = randomList[Math.floor(Math.random() * randomList.length)];
+        const banglaList = PRESET_TEXTS.bangla;
+        targetText = banglaList[Math.floor(Math.random() * banglaList.length)];
       } else {
         targetText = sourceText.trim().replace(/\s+/g, ' ');
       }
-      targetChars = targetText.split('');
+      targetChars = Array.from(targetText); // Correct unicode split for Bengali
       typedChars = [];
       renderTargetTextDisplay();
-      updateMetricsHeader();
+      updateMetricsLive();
     }
 
     function renderTargetTextDisplay() {
@@ -1051,31 +995,30 @@
 
       words.forEach((word, wIdx) => {
         const wordSpan = document.createElement('span');
-        wordSpan.className = 'typing-word';
+        wordSpan.className = 'word-token';
 
-        const chars = word.split('');
+        const chars = Array.from(word);
         chars.forEach((ch) => {
           const charSpan = document.createElement('span');
           charSpan.className = 'char-node';
           charSpan.dataset.idx = globalCharIndex;
           charSpan.textContent = ch;
 
-          // Status coloring
+          // Status coloring: correct / wrong / untyped
           if (globalCharIndex < typedChars.length) {
             const typed = typedChars[globalCharIndex];
             if (typed === ch) {
               charSpan.style.color = correctColor;
             } else {
               charSpan.style.color = wrongColor;
-              charSpan.style.backgroundColor = 'var(--color-wrong-bg, rgba(239,68,68,0.2))';
+              charSpan.style.backgroundColor = 'var(--color-wrong-bg)';
               charSpan.style.borderRadius = '3px';
             }
           } else {
-            // Untyped character
             charSpan.style.color = currentThemeKey === 'paper' ? '#9a8d79' : '#4b5563';
           }
 
-          // Render Caret at active index
+          // Active Caret Placement
           if (globalCharIndex === typedChars.length) {
             applyCaretStyle(charSpan, caretColor);
           }
@@ -1084,7 +1027,7 @@
           globalCharIndex++;
         });
 
-        // Add space character between words if not last word
+        // Add space token between words
         if (wIdx < words.length - 1) {
           const spaceSpan = document.createElement('span');
           spaceSpan.className = 'char-node';
@@ -1097,7 +1040,7 @@
               spaceSpan.style.color = correctColor;
             } else {
               spaceSpan.style.color = wrongColor;
-              spaceSpan.style.backgroundColor = 'var(--color-wrong-bg, rgba(239,68,68,0.2))';
+              spaceSpan.style.backgroundColor = 'var(--color-wrong-bg)';
               spaceSpan.style.borderRadius = '3px';
             }
           } else {
@@ -1115,7 +1058,7 @@
         textDisplayBox.appendChild(wordSpan);
       });
 
-      // Handle Caret at the end of the text
+      // End-of-text caret
       if (typedChars.length >= targetChars.length && targetChars.length > 0) {
         const endCaret = document.createElement('span');
         endCaret.className = 'char-node';
@@ -1124,12 +1067,11 @@
         textDisplayBox.appendChild(endCaret);
       }
 
-      // Auto scroll to active caret line
       scrollToActiveChar();
 
-      // Update progress bar
+      // Progress bar and character summary
       const progressPercent = Math.min((typedChars.length / targetChars.length) * 100, 100);
-      testProgressBar.style.width = currentMode === 'free' ? `${progressPercent}%` : `${progressPercent}%`;
+      testProgressBar.style.width = `${progressPercent}%`;
       charCountSummary.textContent = `${typedChars.length} / ${targetChars.length} chars`;
     }
 
@@ -1143,7 +1085,6 @@
       } else if (currentCursorType === 'cursor-block') {
         span.classList.add('cursor-block');
         span.style.backgroundColor = color;
-        span.style.color = '#000';
       } else if (currentCursorType === 'cursor-underline') {
         span.classList.add('cursor-underline');
         span.style.borderBottomColor = color;
@@ -1162,16 +1103,171 @@
         const containerRect = textDisplayBox.getBoundingClientRect();
         const charRect = activeChar.getBoundingClientRect();
         const offset = charRect.top - containerRect.top - containerRect.height / 2 + charRect.height / 2;
-        if (Math.abs(offset) > 40) {
+        if (Math.abs(offset) > 35) {
           textDisplayBox.scrollBy({ top: offset, behavior: 'smooth' });
         }
       }
     }
 
+    /**
+     * SINGLE-POINT-OF-TRUTH KEYSTROKE PIPELINE
+     * Completely eliminates double-firing and multiple backspace cuts!
+     */
+    function processInputChar(char) {
+      if (testStatus === 'completed') return;
+
+      // Start on first typed character
+      if (testStatus === 'idle') {
+        startTypingSession();
+      }
+
+      if (typedChars.length < targetChars.length) {
+        typedChars.push(char);
+        playKeySound();
+        renderTargetTextDisplay();
+        updateMetricsLive();
+
+        if (typedChars.length >= targetChars.length) {
+          endTypingSession();
+        }
+      }
+    }
+
+    function processBackspace() {
+      if (testStatus === 'completed') return;
+
+      if (typedChars.length > 0) {
+        typedChars.pop();
+        playKeySound();
+        renderTargetTextDisplay();
+        updateMetricsLive();
+      }
+    }
+
+    // Attach to hidden proxy textarea with absolute priority
+    hiddenInput.addEventListener('keydown', (e) => {
+      // Allow browser shortcuts (like Ctrl+R, Ctrl+C, Ctrl+V, etc.)
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      // Hotkey restarts
+      if (e.key === 'Tab' || e.key === 'Escape') {
+        e.preventDefault();
+        resetTest();
+        return;
+      }
+
+      // Handle Backspace: prevent default so exactly 1 backspace occurs
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        processBackspace();
+        return;
+      }
+
+      // Handle Space: prevent default and add space
+      if (e.key === ' ') {
+        e.preventDefault();
+        processInputChar(' ');
+        return;
+      }
+
+      // Handle single character: PREVENT DEFAULT so input event will NOT duplicate it!
+      if (e.key && e.key.length === 1) {
+        e.preventDefault();
+        processInputChar(e.key);
+        return;
+      }
+    });
+
+    // Mobile Virtual Keyboard and IME composite input fallback
+    hiddenInput.addEventListener('input', (e) => {
+      // Handles backspace from software keyboards when keydown is suppressed
+      if (e.inputType === 'deleteContentBackward') {
+        processBackspace();
+        hiddenInput.value = '';
+        return;
+      }
+
+      // For virtual keyboards that send buffered input
+      const val = hiddenInput.value;
+      if (val && val.length > 0) {
+        const arr = Array.from(val);
+        arr.forEach(ch => processInputChar(ch));
+        hiddenInput.value = '';
+      }
+    });
+
+    // Window global catch for seamless typing even if focus was clicked away
+    window.addEventListener('keydown', (e) => {
+      // Ignore if typing inside modal textareas or inputs
+      if (e.target && ['TEXTAREA', 'INPUT'].includes(e.target.tagName)) {
+        return;
+      }
+
+      if (e.key === 'Tab' || e.key === 'Escape') {
+        e.preventDefault();
+        resetTest();
+        return;
+      }
+
+      // Automatically focus hidden input
+      focusTyping();
+    });
+
+    function focusTyping() {
+      hiddenInput.value = '';
+      hiddenInput.focus({ preventScroll: true });
+      focusOverlay.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    document.getElementById('typingArena').addEventListener('click', focusTyping);
+    document.getElementById('btnFocusPrompt').addEventListener('click', (e) => {
+      e.stopPropagation();
+      focusTyping();
+    });
+
+    window.addEventListener('blur', () => {
+      if (testStatus === 'running') {
+        focusOverlay.classList.remove('opacity-0', 'pointer-events-none');
+      }
+    });
+
+    function calculateMetrics() {
+      if (!startTimestamp || typedChars.length === 0) {
+        return { wpm: 0, accuracy: 100, correctCount: 0, totalTyped: 0 };
+      }
+
+      const minutes = Math.max((Date.now() - startTimestamp) / 60000, 0.005);
+      let correctChars = 0;
+
+      for (let i = 0; i < typedChars.length; i++) {
+        if (typedChars[i] === targetChars[i]) {
+          correctChars++;
+        }
+      }
+
+      const wpm = Math.max(Math.round((correctChars / 5) / minutes), 0);
+      const accuracy = Math.round((correctChars / typedChars.length) * 100) || 0;
+
+      return { wpm, accuracy, correctCount: correctChars, totalTyped: typedChars.length };
+    }
+
+    function updateMetricsLive() {
+      const { wpm, accuracy } = calculateMetrics();
+      metricWpm.textContent = wpm;
+      metricAcc.textContent = `${accuracy}%`;
+    }
+
+    function updateHeaderStats() {
+      metricTopWpm.textContent = topWpm;
+      metricTotalTests.textContent = totalTestsCompleted;
+      mobileTopWpm.textContent = topWpm;
+      mobileTotalTests.textContent = totalTestsCompleted;
+    }
+
     function startTypingSession() {
       if (testStatus === 'running') return;
       testStatus = 'running';
-      startTime = Date.now();
+      startTimestamp = Date.now();
       timeElapsed = 0;
 
       if (currentMode === 'free') {
@@ -1183,7 +1279,9 @@
       }
 
       metricTime.textContent = currentMode === 'free' ? '0s' : `${timeRemaining}s`;
-      lblMainAction.textContent = 'Restart';
+
+      // Update Start / End button state to "End"
+      updateStartEndButton(true);
 
       clearInterval(timerInterval);
       timerInterval = setInterval(() => {
@@ -1201,98 +1299,30 @@
           updateMetricsLive();
 
           if (timeRemaining <= 0) {
-            completeTypingSession();
+            endTypingSession();
           }
         }
       }, 1000);
     }
 
-    function handleUserInputChar(key) {
+    function endTypingSession() {
       if (testStatus === 'completed') return;
-
-      // Start on first keypress
-      if (testStatus === 'idle') {
-        startTypingSession();
-      }
-
-      if (key === 'Backspace') {
-        if (typedChars.length > 0) {
-          typedChars.pop();
-          playKeySound();
-          renderTargetTextDisplay();
-          updateMetricsLive();
-        }
-        return;
-      }
-
-      // Ignore modifiers and function keys
-      if (!key || key.length > 1) return;
-
-      // Normal Character Input
-      if (typedChars.length < targetChars.length) {
-        typedChars.push(key);
-        playKeySound();
-        renderTargetTextDisplay();
-        updateMetricsLive();
-
-        // Check if finished entire text
-        if (typedChars.length >= targetChars.length) {
-          completeTypingSession();
-        }
-      }
-    }
-
-    function calculateMetrics() {
-      if (!startTime || typedChars.length === 0) {
-        return { wpm: 0, accuracy: 100, correctCount: 0, totalTyped: 0 };
-      }
-
-      const minutes = Math.max((Date.now() - startTime) / 60000, 0.005);
-      let correctChars = 0;
-
-      for (let i = 0; i < typedChars.length; i++) {
-        if (typedChars[i] === targetChars[i]) {
-          correctChars++;
-        }
-      }
-
-      // Standard typing metric formula: 1 word = 5 characters
-      const wpm = Math.max(Math.round((correctChars / 5) / minutes), 0);
-      const accuracy = Math.round((correctChars / typedChars.length) * 100) || 0;
-
-      return { wpm, accuracy, correctCount: correctChars, totalTyped: typedChars.length };
-    }
-
-    function updateMetricsLive() {
-      const { wpm, accuracy } = calculateMetrics();
-      metricWpm.textContent = wpm;
-      metricAcc.textContent = `${accuracy}%`;
-    }
-
-    function updateMetricsHeader() {
-      metricTopWpm.textContent = topWpm;
-      metricTotalTests.textContent = totalTestsCompleted;
-      mobileTopWpm.textContent = topWpm;
-      mobileTotalTests.textContent = totalTestsCompleted;
-    }
-
-    function completeTypingSession() {
       clearInterval(timerInterval);
       testStatus = 'completed';
+      endTimestamp = Date.now();
 
       const finalMetrics = calculateMetrics();
-      const elapsedSec = Math.round((Date.now() - startTime) / 1000) || 1;
+      const elapsedSec = Math.round((endTimestamp - startTimestamp) / 1000) || 1;
 
-      // Update all-time stats
       totalTestsCompleted++;
       if (finalMetrics.wpm > topWpm) {
         topWpm = finalMetrics.wpm;
       }
 
-      // Record History item
+      // Record to history: Start/End timestamp, Speed, Time, Accuracy Requirement
       const record = {
         id: Date.now(),
-        date: new Date().toLocaleString(),
+        startEnd: `${new Date(startTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})} - ${new Date(endTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`,
         wpm: finalMetrics.wpm,
         accuracy: finalMetrics.accuracy,
         duration: `${elapsedSec}s`,
@@ -1302,26 +1332,20 @@
       testHistory.unshift(record);
       if (testHistory.length > 50) testHistory.pop();
 
-      try {
-        localStorage.setItem('typeflow_top_wpm', topWpm);
-        localStorage.setItem('typeflow_total_tests', totalTestsCompleted);
-        localStorage.setItem('typeflow_history', JSON.stringify(testHistory));
-      } catch (err) {}
-
-      updateMetricsHeader();
+      updateHeaderStats();
       renderHistoryTable();
 
-      // Celebrate or highlight completion
       testProgressBar.style.width = '100%';
-      lblMainAction.textContent = 'Next Test';
+      updateStartEndButton(false, true);
     }
 
-    function resetTest(customParagraph = null) {
+    function resetTest(newCustomText = null) {
       clearInterval(timerInterval);
       testStatus = 'idle';
-      startTime = null;
+      startTimestamp = null;
+      endTimestamp = null;
       timeElapsed = 0;
-      
+
       if (currentMode === 'free') {
         timeRemaining = 0;
         metricTime.textContent = 'Free';
@@ -1332,14 +1356,15 @@
         timeRemaining = parseInt(currentMode, 10);
         metricTime.textContent = `${timeRemaining}s`;
       }
-      
+
       metricWpm.textContent = '0';
       metricAcc.textContent = '100%';
       testProgressBar.style.width = '0%';
-      lblMainAction.textContent = 'Restart';
 
-      if (customParagraph !== null) {
-        prepareText(customParagraph);
+      updateStartEndButton(false, false);
+
+      if (newCustomText !== null) {
+        prepareText(newCustomText);
       } else {
         prepareText(targetText);
       }
@@ -1347,154 +1372,137 @@
       focusTyping();
     }
 
-    function focusTyping() {
-      hiddenInput.value = '';
-      hiddenInput.focus({ preventScroll: true });
-      focusOverlay.classList.add('opacity-0', 'pointer-events-none');
+    function updateStartEndButton(isRunning, isCompleted = false) {
+      if (isRunning) {
+        lblStartEndAction.textContent = 'End';
+        btnStartEndAction.className = 'flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-rose-600/30 transition cursor-pointer';
+        iconStartEnd.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>';
+      } else if (isCompleted) {
+        lblStartEndAction.textContent = 'Restart';
+        btnStartEndAction.className = 'flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-indigo-600/30 transition cursor-pointer';
+        iconStartEnd.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>';
+      } else {
+        lblStartEndAction.textContent = 'Start';
+        btnStartEndAction.className = 'flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 transition cursor-pointer';
+        iconStartEnd.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+      }
     }
 
-    function showFocusPrompt() {
-      focusOverlay.classList.remove('opacity-0', 'pointer-events-none');
-    }
-
-    // Unified & Conflict-Free Keyboard Handling
-    // Prevents double-character firing and backspace double-deleting
-    window.addEventListener('keydown', (e) => {
-      // Don't intercept if user is typing inside modal inputs
-      if (e.target && ['TEXTAREA', 'INPUT'].includes(e.target.tagName) && e.target !== hiddenInput) {
-        return;
-      }
-
-      // Quick restart shortcuts
-      if (e.key === 'Tab' || e.key === 'Escape') {
-        e.preventDefault();
-        resetTest();
-        return;
-      }
-
-      // If hidden proxy input is active, let hidden input event handler process it exclusively
-      // to avoid double triggering! Only handle special keys here if hidden input is not focused.
-      if (document.activeElement === hiddenInput) {
-        if (e.key === 'Backspace') {
-          e.preventDefault();
-          handleUserInputChar('Backspace');
-        } else if (e.key === ' ') {
-          e.preventDefault();
-          handleUserInputChar(' ');
-        }
-        return;
-      }
-
-      // If user clicks in window without hidden input focused:
-      if (e.key === 'Backspace') {
-        e.preventDefault();
-        handleUserInputChar('Backspace');
-      } else if (e.key === ' ') {
-        e.preventDefault();
-        handleUserInputChar(' ');
-      } else if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        e.preventDefault();
-        handleUserInputChar(e.key);
-      }
-    });
-
-    // Hidden input listener for mobile software keyboards & composite IME
-    hiddenInput.addEventListener('input', (e) => {
-      // Handle backspace from virtual keyboards
-      if (e.inputType === 'deleteContentBackward') {
-        handleUserInputChar('Backspace');
-        hiddenInput.value = '';
-        return;
-      }
-
-      // Process input text accurately
-      const val = hiddenInput.value;
-      if (val && val.length > 0) {
-        // Iterate every char in case of fast typing or mobile predictive words
-        for (let i = 0; i < val.length; i++) {
-          handleUserInputChar(val[i]);
-        }
-        hiddenInput.value = '';
-      }
-    });
-
-    // Clicking anywhere in the preview area focuses typing
-    document.getElementById('typingArena').addEventListener('click', () => {
-      focusTyping();
-    });
-
-    document.getElementById('btnFocusPrompt').addEventListener('click', (e) => {
-      e.stopPropagation();
-      focusTyping();
-    });
-
-    window.addEventListener('blur', () => {
+    // Start / End Button Click
+    btnStartEndAction.addEventListener('click', () => {
       if (testStatus === 'running') {
-        showFocusPrompt();
+        endTypingSession();
+      } else if (testStatus === 'completed') {
+        resetTest();
+      } else {
+        startTypingSession();
+        focusTyping();
       }
     });
 
-    function openModal(modalEl) {
-      modalEl.classList.remove('hidden');
+    btnQuickRestart.addEventListener('click', () => resetTest());
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    function updateFullscreenUI() {
+      if (document.fullscreenElement) {
+        fsIconEnter.classList.add('hidden');
+        fsIconExit.classList.remove('hidden');
+        lblFullscreenText.textContent = 'Exit FS';
+        btnFullscreen.classList.add('bg-amber-950/90', 'border-amber-500/80', 'text-amber-300');
+        btnFullscreen.classList.remove('bg-indigo-950/90', 'border-indigo-500/70', 'text-indigo-300');
+      } else {
+        fsIconEnter.classList.remove('hidden');
+        fsIconExit.classList.add('hidden');
+        lblFullscreenText.textContent = 'ফুলস্ক্রিন';
+        btnFullscreen.classList.remove('bg-amber-950/90', 'border-amber-500/80', 'text-amber-300');
+        btnFullscreen.classList.add('bg-indigo-950/90', 'border-indigo-500/70', 'text-indigo-300');
+      }
+    }
+
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', updateFullscreenUI);
+
+    // Modal Helpers
+    function openModal(el) {
+      el.classList.remove('hidden');
       requestAnimationFrame(() => {
-        modalEl.classList.remove('opacity-0');
-        const card = modalEl.querySelector('div');
+        el.classList.remove('opacity-0');
+        const card = el.querySelector('div');
         if (card) card.classList.remove('scale-95');
       });
     }
 
-    function closeModal(modalEl) {
-      modalEl.classList.add('opacity-0');
-      const card = modalEl.querySelector('div');
+    function closeModal(el) {
+      el.classList.add('opacity-0');
+      const card = el.querySelector('div');
       if (card) card.classList.add('scale-95');
       setTimeout(() => {
-        modalEl.classList.add('hidden');
+        el.classList.add('hidden');
         focusTyping();
       }, 200);
     }
 
-    // Custom Text Modal Events
+    // Custom Text Modal
     btnOpenCustomText.addEventListener('click', () => {
       txtCustomInput.value = targetText;
-      updateCustomWordCounts();
+      updateWordCounts();
       openModal(modalCustomText);
     });
-
     btnCloseCustomText.addEventListener('click', () => closeModal(modalCustomText));
     btnCancelCustomText.addEventListener('click', () => closeModal(modalCustomText));
 
-    txtCustomInput.addEventListener('input', updateCustomWordCounts);
-
-    function updateCustomWordCounts() {
+    function updateWordCounts() {
       const val = txtCustomInput.value.trim();
-      const chars = val.length;
+      const chars = Array.from(val).length;
       const words = val.length > 0 ? val.split(/\s+/).length : 0;
       customWordCharCount.textContent = `${chars} characters • ${words} words`;
     }
 
+    txtCustomInput.addEventListener('input', updateWordCounts);
     btnClearCustom.addEventListener('click', () => {
       txtCustomInput.value = '';
-      updateCustomWordCounts();
+      updateWordCounts();
     });
 
-    function updateCustomTimerLabels() {
-      lblCustomDesktop.textContent = `${customTimerDuration}s`;
-      lblCustomMobile.textContent = `${customTimerDuration}s`;
-    }
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.preset;
+        const options = PRESET_TEXTS[key];
+        if (Array.isArray(options)) {
+          txtCustomInput.value = options[Math.floor(Math.random() * options.length)];
+        } else {
+          txtCustomInput.value = options;
+        }
+        if (key === 'bangla') {
+          setFontFamily('font-hind');
+        }
+        updateWordCounts();
+      });
+    });
 
+    btnApplyCustomText.addEventListener('click', () => {
+      const txt = txtCustomInput.value.trim() || PRESET_TEXTS.bangla[0];
+      closeModal(modalCustomText);
+      resetTest(txt);
+    });
+
+    // Custom Timer Modal
     function openCustomTimerModal() {
       numCustomTimerInput.value = customTimerDuration;
       openModal(modalCustomTimer);
     }
 
-    btnCustomTimerDesktop.addEventListener('click', () => {
-      openCustomTimerModal();
-    });
-
-    btnCustomTimerMobile.addEventListener('click', () => {
-      openCustomTimerModal();
-    });
-
+    btnCustomTimerTrigger.addEventListener('click', openCustomTimerModal);
+    btnMobileCustomTimer.addEventListener('click', openCustomTimerModal);
     btnCloseCustomTimer.addEventListener('click', () => closeModal(modalCustomTimer));
     btnCancelCustomTimer.addEventListener('click', () => closeModal(modalCustomTimer));
 
@@ -1508,75 +1516,92 @@
       let sec = parseInt(numCustomTimerInput.value, 10);
       if (isNaN(sec) || sec < 5) sec = 5;
       if (sec > 3600) sec = 3600;
-
       customTimerDuration = sec;
-      updateCustomTimerLabels();
 
-      try {
-        localStorage.setItem('typeflow_custom_duration', customTimerDuration);
-      } catch (e) {}
+      lblCustomMode.textContent = `${customTimerDuration}s`;
+      lblMobileCustomMode.textContent = `${customTimerDuration}s`;
 
       closeModal(modalCustomTimer);
       setTestMode('custom');
     });
 
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const presetKey = btn.dataset.preset;
-        const options = PRESET_TEXTS[presetKey];
-        if (Array.isArray(options)) {
-          txtCustomInput.value = options[Math.floor(Math.random() * options.length)];
+    function setTestMode(modeVal) {
+      currentMode = modeVal;
+      document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
+        if (btn.dataset.mode === modeVal) {
+          btn.classList.add('bg-indigo-600', 'text-white', 'font-bold');
+          btn.classList.remove('bg-slate-800', 'text-slate-300');
         } else {
-          txtCustomInput.value = options;
+          btn.classList.remove('bg-indigo-600', 'text-white', 'font-bold');
+          btn.classList.add('text-slate-300');
         }
-        if (presetKey === 'bangla') {
-          setFontFamily('font-hind');
+      });
+      resetTest();
+    }
+
+    document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        if (mode !== 'custom') {
+          setTestMode(mode);
         }
-        updateCustomWordCounts();
       });
     });
 
-    btnApplyCustomText.addEventListener('click', () => {
-      const textToUse = txtCustomInput.value.trim() || PRESET_TEXTS.standard[0];
-      closeModal(modalCustomText);
-      resetTest(textToUse);
-    });
-
-    // Settings Modal Events
+    // Settings Modal
     btnOpenSettings.addEventListener('click', () => openModal(modalSettings));
     btnCloseSettings.addEventListener('click', () => closeModal(modalSettings));
     btnDoneSettings.addEventListener('click', () => closeModal(modalSettings));
 
     document.querySelectorAll('.theme-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        applyTheme(btn.dataset.theme);
-      });
+      btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
     });
 
     [pickerCorrectColor, pickerWrongColor, pickerCaretColor].forEach(picker => {
-      picker.addEventListener('input', () => {
-        try {
-          localStorage.setItem('typeflow_color_correct', pickerCorrectColor.value);
-          localStorage.setItem('typeflow_color_wrong', pickerWrongColor.value);
-          localStorage.setItem('typeflow_color_caret', pickerCaretColor.value);
-        } catch (e) {}
-        applyTheme(currentThemeKey);
-      });
+      picker.addEventListener('input', () => applyTheme(currentThemeKey));
     });
 
-    // History Modal Events
+    // Font & Cursor Events
+    btnFontInc.addEventListener('click', () => setFontSize(currentFontSize + 2));
+    btnFontDec.addEventListener('click', () => setFontSize(currentFontSize - 2));
+
+    selFontFamily.addEventListener('change', (e) => setFontFamily(e.target.value));
+    mobileSelFont.addEventListener('change', (e) => setFontFamily(e.target.value));
+
+    selCursorType.addEventListener('change', (e) => setCursorType(e.target.value));
+    mobileSelCursor.addEventListener('change', (e) => setCursorType(e.target.value));
+
+    // Sound Events
+    selSoundType.addEventListener('change', (e) => {
+      currentSound = e.target.value;
+      updateSoundIcons();
+    });
+
+    btnSoundToggle.addEventListener('click', () => {
+      currentSound = currentSound === 'none' ? 'click' : 'none';
+      selSoundType.value = currentSound;
+      updateSoundIcons();
+    });
+
+    function updateSoundIcons() {
+      if (currentSound === 'none') {
+        soundIconOn.classList.add('hidden');
+        soundIconOff.classList.remove('hidden');
+      } else {
+        soundIconOn.classList.remove('hidden');
+        soundIconOff.classList.add('hidden');
+      }
+    }
+
+    // History Modal
     btnOpenHistory.addEventListener('click', () => {
       renderHistoryTable();
       openModal(modalHistory);
     });
     btnCloseHistory.addEventListener('click', () => closeModal(modalHistory));
     btnDoneHistory.addEventListener('click', () => closeModal(modalHistory));
-
     btnClearHistory.addEventListener('click', () => {
       testHistory = [];
-      try {
-        localStorage.removeItem('typeflow_history');
-      } catch (e) {}
       renderHistoryTable();
     });
 
@@ -1586,8 +1611,8 @@
       if (testHistory.length === 0) {
         historyTableBody.innerHTML = `
           <tr>
-            <td colspan="5" class="py-6 text-center text-slate-500 font-sans italic">
-              No test history recorded yet. Complete a test to see your analytics here!
+            <td colspan="5" class="py-6 text-center text-slate-500 font-hind">
+              কোনো হিস্ট্রি রেকর্ড পাওয়া যায়নি। একটি টেস্ট সম্পন্ন করুন!
             </td>
           </tr>`;
         historyStatTopWpm.textContent = '0';
@@ -1602,11 +1627,11 @@
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-800/40 transition';
         tr.innerHTML = `
-          <td class="py-2 px-3 text-slate-400 font-sans text-[11px]">${item.date}</td>
-          <td class="py-2 px-3 font-bold text-amber-400">${item.wpm}</td>
-          <td class="py-2 px-3 text-emerald-400 font-bold">${item.accuracy}%</td>
-          <td class="py-2 px-3 text-indigo-300">${item.duration}</td>
-          <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700 font-sans">${item.mode}</span></td>
+          <td class="py-2.5 px-3 text-slate-400 font-mono text-[11px]">${item.startEnd}</td>
+          <td class="py-2.5 px-3 font-bold text-amber-400">${item.wpm}</td>
+          <td class="py-2.5 px-3 text-emerald-400 font-bold">${item.accuracy}%</td>
+          <td class="py-2.5 px-3 text-indigo-300 font-bold">${item.duration}</td>
+          <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700">${item.mode}</span></td>
         `;
         historyTableBody.appendChild(tr);
       });
@@ -1617,127 +1642,17 @@
       historyStatCount.textContent = testHistory.length;
     }
 
-    function setTestMode(modeVal) {
-      currentMode = modeVal;
-      document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
-        if (btn.dataset.mode === modeVal) {
-          btn.classList.add('bg-indigo-600', 'text-white', 'font-semibold');
-          btn.classList.remove('bg-slate-800', 'text-slate-300');
-        } else {
-          btn.classList.remove('bg-indigo-600', 'text-white', 'font-semibold');
-          btn.classList.add('text-slate-300');
-        }
-      });
-
-      if (modeVal === 'custom') {
-        updateCustomTimerLabels();
-      }
-
-      resetTest();
-    }
-
-    document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const mode = btn.dataset.mode;
-        if (mode === 'custom') {
-          // If clicked and not already opened from the button, mode is set
-          setTestMode('custom');
-        } else {
-          setTestMode(mode);
-        }
-      });
-    });
-
-    btnFontInc.addEventListener('click', () => setFontSize(currentFontSize + 2));
-    btnFontDec.addEventListener('click', () => setFontSize(currentFontSize - 2));
-
-    selFontFamily.addEventListener('change', (e) => setFontFamily(e.target.value));
-    mobileSelFont.addEventListener('change', (e) => setFontFamily(e.target.value));
-
-    selCursorType.addEventListener('change', (e) => setCursorType(e.target.value));
-    mobileSelCursor.addEventListener('change', (e) => setCursorType(e.target.value));
-
-    selSoundType.addEventListener('change', (e) => {
-      currentSound = e.target.value;
-      updateSoundIcons();
-      try {
-        localStorage.setItem('typeflow_sound', currentSound);
-      } catch (err) {}
-    });
-
-    btnSoundToggle.addEventListener('click', () => {
-      if (currentSound === 'none') {
-        currentSound = 'click';
-      } else {
-        currentSound = 'none';
-      }
-      selSoundType.value = currentSound;
-      updateSoundIcons();
-      try {
-        localStorage.setItem('typeflow_sound', currentSound);
-      } catch (err) {}
-    });
-
-    function updateSoundIcons() {
-      if (currentSound === 'none') {
-        soundIconOn.classList.add('hidden');
-        soundIconOff.classList.remove('hidden');
-      } else {
-        soundIconOn.classList.remove('hidden');
-        soundIconOff.classList.add('hidden');
-      }
-    }
-
-    function toggleFullscreen() {
-      if (!document.fullscreenElement) {
-        document.documentElement.requestFullscreen().catch(err => {
-          console.warn(`Fullscreen error: ${err.message}`);
-        });
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
-      }
-    }
-
-    function updateFullscreenIcons() {
-      const lblFs = document.getElementById('lblFullscreen');
-      if (document.fullscreenElement) {
-        fsIconEnter.classList.add('hidden');
-        fsIconExit.classList.remove('hidden');
-        btnFullscreen.title = 'Exit Fullscreen';
-        if (lblFs) lblFs.textContent = 'Exit FS';
-        btnFullscreen.classList.add('bg-amber-950/80', 'border-amber-600/80', 'text-amber-300');
-        btnFullscreen.classList.remove('bg-indigo-950/70', 'border-indigo-700/60', 'text-indigo-300');
-      } else {
-        fsIconEnter.classList.remove('hidden');
-        fsIconExit.classList.add('hidden');
-        btnFullscreen.title = 'Enter Fullscreen';
-        if (lblFs) lblFs.textContent = 'Fullscreen';
-        btnFullscreen.classList.remove('bg-amber-950/80', 'border-amber-600/80', 'text-amber-300');
-        btnFullscreen.classList.add('bg-indigo-950/70', 'border-indigo-700/60', 'text-indigo-300');
-      }
-    }
-
-    btnFullscreen.addEventListener('click', toggleFullscreen);
-    document.addEventListener('fullscreenchange', updateFullscreenIcons);
-
-    btnMainAction.addEventListener('click', () => {
-      resetTest();
-    });
-
+    // Initial Bootstrap
     window.addEventListener('DOMContentLoaded', () => {
-      loadPersistedData();
       startLiveClock();
       setFontSize(currentFontSize);
       setFontFamily(currentFontFamily);
       setCursorType(currentCursorType);
       applyTheme(currentThemeKey);
       updateSoundIcons();
-      updateFullscreenIcons();
-      selSoundType.value = currentSound;
+      updateFullscreenUI();
+      updateHeaderStats();
 
-      // Load initial text and focus typing arena
       prepareText();
       focusTyping();
     });
