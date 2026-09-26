@@ -110,7 +110,7 @@
     }
   </style>
 </head>
-<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden font-sans select-none antialiased transition-colors duration-300" id="appBody">
+<body class="bg-surface-950 text-slate-100 h-screen flex flex-col overflow-hidden font-sans select-none antialiased transition-colors duration-300" id="appBody">
 
   <!-- Hidden proxy input for touch & seamless keyboard capture -->
   <textarea id="hiddenTypingInput" 
@@ -120,157 +120,148 @@
     autocorrect="off" 
     spellcheck="false"></textarea>
 
-  <header id="controlPanel" class="w-full flex-none border-b border-slate-800/80 bg-surface-900/90 backdrop-blur-md z-30 transition-all duration-200">
-    <div class="max-w-[1920px] mx-auto px-3 sm:px-5 py-2 sm:py-2.5">
+  <!-- 10% TOP CONTROL & INFORMATION PANEL -->
+  <header id="controlPanel" class="w-full h-auto min-h-[58px] lg:h-[10vh] flex-none border-b border-slate-800/80 bg-surface-900/95 backdrop-blur-md z-30 flex items-center transition-all duration-200">
+    <div class="w-full max-w-[1920px] mx-auto px-3 sm:px-5 py-1.5 lg:py-0 flex flex-col justify-center h-full">
       
-      <!-- Top Row: Branding, Live Clock, Primary Stats, and Fast Controls -->
-      <div class="flex items-center justify-between gap-2 md:gap-4 flex-wrap">
+      <!-- Top Row: Branding, Live Clock, Primary Stats, Fullscreen and Fast Controls -->
+      <div class="flex items-center justify-between gap-2 md:gap-3 flex-wrap lg:flex-nowrap">
         
         <!-- Brand & Clock -->
-        <div class="flex items-center gap-2 sm:gap-4">
+        <div class="flex items-center gap-2 sm:gap-3 shrink-0">
           <div class="flex items-center gap-2">
-            <span class="p-1.5 sm:p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <span class="p-1 sm:p-1.5 rounded-lg bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <rect x="2" y="4" width="20" height="16" rx="3" stroke-width="2"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
               </svg>
             </span>
             <div>
-              <h1 class="font-bold text-sm sm:text-base tracking-tight flex items-center gap-1.5 text-white">
-                TypeFlow <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-semibold hidden sm:inline-block">Pro</span>
+              <h1 class="font-bold text-xs sm:text-sm tracking-tight flex items-center gap-1 text-white">
+                TypeFlow <span class="text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-semibold hidden sm:inline-block">Pro</span>
               </h1>
-              <div id="liveClock" class="text-[10px] sm:text-xs font-mono text-slate-400 leading-none">--:--:--</div>
+              <div id="liveClock" class="text-[9px] sm:text-[11px] font-mono text-slate-400 leading-none">--:--:--</div>
             </div>
           </div>
         </div>
 
-        <!-- Desktop Central Controls & Settings Hub (Visible on md+) -->
-        <div class="hidden lg:flex items-center gap-3">
+        <!-- Desktop Central Controls & Settings Hub (Visible on lg+) -->
+        <div class="hidden lg:flex items-center gap-2 shrink-0">
           <!-- Font Size Stepper -->
-          <div class="flex items-center bg-slate-800/70 border border-slate-700/60 rounded-lg p-0.5 text-xs">
-            <button id="btnFontDec" title="Decrease Font Size" class="px-2 py-1 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A−</button>
-            <span id="lblFontSize" class="px-2 font-mono text-slate-300 text-xs font-medium min-w-[3rem] text-center">28px</span>
-            <button id="btnFontInc" title="Increase Font Size" class="px-2 py-1 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A+</button>
+          <div class="flex items-center bg-slate-800/80 border border-slate-700/60 rounded-lg p-0.5 text-xs">
+            <button id="btnFontDec" title="Decrease Font Size" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A−</button>
+            <span id="lblFontSize" class="px-1.5 font-mono text-slate-300 text-xs font-medium min-w-[2.8rem] text-center">26px</span>
+            <button id="btnFontInc" title="Increase Font Size" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A+</button>
           </div>
 
           <!-- Font Family Selector -->
           <div class="relative">
-            <select id="selFontFamily" class="bg-slate-800/70 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
-              <option value="font-mono">JetBrains Mono</option>
+            <select id="selFontFamily" class="bg-slate-800/80 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2 py-1 pr-6 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
               <option value="font-hind">হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
+              <option value="font-mono">JetBrains Mono</option>
               <option value="font-sans">Inter Sans</option>
               <option value="font-roboto-mono">Roboto Mono</option>
               <option value="font-space-mono">Space Mono</option>
               <option value="font-serif">Playfair Serif</option>
             </select>
             <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
           </div>
 
           <!-- Cursor Selector -->
           <div class="relative">
-            <select id="selCursorType" class="bg-slate-800/70 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+            <select id="selCursorType" class="bg-slate-800/80 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2 py-1 pr-6 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
               <option value="cursor-line">Caret: Line |</option>
               <option value="cursor-block">Caret: Block █</option>
               <option value="cursor-underline">Caret: Underline _</option>
-              <option value="cursor-pulse">Caret: Smooth Pulse</option>
+              <option value="cursor-pulse">Caret: Pulse</option>
             </select>
             <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+              <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
             </div>
           </div>
 
           <!-- Mode / Timer Segmented Buttons (With Custom Timer Option) -->
-          <div class="flex items-center bg-slate-800/70 border border-slate-700/60 rounded-lg p-0.5 text-xs font-medium">
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="15">15s</button>
-            <button class="mode-btn px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold shadow-sm transition" data-mode="30">30s</button>
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="60">60s</button>
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="120">120s</button>
-            <button id="btnCustomTimerDesktop" class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white flex items-center gap-1 transition" data-mode="custom">
+          <div class="flex items-center bg-slate-800/80 border border-slate-700/60 rounded-lg p-0.5 text-xs font-medium">
+            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="15">15s</button>
+            <button class="mode-btn px-2 py-1 rounded bg-indigo-600 text-white font-semibold shadow-sm transition" data-mode="30">30s</button>
+            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="60">60s</button>
+            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="120">120s</button>
+            <button id="btnCustomTimerDesktop" class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white flex items-center gap-1 transition" data-mode="custom">
               <span id="lblCustomDesktop">Custom</span>
-              <svg class="w-3 h-3 text-indigo-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+              <svg class="w-2.5 h-2.5 text-indigo-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
             </button>
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="free">Free</button>
+            <button class="mode-btn px-2 py-1 rounded text-slate-300 hover:text-white transition" data-mode="free">Free</button>
           </div>
 
           <!-- Sound Effects Toggle -->
-          <button id="btnSoundToggle" title="Toggle Mechanical Key Sound" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/50 hover:bg-slate-700 border border-slate-700/60 transition">
-            <svg id="soundIconOn" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button id="btnSoundToggle" title="Toggle Mechanical Key Sound" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/60 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg id="soundIconOn" class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
             </svg>
-            <svg id="soundIconOff" class="w-4 h-4 text-slate-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg id="soundIconOff" class="w-3.5 h-3.5 text-slate-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
             </svg>
           </button>
-
-          <!-- Fullscreen Toggle Button -->
-          <button id="btnFullscreen" title="Toggle Fullscreen" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/50 hover:bg-slate-700 border border-slate-700/60 transition">
-            <svg id="fsIconEnter" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-            </svg>
-            <svg id="fsIconExit" class="w-4 h-4 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5m0 0l4-4M15 4v4h4m0 0l-4-4M9 20v-4H5m0 0l4 4m6-4v4h4m0 0l-4-4"/>
-            </svg>
-          </button>
         </div>
 
-        <!-- Live Scoreboard Pills: WPM, Accuracy, Time Left/Elapsed, Top, Tests -->
-        <div class="flex items-center gap-1.5 sm:gap-2.5">
+        <!-- Live Scoreboard Pills: WPM, Accuracy, Time Left, Prominent Fullscreen, and Main Actions -->
+        <div class="flex items-center gap-1.5 sm:gap-2 ml-auto lg:ml-0">
           
           <!-- Live WPM Pill -->
-          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-3 py-1 rounded-xl shadow-inner">
-            <span class="text-[10px] uppercase font-bold text-slate-400">WPM</span>
-            <span id="metricWpm" class="font-mono text-sm sm:text-lg font-black text-amber-400">0</span>
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-inner">
+            <span class="text-[9px] uppercase font-bold text-slate-400">WPM</span>
+            <span id="metricWpm" class="font-mono text-xs sm:text-base font-black text-amber-400">0</span>
           </div>
 
           <!-- Accuracy Pill -->
-          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-3 py-1 rounded-xl shadow-inner">
-            <span class="text-[10px] uppercase font-bold text-slate-400">ACC</span>
-            <span id="metricAcc" class="font-mono text-sm sm:text-lg font-black text-emerald-400">100%</span>
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-inner">
+            <span class="text-[9px] uppercase font-bold text-slate-400">ACC</span>
+            <span id="metricAcc" class="font-mono text-xs sm:text-base font-black text-emerald-400">100%</span>
           </div>
 
           <!-- Timer / Duration Pill -->
-          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-3 py-1 rounded-xl shadow-inner">
-            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
-            <span id="metricTime" class="font-mono text-sm sm:text-lg font-black text-indigo-300 min-w-[2.2rem] text-center">30</span>
+          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-lg shadow-inner">
+            <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+            <span id="metricTime" class="font-mono text-xs sm:text-base font-black text-indigo-300 min-w-[2rem] text-center">30s</span>
           </div>
 
-          <!-- Secondary Stats (Hidden on smallest mobile) -->
-          <div class="hidden sm:flex items-center gap-2 bg-slate-800/40 border border-slate-700/50 px-2.5 py-1 rounded-xl text-xs font-mono text-slate-300">
-            <span title="Personal Top WPM" class="flex items-center gap-1">
-              <span class="text-amber-400 text-xs">★</span> <span id="metricTopWpm">0</span>
-            </span>
-            <span class="text-slate-600">|</span>
-            <span title="Total Completed Tests" class="text-slate-400">
-              #<span id="metricTotalTests" class="text-slate-300">0</span>
-            </span>
-          </div>
+          <!-- PROMINENT FULLSCREEN BUTTON (Always visible on mobile & desktop) -->
+          <button id="btnFullscreen" title="Toggle Fullscreen Mode" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-700/60 font-medium text-xs shadow-sm transition active:scale-95 cursor-pointer">
+            <svg id="fsIconEnter" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+            </svg>
+            <svg id="fsIconExit" class="w-3.5 h-3.5 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5m0 0l4-4M15 4v4h4m0 0l-4-4M9 20v-4H5m0 0l4 4m6-4v4h4m0 0l-4-4"/>
+            </svg>
+            <span id="lblFullscreen" class="hidden sm:inline">Fullscreen</span>
+          </button>
 
           <!-- Start / Restart Primary Action Button -->
-          <button id="btnMainAction" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-medium text-xs sm:text-sm px-3 sm:px-4 py-1.5 rounded-xl shadow-lg shadow-indigo-600/20 transition cursor-pointer">
-            <svg id="iconPlay" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          <button id="btnMainAction" class="flex items-center gap-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-medium text-xs px-2.5 sm:px-3.5 py-1 rounded-lg shadow-md shadow-indigo-600/20 transition cursor-pointer">
+            <svg id="iconPlay" class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             <span id="lblMainAction" class="font-semibold">Restart</span>
           </button>
 
-          <!-- Custom Text / Settings Drawer Trigger (Mobile + Desktop modal) -->
-          <button id="btnOpenCustomText" title="Custom Text & Presets" class="p-1.5 sm:p-2 text-slate-300 hover:text-white rounded-xl bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Custom Text / Settings Drawer Trigger -->
+          <button id="btnOpenCustomText" title="Custom Text & Presets" class="p-1 sm:p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
           </button>
 
           <!-- History Modal Button -->
-          <button id="btnOpenHistory" title="History & Logs" class="p-1.5 sm:p-2 text-slate-300 hover:text-white rounded-xl bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button id="btnOpenHistory" title="History & Logs" class="p-1 sm:p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </button>
 
-          <!-- Settings Sheet Trigger (Essential for Mobile & Themes) -->
-          <button id="btnOpenSettings" title="Themes & Settings" class="p-1.5 sm:p-2 text-slate-300 hover:text-white rounded-xl bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Settings Sheet Trigger -->
+          <button id="btnOpenSettings" title="Themes & Settings" class="p-1 sm:p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
@@ -279,15 +270,15 @@
       </div>
 
       <!-- Mobile Quick Ribbon: Compact mode switcher for small viewports -->
-      <div class="flex lg:hidden items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-800/80 text-[11px] overflow-x-auto no-scrollbar">
+      <div class="flex lg:hidden items-center justify-between gap-1.5 mt-1 pt-1 border-t border-slate-800/80 text-[11px] overflow-x-auto no-scrollbar">
         <div class="flex items-center gap-1 font-medium flex-nowrap shrink-0">
-          <button class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="15">15s</button>
-          <button class="mobile-mode-btn px-2 py-1 rounded bg-indigo-600 text-white font-semibold shrink-0" data-mode="30">30s</button>
-          <button class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="60">60s</button>
-          <button id="btnCustomTimerMobile" class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0 flex items-center gap-1" data-mode="custom">
+          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="15">15s</button>
+          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-indigo-600 text-white font-semibold shrink-0" data-mode="30">30s</button>
+          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="60">60s</button>
+          <button id="btnCustomTimerMobile" class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0 flex items-center gap-1" data-mode="custom">
             <span id="lblCustomMobile">Custom</span>
           </button>
-          <button class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="free">Free</button>
+          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="free">Free</button>
         </div>
         <div class="flex items-center gap-2 text-slate-400 font-mono text-[10px] shrink-0 ml-auto pl-2 border-l border-slate-800">
           <span>Top: <strong id="mobileTopWpm" class="text-amber-400">0</strong></span>
@@ -298,7 +289,8 @@
     </div>
   </header>
 
-  <main id="typingArena" class="flex-1 w-full flex flex-col justify-center items-center relative overflow-hidden cursor-text px-4 sm:px-8 md:px-12 py-6">
+  <!-- 90% MAIN TYPING ARENA -->
+  <main id="typingArena" class="flex-1 w-full lg:h-[90vh] flex flex-col justify-center items-center relative overflow-hidden cursor-text px-4 sm:px-8 md:px-12 py-3 lg:py-6">
     
     <!-- Focus Guide / Click-to-focus prompt overlay when blurred -->
     <div id="focusOverlay" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-surface-950/70 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none opacity-0">
@@ -312,20 +304,20 @@
     <div class="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center relative">
       
       <!-- Progress Bar (Time or Character progress) -->
-      <div class="w-full bg-slate-800/60 rounded-full h-1.5 mb-6 overflow-hidden border border-slate-700/40">
+      <div class="w-full bg-slate-800/60 rounded-full h-1.5 mb-4 lg:mb-6 overflow-hidden border border-slate-700/40">
         <div id="testProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all duration-150 w-0"></div>
       </div>
 
       <!-- Live Typing Container (90% viewport focus) -->
       <div id="textDisplayBox" 
-           class="w-full max-h-[65vh] md:max-h-[72vh] overflow-y-auto px-2 py-4 select-none leading-relaxed transition-all scroll-smooth"
+           class="w-full max-h-[62vh] md:max-h-[72vh] overflow-y-auto px-2 py-3 select-none leading-relaxed transition-all scroll-smooth"
            tabindex="0"
            aria-label="Typing test preview arena">
         <!-- Words and characters will be dynamically rendered here -->
       </div>
 
       <!-- Quick Reset Shortcut Hint -->
-      <div class="mt-4 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+      <div class="mt-3 lg:mt-4 flex items-center justify-between text-[11px] text-slate-500 font-mono">
         <span class="flex items-center gap-1.5">
           <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">Tab</kbd>
           <span>or</span>
@@ -745,7 +737,7 @@
     // State Variables
     let currentThemeKey = 'dark';
     let currentFontSize = 26;
-    let currentFontFamily = 'font-mono';
+    let currentFontFamily = 'font-hind'; // Default to Hind Siliguri
     let currentCursorType = 'cursor-line';
     let currentMode = '30'; // 15, 30, 60, 120, 'custom', 'free'
     let customTimerDuration = 45; // Default custom seconds
@@ -1234,7 +1226,7 @@
       }
 
       // Ignore modifiers and function keys
-      if (key.length > 1) return;
+      if (!key || key.length > 1) return;
 
       // Normal Character Input
       if (typedChars.length < targetChars.length) {
@@ -1356,6 +1348,7 @@
     }
 
     function focusTyping() {
+      hiddenInput.value = '';
       hiddenInput.focus({ preventScroll: true });
       focusOverlay.classList.add('opacity-0', 'pointer-events-none');
     }
@@ -1364,41 +1357,64 @@
       focusOverlay.classList.remove('opacity-0', 'pointer-events-none');
     }
 
-    // Global Key Listener for desktop typing experience
+    // Unified & Conflict-Free Keyboard Handling
+    // Prevents double-character firing and backspace double-deleting
     window.addEventListener('keydown', (e) => {
-      // Don't intercept if typing in modal input
-      if (['TEXTAREA', 'INPUT'].includes(e.target.tagName) && e.target !== hiddenInput) {
+      // Don't intercept if user is typing inside modal inputs
+      if (e.target && ['TEXTAREA', 'INPUT'].includes(e.target.tagName) && e.target !== hiddenInput) {
         return;
       }
 
-      // Quick restart via Tab or Escape
+      // Quick restart shortcuts
       if (e.key === 'Tab' || e.key === 'Escape') {
         e.preventDefault();
         resetTest();
         return;
       }
 
-      // Prevent page scrolling on space
-      if (e.key === ' ') {
-        e.preventDefault();
+      // If hidden proxy input is active, let hidden input event handler process it exclusively
+      // to avoid double triggering! Only handle special keys here if hidden input is not focused.
+      if (document.activeElement === hiddenInput) {
+        if (e.key === 'Backspace') {
+          e.preventDefault();
+          handleUserInputChar('Backspace');
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          handleUserInputChar(' ');
+        }
+        return;
       }
 
-      handleUserInputChar(e.key);
-    });
-
-    // Hidden input listener for mobile software keyboards & IME
-    hiddenInput.addEventListener('input', (e) => {
-      const val = hiddenInput.value;
-      if (val.length > 0) {
-        const lastChar = val[val.length - 1];
-        handleUserInputChar(lastChar);
-        hiddenInput.value = '';
-      }
-    });
-
-    hiddenInput.addEventListener('keydown', (e) => {
+      // If user clicks in window without hidden input focused:
       if (e.key === 'Backspace') {
+        e.preventDefault();
         handleUserInputChar('Backspace');
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        handleUserInputChar(' ');
+      } else if (e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        handleUserInputChar(e.key);
+      }
+    });
+
+    // Hidden input listener for mobile software keyboards & composite IME
+    hiddenInput.addEventListener('input', (e) => {
+      // Handle backspace from virtual keyboards
+      if (e.inputType === 'deleteContentBackward') {
+        handleUserInputChar('Backspace');
+        hiddenInput.value = '';
+        return;
+      }
+
+      // Process input text accurately
+      const val = hiddenInput.value;
+      if (val && val.length > 0) {
+        // Iterate every char in case of fast typing or mobile predictive words
+        for (let i = 0; i < val.length; i++) {
+          handleUserInputChar(val[i]);
+        }
+        hiddenInput.value = '';
       }
     });
 
@@ -1685,14 +1701,21 @@
     }
 
     function updateFullscreenIcons() {
+      const lblFs = document.getElementById('lblFullscreen');
       if (document.fullscreenElement) {
         fsIconEnter.classList.add('hidden');
         fsIconExit.classList.remove('hidden');
         btnFullscreen.title = 'Exit Fullscreen';
+        if (lblFs) lblFs.textContent = 'Exit FS';
+        btnFullscreen.classList.add('bg-amber-950/80', 'border-amber-600/80', 'text-amber-300');
+        btnFullscreen.classList.remove('bg-indigo-950/70', 'border-indigo-700/60', 'text-indigo-300');
       } else {
         fsIconEnter.classList.remove('hidden');
         fsIconExit.classList.add('hidden');
         btnFullscreen.title = 'Enter Fullscreen';
+        if (lblFs) lblFs.textContent = 'Fullscreen';
+        btnFullscreen.classList.remove('bg-amber-950/80', 'border-amber-600/80', 'text-amber-300');
+        btnFullscreen.classList.add('bg-indigo-950/70', 'border-indigo-700/60', 'text-indigo-300');
       }
     }
 
@@ -1711,6 +1734,7 @@
       setCursorType(currentCursorType);
       applyTheme(currentThemeKey);
       updateSoundIcons();
+      updateFullscreenIcons();
       selSoundType.value = currentSound;
 
       // Load initial text and focus typing arena
@@ -1719,4 +1743,4 @@
     });
   </script>
 </body>
-        </html>
+  </html>
