@@ -1,1453 +1,1722 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Typing Speed Test with History</title>
-    <style>
-        :root {
-            --background-color: #1a1a1a;
-            --text-color: #e0e0e0;
-            --subtle-text-color: #666;
-            --primary-color: #f92672;
-            --correct-color: #a6e22e;
-            --error-color: var(--primary-color);
-            --cursor-color: var(--primary-color);
-            --container-bg: #222;
-            --font-family: 'Fira Code', 'Courier New', Courier, monospace;
-            --line-height: 2.2;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>TypeFlow — Custom Typing Test Machine</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Playfair+Display:ital,wght@0,500;0,700;1,400&family=Roboto+Mono:wght@400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+            'roboto-mono': ['Roboto Mono', 'monospace'],
+            'space-mono': ['Space Mono', 'monospace'],
+            serif: ['Playfair Display', 'serif'],
+            hind: ['"Hind Siliguri"', 'sans-serif'],
+          },
+          colors: {
+            surface: {
+              50: '#f8fafc',
+              100: '#f1f5f9',
+              800: '#111827',
+              850: '#0d131f',
+              900: '#080d17',
+              950: '#030712'
+            }
+          }
         }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(140, 140, 160, 0.3);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(140, 140, 160, 0.5);
+    }
 
-        [data-theme='dracula'] {
-            --background-color: #282a36;
-            --text-color: #f8f8f2;
-            --subtle-text-color: #6272a4;
-            --primary-color: #ff79c6;
-            --correct-color: #50fa7b;
-            --error-color: #ff5555;
-            --cursor-color: #f8f8f2;
-            --container-bg: #22212c;
-        }
+    /* Caret & Cursor Styles */
+    @keyframes blink-animation {
+      0%, 49% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    @keyframes pulse-smooth {
+      0%, 100% { opacity: 1; transform: scaleY(1); }
+      50% { opacity: 0.3; transform: scaleY(0.92); }
+    }
 
-        [data-theme='aether'] {
-            --background-color: #101015;
-            --text-color: #E2B792;
-            --subtle-text-color: #4A3E4E;
-            --primary-color: #9370DB;
-            --correct-color: #DBA9A9;
-            --cursor-color: var(--primary-color);
-            --container-bg: #1a1a20;
-        }
+    .cursor-line {
+      display: inline-block;
+      width: 2.5px;
+      margin-left: -1px;
+      margin-right: -1.5px;
+      vertical-align: text-bottom;
+      animation: blink-animation 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .cursor-block {
+      display: inline;
+      padding: 0 1px;
+      border-radius: 2px;
+      animation: pulse-smooth 1.1s ease-in-out infinite;
+    }
+    .cursor-underline {
+      display: inline;
+      border-bottom-width: 3px;
+      border-bottom-style: solid;
+      animation: blink-animation 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    .cursor-pulse {
+      display: inline-block;
+      width: 3px;
+      margin-left: -1px;
+      margin-right: -2px;
+      border-radius: 9999px;
+      animation: pulse-smooth 0.8s ease-in-out infinite;
+    }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            font-family: var(--font-family);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            text-align: center;
-            transition: background-color 0.3s, color 0.3s;
-            overflow-x: hidden;
-        }
-
-        #watermark {
-            position: fixed;
-            bottom: 10px;
-            right: 15px;
-            font-size: 0.8rem;
-            opacity: 0.7;
-            user-select: none;
-            z-index: 100;
-        }
-
-        #watermark a {
-            color: var(--subtle-text-color);
-            text-decoration: none;
-        }
-        
-        .container {
-            width: 95%;
-            max-width: 1000px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            padding: 1rem;
-            min-height: 100vh;
-        }
-
-        .settings {
-            height: 15vh;
-            min-height: 90px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            align-content: center;
-            align-items: center;
-            gap: 1rem;
-            color: var(--subtle-text-color);
-            width: 100%;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 0.5rem 0;
-        }
-        
-        .setting-group {
-            display: flex;
-            align-items: center;
-            gap: 0.4rem;
-            flex-wrap: wrap;
-            justify-content: center;
-            background: var(--container-bg);
-            padding: 0.4rem 0.8rem;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .setting-group > span {
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-        
-        .setting-group button, .setting-group input, .setting-group select {
-            background: none;
-            border: none;
-            color: var(--subtle-text-color);
-            font-family: inherit;
-            cursor: pointer;
-            font-size: 0.85rem;
-            padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-            transition: color 0.2s, background-color 0.2s;
-        }
-
-        .setting-group select {
-            background: var(--background-color);
-            color: var(--text-color);
-            border: 1px solid var(--subtle-text-color);
-            padding: 0.2rem 0.5rem;
-        }
-
-        .setting-group input {
-            background: var(--background-color);
-            color: var(--text-color);
-            border: 1px solid var(--subtle-text-color);
-            padding: 0.2rem 0.5rem;
-            width: 110px;
-        }
-        
-        .setting-group button.active {
-            color: var(--primary-color);
-            font-weight: bold;
-            background: rgba(255, 255, 255, 0.05);
-        }
-        .setting-group button:not(.active):hover {
-            color: var(--text-color);
-        }
-
-        #theme-selector {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            border: 1px solid var(--subtle-text-color);
-            border-radius: 4px;
-            padding: 0.3rem;
-            font-family: inherit;
-            cursor: pointer;
-        }
-        
-        #custom-text-container {
-            width: 100%;
-        }
-
-        #custom-text-input {
-            width: 100%;
-            height: 90px;
-            background-color: var(--container-bg);
-            color: var(--text-color);
-            border: 1px solid var(--subtle-text-color);
-            border-radius: 5px;
-            padding: 0.75rem;
-            font-family: inherit;
-            font-size: 0.95rem;
-            resize: vertical;
-        }
-        
-        #typing-area {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 800px;
-            font-size: 1.4rem;
-            padding: 0 0.5rem;
-            color: var(--subtle-text-color);
-        }
-
-        .stats div span {
-            color: var(--text-color);
-            font-weight: bold;
-        }
-
-        .words-container {
-            font-size: 1.6rem;
-            letter-spacing: 0.5px;
-            line-height: var(--line-height);
-            user-select: none;
-            position: relative;
-            width: 100%;
-            max-width: 950px;
-            max-height: calc(1.6rem * var(--line-height) * 3);
-            overflow: hidden;
-            text-align: left;
-            padding: 0 1rem;
-            background-color: var(--container-bg);
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        }
-        
-        .words-container.unfocused {
-            filter: blur(4px);
-        }
-        
-        .words-container.unfocused::after {
-            content: 'Click to focus / Type to start';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.1rem;
-            color: var(--text-color);
-            background: rgba(0,0,0,0.7);
-            padding: 0.6rem 1.2rem;
-            border-radius: 6px;
-            z-index: 10;
-        }
-
-        #word-wrapper {
-            position: relative;
-            transition: transform 0.2s ease-out;
-            word-break: break-word;
-            white-space: pre-wrap; /* Preserves space characters layout accurately */
-        }
-        
-        #word-wrapper span {
-            color: var(--subtle-text-color);
-            display: inline;
-        }
-        #word-wrapper span.correct { color: var(--text-color); }
-        #word-wrapper span.incorrect { 
-            color: var(--error-color); 
-            text-decoration: underline;
-            background-color: rgba(255, 85, 85, 0.25);
-            border-radius: 2px;
-        }
-
-        #cursor {
-            position: absolute;
-            width: 2.5px;
-            height: 2.2rem;
-            background-color: var(--cursor-color);
-            border-radius: 2px;
-            transition: left 0.08s ease, top 0.08s ease;
-            z-index: 5;
-        }
-
-        #typing-input {
-            position: absolute;
-            left: -9999px;
-            opacity: 0;
-        }
-
-        .results {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.5rem;
-            width: 100%;
-            max-width: 700px;
-            background: var(--container-bg);
-            padding: 2rem;
-            border-radius: 10px;
-        }
-
-        #result-wpm {
-            font-size: 4.5rem;
-            color: var(--correct-color);
-            font-weight: bold;
-        }
-        
-        #result-wpm .label {
-            font-size: 1.8rem;
-            color: var(--text-color);
-            font-weight: normal;
-            margin-left: 0.5rem;
-        }
-
-        .results-details {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-            width: 100%;
-            max-width: 450px;
-            font-size: 1rem;
-        }
-        
-        .results-details div { color: var(--subtle-text-color); }
-        .results-details span {
-            display: block;
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--text-color);
-        }
-
-        #restart-btn {
-            background-color: var(--primary-color);
-            color: var(--background-color);
-            border: none;
-            padding: 0.7rem 1.8rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-family: inherit;
-            font-weight: bold;
-        }
-
-        /* History Modal & User Selection Modal */
-        #history-modal, #user-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-        }
-        .history-content, .user-modal-content {
-            background: var(--container-bg);
-            padding: 2rem;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 650px;
-            max-height: 85vh;
-            overflow-y: auto;
-            text-align: left;
-            border: 1px solid var(--subtle-text-color);
-        }
-
-        /* History Summary Cards */
-        .history-summary {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 0.8rem;
-            margin-bottom: 1.5rem;
-        }
-        .summary-card {
-            background: var(--background-color);
-            padding: 0.8rem;
-            border-radius: 6px;
-            text-align: center;
-            border: 1px solid rgba(255,255,255,0.08);
-        }
-        .summary-card .s-label {
-            display: block;
-            font-size: 0.75rem;
-            color: var(--subtle-text-color);
-            margin-bottom: 0.3rem;
-        }
-        .summary-card .s-value {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: var(--correct-color);
-        }
-
-        .user-modal-form {
-            display: flex;
-            flex-direction: column;
-            gap: 1rem;
-            margin-top: 1.2rem;
-        }
-        .user-modal-form select, .user-modal-form input {
-            padding: 0.6rem;
-            background: var(--background-color);
-            color: var(--text-color);
-            border: 1px solid var(--subtle-text-color);
-            border-radius: 5px;
-            font-family: inherit;
-        }
-        .user-modal-btn {
-            background: var(--primary-color);
-            color: #fff;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .history-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .history-header h3 { color: var(--text-color); }
-        .close-history { background: none; border: none; color: var(--error-color); font-size: 1.2rem; cursor: pointer; }
-        
-        .history-list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
-        }
-        .history-item {
-            background: var(--background-color);
-            padding: 0.8rem;
-            border-radius: 5px;
-            font-size: 0.9rem;
-            border-left: 4px solid var(--primary-color);
-        }
-        .history-item .h-user { font-weight: bold; color: var(--primary-color); }
-        .history-item .h-time { font-size: 0.75rem; color: var(--subtle-text-color); float: right; }
-        .history-item .h-details { margin-top: 0.4rem; color: var(--text-color); display: flex; gap: 1rem; flex-wrap: wrap; }
-
-        @media (max-width: 768px) {
-            .container { gap: 1rem; width: 98%; }
-            .settings { height: auto; min-height: auto; padding: 0.8rem 0; justify-content: center; }
-            .words-container { font-size: 1.3rem; }
-            #result-wpm { font-size: 3.5rem; }
-        }
-    </style>
-</head>
-<body data-theme="dracula">
-
-    <div class="container">
-        
-        <div class="settings">
-            <div class="setting-group" id="user-settings">
-                <span>User:</span>
-                <select id="user-dropdown"></select>
-                <button id="switch-user-btn" style="background: rgba(255,255,255,0.1); padding: 0.2rem 0.5rem;" title="Switch or Add User">👤 Switch</button>
-            </div>
-            <div class="setting-group" id="time-settings">
-                <span>Time:</span>
-                <button data-time="15">15s</button>
-                <button data-time="30">30s</button>
-                <button data-time="60" class="active">60s</button>
-                <button data-time="120">2m</button>
-                <button data-time="300">5m</button>
-            </div>
-            <div class="setting-group" id="mode-settings">
-                <span>Mode:</span>
-                <button data-mode="words" class="active">Words</button>
-                <button data-mode="custom">Custom</button>
-            </div>
-            <div class="setting-group">
-                <span>Theme:</span>
-                <select id="theme-selector">
-                    <option value="dark">Dark</option>
-                    <option value="dracula">Dracula</option>
-                    <option value="aether">Aether</option>
-                </select>
-            </div>
-            <div class="setting-group">
-                <button id="history-btn">History 📊</button>
-                <button id="fullscreen-btn" title="Toggle Fullscreen">Full Screen ⛶</button>
-            </div>
-        </div>
-        
-        <div id="custom-text-container" style="display: none;">
-            <textarea id="custom-text-input" placeholder="Paste your custom text here..."></textarea>
-        </div>
-        
-        <div id="typing-area">
-            <div class="stats">
-                <div id="timer-display">Time: <span id="timer">60</span>s</div>
-                <div id="wpm-display">WPM: <span id="wpm">0</span></div>
-            </div>
-            <div id="words-container" class="words-container unfocused">
-                <div id="word-wrapper"></div>
-                <div id="cursor"></div>
-            </div>
-        </div>
-        <input type="text" id="typing-input" autofocus autocomplete="off" autocapitalize="off" spellcheck="false">
-
-        <div id="results" class="results">
-            <h2 id="result-wpm">0<span class="label">WPM</span></h2>
-            <div class="results-details">
-                <div>Test Config<span id="result-info">60s | words</span></div>
-                <div>Accuracy<span id="result-accuracy">0%</span></div>
-                <div>Raw WPM<span id="result-raw-wpm">0</span></div>
-            </div>
-            <button id="restart-btn">Try Again</button>
-        </div>
-    </div>
-
-    <!-- History Modal -->
-    <div id="history-modal">
-        <div class="history-content">
-            <div class="history-header">
-                <h3>Typing History & Stats Summary</h3>
-                <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                    <select id="history-user-filter" style="padding: 0.35rem; background: var(--background-color); color: var(--text-color); border: 1px solid var(--subtle-text-color); border-radius: 4px; font-size: 0.85rem; cursor: pointer;"></select>
-                    <button id="clear-history-btn" style="background: var(--error-color); color: #fff; border: none; padding: 0.35rem 0.7rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; font-weight: bold;" title="Clear selected history">🗑️ Clear</button>
-                    <button class="close-history" id="close-history-btn">✕</button>
-                </div>
-            </div>
-            <!-- Average & Summary Cards -->
-            <div class="history-summary">
-                <div class="summary-card">
-                    <span class="s-label">গড় WPM (Avg WPM)</span>
-                    <span class="s-value" id="avg-wpm">0</span>
-                </div>
-                <div class="summary-card">
-                    <span class="s-label">গড় Accuracy</span>
-                    <span class="s-value" id="avg-acc">0%</span>
-                </div>
-                <div class="summary-card">
-                    <span class="s-label">মোট টেস্ট (Total)</span>
-                    <span class="s-value" id="total-tests">0</span>
-                </div>
-                <div class="summary-card">
-                    <span class="s-label">সেরা WPM (Best)</span>
-                    <span class="s-value" id="best-wpm">0</span>
-                </div>
-            </div>
-            <ul class="history-list" id="history-list">
-                <!-- History items will be injected here -->
-            </ul>
-        </div>
-    </div>
-
-    <!-- User Entry / Switch Modal -->
-    <div id="user-modal">
-        <div class="user-modal-content">
-            <h3>👤 Select or Enter User / ইউজার নির্বাচন করুন</h3>
-            <p style="font-size: 0.85rem; color: var(--subtle-text-color); margin-top: 0.4rem;">
-                টাইপিং টেস্টে প্রবেশের পূর্বে বিদ্যমান ইউজার সিলেক্ট করুন অথবা নতুন ইউজারনেম তৈরি করুন।
-            </p>
-            <div class="user-modal-form">
-                <select id="modal-existing-users">
-                    <option value="">-- Choose Existing User --</option>
-                </select>
-                <div style="text-align: center; color: var(--subtle-text-color); font-size: 0.8rem;">— OR —</div>
-                <input type="text" id="modal-username-input" placeholder="Enter new username...">
-                <button class="user-modal-btn" id="confirm-user-btn">Confirm & Continue</button>
-            </div>
-        </div>
-    </div>
+    /* Word Break and Flow Optimization */
+    .typing-word {
+      display: inline-block;
+      white-space: pre;
+      margin-bottom: 0.35em;
+    }
+    .char-node {
+      position: relative;
+      transition: color 0.08s ease, background-color 0.08s ease;
+    }
     
-    <div id="watermark">
-        <a href="https://www.facebook.com/md0nakib" target="_blank" rel="noopener noreferrer">Update:- Md. Tarikul Islam Bhuyian Nakib</a>
+    /* Subtle glow for dark modes */
+    .glow-accent {
+      box-shadow: 0 0 15px -3px var(--accent-color, rgba(99, 102, 241, 0.3));
+    }
+  </style>
+</head>
+<body class="bg-surface-950 text-slate-100 min-h-screen flex flex-col overflow-x-hidden font-sans select-none antialiased transition-colors duration-300" id="appBody">
+
+  <!-- Hidden proxy input for touch & seamless keyboard capture -->
+  <textarea id="hiddenTypingInput" 
+    class="absolute opacity-0 pointer-events-none -left-[9999px] -top-[9999px] w-1 h-1" 
+    autocapitalize="off" 
+    autocomplete="off" 
+    autocorrect="off" 
+    spellcheck="false"></textarea>
+
+  <header id="controlPanel" class="w-full flex-none border-b border-slate-800/80 bg-surface-900/90 backdrop-blur-md z-30 transition-all duration-200">
+    <div class="max-w-[1920px] mx-auto px-3 sm:px-5 py-2 sm:py-2.5">
+      
+      <!-- Top Row: Branding, Live Clock, Primary Stats, and Fast Controls -->
+      <div class="flex items-center justify-between gap-2 md:gap-4 flex-wrap">
+        
+        <!-- Brand & Clock -->
+        <div class="flex items-center gap-2 sm:gap-4">
+          <div class="flex items-center gap-2">
+            <span class="p-1.5 sm:p-2 rounded-xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="2" y="4" width="20" height="16" rx="3" stroke-width="2"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
+              </svg>
+            </span>
+            <div>
+              <h1 class="font-bold text-sm sm:text-base tracking-tight flex items-center gap-1.5 text-white">
+                TypeFlow <span class="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-semibold hidden sm:inline-block">Pro</span>
+              </h1>
+              <div id="liveClock" class="text-[10px] sm:text-xs font-mono text-slate-400 leading-none">--:--:--</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Central Controls & Settings Hub (Visible on md+) -->
+        <div class="hidden lg:flex items-center gap-3">
+          <!-- Font Size Stepper -->
+          <div class="flex items-center bg-slate-800/70 border border-slate-700/60 rounded-lg p-0.5 text-xs">
+            <button id="btnFontDec" title="Decrease Font Size" class="px-2 py-1 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A−</button>
+            <span id="lblFontSize" class="px-2 font-mono text-slate-300 text-xs font-medium min-w-[3rem] text-center">28px</span>
+            <button id="btnFontInc" title="Increase Font Size" class="px-2 py-1 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold">A+</button>
+          </div>
+
+          <!-- Font Family Selector -->
+          <div class="relative">
+            <select id="selFontFamily" class="bg-slate-800/70 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+              <option value="font-mono">JetBrains Mono</option>
+              <option value="font-hind">হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
+              <option value="font-sans">Inter Sans</option>
+              <option value="font-roboto-mono">Roboto Mono</option>
+              <option value="font-space-mono">Space Mono</option>
+              <option value="font-serif">Playfair Serif</option>
+            </select>
+            <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+
+          <!-- Cursor Selector -->
+          <div class="relative">
+            <select id="selCursorType" class="bg-slate-800/70 border border-slate-700/60 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer">
+              <option value="cursor-line">Caret: Line |</option>
+              <option value="cursor-block">Caret: Block █</option>
+              <option value="cursor-underline">Caret: Underline _</option>
+              <option value="cursor-pulse">Caret: Smooth Pulse</option>
+            </select>
+            <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+          </div>
+
+          <!-- Mode / Timer Segmented Buttons (With Custom Timer Option) -->
+          <div class="flex items-center bg-slate-800/70 border border-slate-700/60 rounded-lg p-0.5 text-xs font-medium">
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="15">15s</button>
+            <button class="mode-btn px-2.5 py-1 rounded bg-indigo-600 text-white font-semibold shadow-sm transition" data-mode="30">30s</button>
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="60">60s</button>
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="120">120s</button>
+            <button id="btnCustomTimerDesktop" class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white flex items-center gap-1 transition" data-mode="custom">
+              <span id="lblCustomDesktop">Custom</span>
+              <svg class="w-3 h-3 text-indigo-400 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+            </button>
+            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="free">Free</button>
+          </div>
+
+          <!-- Sound Effects Toggle -->
+          <button id="btnSoundToggle" title="Toggle Mechanical Key Sound" class="p-1.5 text-slate-400 hover:text-white rounded-lg bg-slate-800/50 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg id="soundIconOn" class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+            </svg>
+            <svg id="soundIconOff" class="w-4 h-4 text-slate-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
+            </svg>
+          </button>
+
+          <!-- Fullscreen Toggle Button -->
+          <button id="btnFullscreen" title="Toggle Fullscreen" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/50 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg id="fsIconEnter" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+            </svg>
+            <svg id="fsIconExit" class="w-4 h-4 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 4v4H5m0 0l4-4M15 4v4h4m0 0l-4-4M9 20v-4H5m0 0l4 4m6-4v4h4m0 0l-4-4"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Live Scoreboard Pills: WPM, Accuracy, Time Left/Elapsed, Top, Tests -->
+        <div class="flex items-center gap-1.5 sm:gap-2.5">
+          
+          <!-- Live WPM Pill -->
+          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-3 py-1 rounded-xl shadow-inner">
+            <span class="text-[10px] uppercase font-bold text-slate-400">WPM</span>
+            <span id="metricWpm" class="font-mono text-sm sm:text-lg font-black text-amber-400">0</span>
+          </div>
+
+          <!-- Accuracy Pill -->
+          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-3 py-1 rounded-xl shadow-inner">
+            <span class="text-[10px] uppercase font-bold text-slate-400">ACC</span>
+            <span id="metricAcc" class="font-mono text-sm sm:text-lg font-black text-emerald-400">100%</span>
+          </div>
+
+          <!-- Timer / Duration Pill -->
+          <div class="flex items-center gap-1.5 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-3 py-1 rounded-xl shadow-inner">
+            <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+            <span id="metricTime" class="font-mono text-sm sm:text-lg font-black text-indigo-300 min-w-[2.2rem] text-center">30</span>
+          </div>
+
+          <!-- Secondary Stats (Hidden on smallest mobile) -->
+          <div class="hidden sm:flex items-center gap-2 bg-slate-800/40 border border-slate-700/50 px-2.5 py-1 rounded-xl text-xs font-mono text-slate-300">
+            <span title="Personal Top WPM" class="flex items-center gap-1">
+              <span class="text-amber-400 text-xs">★</span> <span id="metricTopWpm">0</span>
+            </span>
+            <span class="text-slate-600">|</span>
+            <span title="Total Completed Tests" class="text-slate-400">
+              #<span id="metricTotalTests" class="text-slate-300">0</span>
+            </span>
+          </div>
+
+          <!-- Start / Restart Primary Action Button -->
+          <button id="btnMainAction" class="flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-medium text-xs sm:text-sm px-3 sm:px-4 py-1.5 rounded-xl shadow-lg shadow-indigo-600/20 transition cursor-pointer">
+            <svg id="iconPlay" class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <span id="lblMainAction" class="font-semibold">Restart</span>
+          </button>
+
+          <!-- Custom Text / Settings Drawer Trigger (Mobile + Desktop modal) -->
+          <button id="btnOpenCustomText" title="Custom Text & Presets" class="p-1.5 sm:p-2 text-slate-300 hover:text-white rounded-xl bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+            </svg>
+          </button>
+
+          <!-- History Modal Button -->
+          <button id="btnOpenHistory" title="History & Logs" class="p-1.5 sm:p-2 text-slate-300 hover:text-white rounded-xl bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </button>
+
+          <!-- Settings Sheet Trigger (Essential for Mobile & Themes) -->
+          <button id="btnOpenSettings" title="Themes & Settings" class="p-1.5 sm:p-2 text-slate-300 hover:text-white rounded-xl bg-slate-800/70 hover:bg-slate-700 border border-slate-700/60 transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Quick Ribbon: Compact mode switcher for small viewports -->
+      <div class="flex lg:hidden items-center justify-between gap-1.5 mt-2 pt-2 border-t border-slate-800/80 text-[11px] overflow-x-auto no-scrollbar">
+        <div class="flex items-center gap-1 font-medium flex-nowrap shrink-0">
+          <button class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="15">15s</button>
+          <button class="mobile-mode-btn px-2 py-1 rounded bg-indigo-600 text-white font-semibold shrink-0" data-mode="30">30s</button>
+          <button class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="60">60s</button>
+          <button id="btnCustomTimerMobile" class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0 flex items-center gap-1" data-mode="custom">
+            <span id="lblCustomMobile">Custom</span>
+          </button>
+          <button class="mobile-mode-btn px-2 py-1 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="free">Free</button>
+        </div>
+        <div class="flex items-center gap-2 text-slate-400 font-mono text-[10px] shrink-0 ml-auto pl-2 border-l border-slate-800">
+          <span>Top: <strong id="mobileTopWpm" class="text-amber-400">0</strong></span>
+          <span>Tests: <strong id="mobileTotalTests" class="text-slate-300">0</strong></span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <main id="typingArena" class="flex-1 w-full flex flex-col justify-center items-center relative overflow-hidden cursor-text px-4 sm:px-8 md:px-12 py-6">
+    
+    <!-- Focus Guide / Click-to-focus prompt overlay when blurred -->
+    <div id="focusOverlay" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-surface-950/70 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none opacity-0">
+      <div class="px-5 py-3 rounded-2xl bg-indigo-600/90 text-white shadow-2xl flex items-center gap-3 text-sm font-medium tracking-wide animate-bounce pointer-events-auto cursor-pointer" id="btnFocusPrompt">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+        <span>Click or Tap anywhere to resume typing</span>
+      </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-const COMMON_WORDS = [
+    <!-- Active Text Preview Viewport -->
+    <div class="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center relative">
+      
+      <!-- Progress Bar (Time or Character progress) -->
+      <div class="w-full bg-slate-800/60 rounded-full h-1.5 mb-6 overflow-hidden border border-slate-700/40">
+        <div id="testProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all duration-150 w-0"></div>
+      </div>
 
-    // ==========================================
-    // GENERAL & STANDARD ENGLISH
-    // ==========================================
-    'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have',
-    'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you',
-    'do', 'at', 'this', 'but', 'his', 'by', 'from', 'they',
-    'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my',
-    'one', 'all', 'would', 'there', 'their', 'what', 'so',
-    'up', 'out', 'if', 'about', 'who', 'get', 'which', 'go',
-    'me', 'when', 'make', 'can', 'like', 'time', 'no', 'just',
-    'him', 'know', 'take', 'people', 'into', 'year', 'your',
-    'good', 'some', 'could', 'them', 'see', 'other', 'than',
-    'then', 'now', 'look', 'only', 'come', 'its', 'over',
-    'think', 'also', 'back', 'after', 'use', 'two', 'how',
-    'our', 'work', 'first', 'well', 'way', 'even', 'new',
-    'want', 'because', 'any', 'these', 'give', 'day', 'most',
-    'us',
+      <!-- Live Typing Container (90% viewport focus) -->
+      <div id="textDisplayBox" 
+           class="w-full max-h-[65vh] md:max-h-[72vh] overflow-y-auto px-2 py-4 select-none leading-relaxed transition-all scroll-smooth"
+           tabindex="0"
+           aria-label="Typing test preview arena">
+        <!-- Words and characters will be dynamically rendered here -->
+      </div>
 
-    // ==========================================
-    // DESCRIPTIVES & STATES
-    // ==========================================
-    'Simple', 'Basic', 'Advanced', 'Common', 'Optional',
-    'Required', 'Correct', 'Incorrect', 'Expected', 'Available',
-    'Complete', 'Empty', 'Full', 'Disabled', 'Enabled',
-    'Similar', 'Different', 'Limited', 'Active', 'Inactive',
-    'Random', 'Primary', 'Secondary', 'Temporary', 'Permanent',
-    'Public', 'Private', 'Open', 'Closed', 'Ready', 'Loading',
-    'Success', 'Failed', 'Valid', 'Invalid', 'Safe', 'Secure',
-    'Fast', 'Slow', 'Easy', 'Difficult', 'Important',
+      <!-- Quick Reset Shortcut Hint -->
+      <div class="mt-4 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+        <span class="flex items-center gap-1.5">
+          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">Tab</kbd>
+          <span>or</span>
+          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-400">Esc</kbd>
+          <span>to restart test</span>
+        </span>
+        <span id="charCountSummary">0 / 0 chars</span>
+      </div>
 
-    // ==========================================
-    // ACTION WORDS
-    // ==========================================
-    'Create', 'Add', 'Define', 'Return', 'Change', 'Remove',
-    'Update', 'Set', 'Use', 'Call', 'Compare', 'Build',
-    'Start', 'Stop', 'Modify', 'Run', 'Pause', 'Cancel',
-    'Apply', 'Save', 'Load', 'Retrieve', 'Validate', 'Detect',
-    'Handle', 'Adjust', 'Configure', 'Install', 'Open', 'Close',
-    'Edit', 'Delete', 'Select', 'Search', 'Find', 'Replace',
-    'Upload', 'Download', 'Send', 'Receive', 'Connect',
-    'Disconnect', 'Refresh', 'Submit', 'Reset', 'Clear',
+    </div>
 
-    // ==========================================
-    // CONNECTOR WORDS
-    // ==========================================
-    'And', 'Or', 'But', 'Then', 'Also', 'However',
-    'Therefore', 'Because', 'Example', 'Before', 'After',
-    'While', 'Where', 'When', 'Although', 'Between',
+  </main>
 
-    // ==========================================
-    // PREPOSITIONS
-    // ==========================================
-    'In', 'On', 'At', 'For', 'To', 'By', 'From',
-    'Inside', 'Outside', 'Above', 'Below', 'Under',
-    'Over', 'Before', 'After', 'With', 'Without',
-    'Next', 'Against', 'Through', 'Around', 'Between',
+  <div id="modalCustomText" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-surface-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomCard">
+      
+      <!-- Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <h2 class="font-bold text-base text-white">Custom Text & Presets</h2>
+        </div>
+        <button id="btnCloseCustomText" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
+      </div>
 
-    // ==========================================
-    // PRONOUNS
-    // ==========================================
-    'This', 'That', 'These', 'Those', 'It', 'They',
-    'You', 'We', 'All', 'He', 'She', 'Someone',
-    'Something', 'Anyone', 'Everyone',
+      <!-- Presets quick buttons -->
+      <div class="p-5 overflow-y-auto space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Preset Quick Picks</label>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="standard">
+              <span class="block font-semibold text-slate-200">Standard English</span>
+              <span class="text-[10px] text-slate-400">Common words & flow</span>
+            </button>
+            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="bangla">
+              <span class="block font-semibold text-emerald-300">বাংলা অনুশীলন</span>
+              <span class="text-[10px] text-slate-400">হিন্দ শিলিগুড়ি ফন্ট</span>
+            </button>
+            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="quotes">
+              <span class="block font-semibold text-slate-200">Famous Quotes</span>
+              <span class="text-[10px] text-slate-400">Inspirational & books</span>
+            </button>
+            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="code">
+              <span class="block font-semibold text-slate-200">Programming</span>
+              <span class="text-[10px] text-slate-400">JavaScript & symbols</span>
+            </button>
+            <button class="preset-btn px-3 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="blank">
+              <span class="block font-semibold text-slate-200">Blank Machine</span>
+              <span class="text-[10px] text-slate-400">Freeform typing</span>
+            </button>
+          </div>
+        </div>
 
-    // ==========================================
-    // COMMON VERBS
-    // ==========================================
-    'Check', 'See', 'Edit', 'Get', 'Show', 'Display',
-    'Open', 'Close', 'Allow', 'Block', 'Consider',
-    'Suggest', 'Create', 'Build', 'Write', 'Read',
-    'Learn', 'Teach', 'Practice', 'Test', 'Run',
-    'Debug', 'Fix', 'Improve', 'Develop', 'Design',
+        <div>
+          <label for="txtCustomInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+            Or Paste Your Own Text
+          </label>
+          <textarea id="txtCustomInput" rows="6" class="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl p-3 text-sm font-mono text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed" placeholder="Paste or type any paragraph, code snippet, lyrics, or test sentences here..."></textarea>
+          <div class="flex justify-between items-center text-xs text-slate-400 mt-1">
+            <span id="customWordCharCount">0 characters • 0 words</span>
+            <button id="btnClearCustom" class="text-rose-400 hover:text-rose-300 transition">Clear text</button>
+          </div>
+        </div>
+      </div>
 
-    // ==========================================
-    // ADVERBS
-    // ==========================================
-    'Always', 'Sometimes', 'Never', 'Usually', 'Quickly',
-    'Slowly', 'Frequently', 'Continuously', 'Automatically',
-    'Successfully', 'Clearly', 'Directly', 'Finally',
+      <!-- Footer Buttons -->
+      <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end gap-2">
+        <button id="btnCancelCustomText" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">Cancel</button>
+        <button id="btnApplyCustomText" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">Apply & Start Test</button>
+      </div>
 
-    // ==========================================
-    // PROGRAMMING BASICS
-    // ==========================================
-    'code', 'coding', 'program', 'programming', 'programmer',
-    'language', 'syntax', 'logic', 'algorithm', 'data',
-    'computer', 'software', 'hardware', 'developer',
-    'development', 'project', 'source', 'file', 'folder',
-    'input', 'output', 'process', 'system', 'application',
-    'app', 'tool', 'tools', 'editor', 'terminal', 'command',
-    'commands', 'debug', 'debugging', 'error', 'errors',
-    'warning', 'exception', 'solution', 'problem',
+    </div>
+  </div>
 
-    // ==========================================
-    // HTML
-    // ==========================================
-    'HTML', 'html', 'HyperText', 'Markup', 'Element',
-    'Elements', 'Tag', 'Tags', 'Attribute', 'Attributes',
-    'Document', 'Page', 'Webpage', 'Website', 'Structure',
-    'Semantic', 'Heading', 'Paragraph', 'Link', 'Anchor',
-    'Image', 'Images', 'Table', 'Form', 'Input', 'Label',
-    'Textarea', 'Select', 'Option', 'Button', 'Header',
-    'Footer', 'Main', 'Section', 'Article', 'Aside', 'Nav',
-    'Div', 'Span', 'Body', 'Head', 'Title', 'Meta',
-    'Script', 'Style', 'Class', 'ID', 'Content',
-    'Hyperlink', 'Viewport', 'DOCTYPE', 'Canvas', 'Video',
-    'Audio', 'Source', 'Iframe', 'List', 'Ordered',
-    'Unordered', 'ListItem', 'Details', 'Summary',
-    'Dialog', 'Template',
+  <!-- Custom Timer Modal -->
+  <div id="modalCustomTimer" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-surface-900 border border-slate-700/80 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomTimerCard">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10" stroke-width="2"/>
+            <path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/>
+          </svg>
+          <h2 class="font-bold text-base text-white">Custom Timer Duration</h2>
+        </div>
+        <button id="btnCloseCustomTimer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
+      </div>
 
-    // ==========================================
-    // COMMON HTML TAGS
-    // ==========================================
-    'doctype', 'html', 'head', 'body', 'title', 'meta',
-    'link', 'style', 'script', 'header', 'nav', 'main',
-    'section', 'article', 'aside', 'footer', 'div', 'span',
-    'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'a',
-    'img', 'figure', 'figcaption', 'ul', 'ol', 'li',
-    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
-    'form', 'input', 'label', 'textarea', 'select',
-    'option', 'button', 'br', 'hr',
+      <div class="p-5 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Quick Duration Presets</label>
+          <div class="grid grid-cols-4 gap-2 text-xs">
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="45">45s</button>
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="90">90s</button>
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="180">3 min</button>
+            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-medium text-slate-200 transition" data-seconds="300">5 min</button>
+          </div>
+        </div>
 
-    // ==========================================
-    // HTML ATTRIBUTES
-    // ==========================================
-    'class', 'id', 'style', 'href', 'src', 'alt', 'title',
-    'name', 'value', 'type', 'placeholder', 'required',
-    'disabled', 'readonly', 'checked', 'selected',
-    'target', 'rel', 'width', 'height', 'loading',
-    'autocomplete', 'action', 'method', 'for',
+        <div>
+          <label for="numCustomTimerInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+            Or Enter Specific Seconds (5 to 3600 seconds)
+          </label>
+          <div class="flex items-center gap-2">
+            <input type="number" id="numCustomTimerInput" min="5" max="3600" step="5" value="45"
+              class="w-full bg-slate-950/90 border border-slate-700 rounded-xl px-4 py-2.5 text-base font-mono text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. 45">
+            <span class="text-xs font-mono text-slate-400 uppercase">Sec</span>
+          </div>
+          <p class="text-[11px] text-slate-500 mt-1">Recommended: 15s to 300s for optimal typing fluency analysis.</p>
+        </div>
+      </div>
 
-    // ==========================================
-    // CSS
-    // ==========================================
-    'CSS', 'css', 'Cascading', 'Stylesheet', 'Styles',
-    'Selector', 'Selectors', 'Property', 'Properties',
-    'Value', 'Values', 'Color', 'Background', 'Border',
-    'Margin', 'Padding', 'Width', 'Height', 'Display',
-    'Position', 'Relative', 'Absolute', 'Fixed', 'Sticky',
-    'Static', 'Flex', 'Flexbox', 'Grid', 'Layout',
-    'Responsive', 'Mobile', 'Desktop', 'Media', 'Query',
-    'Font', 'Fonts', 'Size', 'Weight', 'Line', 'Spacing',
-    'Shadow', 'Opacity', 'Radius', 'Animation', 'Transition',
-    'Transform', 'Gradient', 'Pseudo', 'Hover', 'Focus',
-    'Before', 'After', 'Root', 'Variable', 'Variables',
-    'Inheritance', 'Specificity', 'Overflow', 'Visible',
-    'Hidden', 'Z-index', 'Box', 'Model', 'Outline',
-    'Cursor', 'Theme', 'Dark', 'Light', 'Center',
-    'Top', 'Bottom', 'Left', 'Right', 'Auto', 'None',
+      <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end gap-2">
+        <button id="btnCancelCustomTimer" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">Cancel</button>
+        <button id="btnSetCustomTimer" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">Set & Start</button>
+      </div>
+    </div>
+  </div>
 
-    // ==========================================
-    // CSS VALUES & UNITS
-    // ==========================================
-    'px', 'em', 'rem', 'vh', 'vw', 'vmin', 'vmax',
-    'percent', 'deg', 's', 'ms', 'rgb', 'rgba', 'hex',
-    'transparent', 'inherit', 'initial', 'unset',
-    'solid', 'dashed', 'dotted', 'normal', 'bold',
-    'italic', 'uppercase', 'lowercase', 'capitalize',
+  <div id="modalSettings" class="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-surface-900 border border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden mt-auto sm:my-auto" id="modalSettingsCard">
+      
+      <!-- Drawer Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+          <h2 class="font-bold text-base text-white">Appearance & Themes</h2>
+        </div>
+        <button id="btnCloseSettings" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
+      </div>
 
-    // ==========================================
-    // JAVASCRIPT FUNDAMENTALS
-    // ==========================================
-    'JavaScript', 'javascript', 'JS', 'js',
-    'Variable', 'Variables', 'Let', 'Const', 'Var',
-    'String', 'Number', 'Boolean', 'Null', 'Undefined',
-    'Object', 'Objects', 'Array', 'Arrays', 'Function',
-    'Functions', 'Parameter', 'Parameters', 'Argument',
-    'Arguments', 'Return', 'Operator', 'Operators',
-    'Expression', 'Statement', 'Condition', 'Conditions',
-    'If', 'Else', 'Switch', 'Case', 'Loop', 'Loops',
-    'For', 'While', 'Do', 'Break', 'Continue', 'Scope',
-    'Global', 'Local', 'Block', 'Value', 'Type', 'Types',
-    'Data', 'Logic', 'Syntax', 'Error', 'Errors',
-    'Debug', 'Debugging', 'Variable', 'Constant',
+      <!-- Settings Body -->
+      <div class="p-5 overflow-y-auto space-y-5 text-sm">
+        
+        <!-- Theme Presets -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">Theme Palette</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-slate-950 flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="dark">
+              <span class="text-xs font-semibold text-slate-200">Cyber Dark</span>
+              <div class="flex items-center gap-1">
+                <span class="w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-emerald-400"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-rose-500"></span>
+              </div>
+            </button>
+            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#1e1e2e] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="catppuccin">
+              <span class="text-xs font-semibold text-pink-200">Catppuccin</span>
+              <div class="flex items-center gap-1">
+                <span class="w-3.5 h-3.5 rounded-full bg-[#1e1e2e]"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-[#a6e3a1]"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-[#f38ba8]"></span>
+              </div>
+            </button>
+            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#0f172a] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="nord">
+              <span class="text-xs font-semibold text-cyan-200">Nordic Frost</span>
+              <div class="flex items-center gap-1">
+                <span class="w-3.5 h-3.5 rounded-full bg-[#2e3440]"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-[#88c0d0]"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-[#bf616a]"></span>
+              </div>
+            </button>
+            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#0d1117] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="matrix">
+              <span class="text-xs font-semibold text-emerald-300">Matrix Hacker</span>
+              <div class="flex items-center gap-1">
+                <span class="w-3.5 h-3.5 rounded-full bg-black"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-lime-400"></span>
+              </div>
+            </button>
+            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#faf8f5] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="paper">
+              <span class="text-xs font-semibold text-amber-950">Paper Light</span>
+              <div class="flex items-center gap-1">
+                <span class="w-3.5 h-3.5 rounded-full bg-[#eee9df]"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-emerald-600"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-rose-600"></span>
+              </div>
+            </button>
+            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#282a36] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="dracula">
+              <span class="text-xs font-semibold text-purple-300">Dracula Vamp</span>
+              <div class="flex items-center gap-1">
+                <span class="w-3.5 h-3.5 rounded-full bg-[#282a36]"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-[#50fa7b]"></span>
+                <span class="w-3.5 h-3.5 rounded-full bg-[#ff5555]"></span>
+              </div>
+            </button>
+          </div>
+        </div>
 
-    // ==========================================
-    // JAVASCRIPT KEYWORDS
-    // ==========================================
-    'abstract', 'arguments', 'await', 'boolean', 'break',
-    'case', 'catch', 'class', 'const', 'continue',
-    'debugger', 'default', 'delete', 'do', 'else',
-    'enum', 'eval', 'export', 'extends', 'false',
-    'finally', 'for', 'function', 'if', 'implements',
-    'import', 'in', 'instanceof', 'interface', 'let',
-    'new', 'null', 'package', 'private', 'protected',
-    'public', 'return', 'static', 'super', 'switch',
-    'this', 'throw', 'true', 'try', 'typeof',
-    'var', 'void', 'while', 'with', 'yield',
+        <!-- Custom Character & Caret Colors -->
+        <div class="border-t border-slate-800 pt-4">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">Custom Text & Caret Colors</label>
+          <div class="grid grid-cols-3 gap-2.5 text-xs">
+            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
+              <span class="text-slate-300 font-medium">Correct Text</span>
+              <input type="color" id="pickerCorrectColor" value="#34d399" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+            </div>
+            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
+              <span class="text-slate-300 font-medium">Wrong Text</span>
+              <input type="color" id="pickerWrongColor" value="#f43f5e" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+            </div>
+            <div class="bg-slate-800/60 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
+              <span class="text-slate-300 font-medium">Caret / Cursor</span>
+              <input type="color" id="pickerCaretColor" value="#818cf8" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
+            </div>
+          </div>
+        </div>
 
-    // ==========================================
-    // JAVASCRIPT DOM
-    // ==========================================
-    'DOM', 'Document', 'Window', 'Element', 'Node',
-    'Nodes', 'Parent', 'Child', 'Children', 'Sibling',
-    'Selector', 'QuerySelector', 'QuerySelectorAll',
-    'GetElementById', 'GetElementsByClassName',
-    'CreateElement', 'AppendChild', 'RemoveChild',
-    'ReplaceChild', 'InnerHTML', 'InnerText',
-    'TextContent', 'SetAttribute', 'GetAttribute',
-    'RemoveAttribute', 'ClassList', 'Contains',
-    'Event', 'Events', 'Listener', 'EventListener',
-    'Click', 'Submit', 'Change', 'Input', 'Keydown',
-    'Keyup', 'Mouseover', 'Mouseout', 'Load',
+        <!-- Mobile Font & Caret Options (Visible inside settings for small screens) -->
+        <div class="border-t border-slate-800 pt-4 lg:hidden space-y-3">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Font Style</label>
+            <select id="mobileSelFont" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5">
+              <option value="font-mono">JetBrains Mono</option>
+              <option value="font-hind">হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
+              <option value="font-sans">Inter Sans</option>
+              <option value="font-roboto-mono">Roboto Mono</option>
+              <option value="font-space-mono">Space Mono</option>
+              <option value="font-serif">Playfair Serif</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Cursor Type</label>
+            <select id="mobileSelCursor" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5">
+              <option value="cursor-line">Line |</option>
+              <option value="cursor-block">Block █</option>
+              <option value="cursor-underline">Underline _</option>
+              <option value="cursor-pulse">Smooth Pulse</option>
+            </select>
+          </div>
+        </div>
 
-    // ==========================================
-    // JAVASCRIPT MODERN FEATURES
-    // ==========================================
-    'Arrow', 'ArrowFunction', 'Template', 'Literal',
-    'Destructuring', 'Spread', 'Rest', 'Default',
-    'Modules', 'Import', 'Export', 'Async', 'Await',
-    'Promise', 'Promises', 'Callback', 'Callbacks',
-    'Fetch', 'API', 'JSON', 'Parse', 'Stringify',
-    'Map', 'Set', 'WeakMap', 'WeakSet', 'Symbol',
-    'Iterator', 'Generator', 'Class', 'Constructor',
-    'Method', 'Methods', 'Instance', 'Prototype',
-    'Inheritance', 'Encapsulation',
+        <!-- Keyboard Sounds Select -->
+        <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
+          <div>
+            <span class="block text-xs font-semibold text-slate-200">Mechanical Key Sounds</span>
+            <span class="text-[11px] text-slate-400">Synthesized tactile feedback clicks</span>
+          </div>
+          <select id="selSoundType" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5">
+            <option value="click">Mechanical Click</option>
+            <option value="thock">Deep Thock</option>
+            <option value="beep">Soft Pop</option>
+            <option value="none">Muted / Off</option>
+          </select>
+        </div>
 
-    // ==========================================
-    // JAVASCRIPT ARRAY METHODS
-    // ==========================================
-    'Push', 'Pop', 'Shift', 'Unshift', 'Slice',
-    'Splice', 'Concat', 'Join', 'Reverse', 'Sort',
-    'Includes', 'IndexOf', 'Find', 'FindIndex',
-    'Filter', 'Map', 'Reduce', 'ForEach', 'Some',
-    'Every', 'Flat', 'FlatMap',
+      </div>
 
-    // ==========================================
-    // JAVASCRIPT OBJECT METHODS
-    // ==========================================
-    'Keys', 'Entries', 'Values', 'Assign', 'Freeze',
-    'Create', 'Seal', 'HasOwn', 'Property',
-    'DefineProperty', 'GetOwnPropertyNames',
+      <!-- Close Drawer -->
+      <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end">
+        <button id="btnDoneSettings" class="px-5 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">Done</button>
+      </div>
 
-    // ==========================================
-    // BROWSER & WEB APIs
-    // ==========================================
-    'Browser', 'Browsers', 'Chrome', 'Firefox', 'Edge',
-    'Safari', 'Console', 'Storage', 'LocalStorage',
-    'SessionStorage', 'Cookie', 'Cookies', 'Location',
-    'History', 'Navigator', 'Screen', 'Clipboard',
-    'Geolocation', 'Notification', 'Permission',
-    'Permissions', 'URL', 'SearchParams', 'WebSocket',
-    'Worker', 'ServiceWorker', 'Cache', 'IndexedDB',
+    </div>
+  </div>
 
-    // ==========================================
-    // WEB DEVELOPMENT
-    // ==========================================
-    'Frontend', 'Backend', 'Fullstack', 'Developer',
-    'Development', 'Web', 'Internet', 'Server',
-    'Client', 'Request', 'Response', 'HTTP', 'HTTPS',
-    'GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'REST',
-    'RESTful', 'Endpoint', 'Route', 'Routing', 'API',
-    'Database', 'Authentication', 'Authorization',
-    'Session', 'Token', 'Security', 'Hosting',
-    'Domain', 'Deployment', 'Production',
-    'Environment', 'Localhost', 'Port', 'Network',
-    'Protocol', 'Server', 'Client',
+  <div id="modalHistory" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-surface-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden" id="modalHistoryCard">
+      
+      <!-- Header -->
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <h2 class="font-bold text-base text-white">Test History & Performance</h2>
+        </div>
+        <button id="btnCloseHistory" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
+      </div>
 
-    // ==========================================
-    // API & JSON
-    // ==========================================
-    'API', 'JSON', 'REST', 'Endpoint', 'Fetch',
-    'Request', 'Response', 'Headers', 'Body',
-    'Status', 'StatusCode', 'Success', 'Failure',
-    'Data', 'Parse', 'Stringify', 'Object',
-    'Array', 'Authentication', 'Bearer', 'Token',
+      <!-- History Content -->
+      <div class="p-5 flex-1 overflow-y-auto space-y-4">
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-3 gap-3">
+          <div class="bg-slate-800/50 border border-slate-700/60 p-3 rounded-xl text-center">
+            <div class="text-[10px] uppercase text-slate-400 font-bold">Best WPM</div>
+            <div id="historyStatTopWpm" class="text-xl font-mono font-black text-amber-400 mt-0.5">0</div>
+          </div>
+          <div class="bg-slate-800/50 border border-slate-700/60 p-3 rounded-xl text-center">
+            <div class="text-[10px] uppercase text-slate-400 font-bold">Avg WPM</div>
+            <div id="historyStatAvgWpm" class="text-xl font-mono font-black text-indigo-400 mt-0.5">0</div>
+          </div>
+          <div class="bg-slate-800/50 border border-slate-700/60 p-3 rounded-xl text-center">
+            <div class="text-[10px] uppercase text-slate-400 font-bold">Completed</div>
+            <div id="historyStatCount" class="text-xl font-mono font-black text-emerald-400 mt-0.5">0</div>
+          </div>
+        </div>
 
-    // ==========================================
-    // GIT & GITHUB
-    // ==========================================
-    'Git', 'GitHub', 'Repository', 'Repo', 'Commit',
-    'Push', 'Pull', 'Branch', 'Branches', 'Merge',
-    'Clone', 'Fork', 'Version', 'Control', 'Remote',
-    'Origin', 'Main', 'Master', 'Checkout', 'Status',
-    'Log', 'Diff', 'Stash', 'Reset', 'Revert',
-    'Tag', 'Release', 'Issue', 'PullRequest',
+        <!-- History Table / Items -->
+        <div class="border border-slate-800 rounded-xl overflow-hidden">
+          <div class="max-h-64 overflow-y-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-800/80 text-slate-400 sticky top-0 uppercase text-[10px] font-semibold border-b border-slate-700/80">
+                <tr>
+                  <th class="py-2.5 px-3">Date & Time</th>
+                  <th class="py-2.5 px-3">Speed (WPM)</th>
+                  <th class="py-2.5 px-3">Accuracy</th>
+                  <th class="py-2.5 px-3">Duration</th>
+                  <th class="py-2.5 px-3">Mode</th>
+                </tr>
+              </thead>
+              <tbody id="historyTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
+                <!-- Dynamically populated or empty placeholder -->
+              </tbody>
+            </table>
+          </div>
+        </div>
 
-    // ==========================================
-    // DEVELOPMENT TOOLS
-    // ==========================================
-    'Node', 'NodeJS', 'NPM', 'Package', 'Packages',
-    'Library', 'Libraries', 'Framework', 'Frameworks',
-    'Plugin', 'Plugins', 'Configuration', 'Config',
-    'Settings', 'Build', 'Builds', 'Compile',
-    'Compiler', 'Bundle', 'Bundler', 'Minify',
-    'Optimize', 'Performance', 'Testing', 'Unit',
-    'Integration', 'VSCode', 'Editor', 'Extension',
-    'Extensions', 'DevTools', 'Debugger',
+      </div>
 
-    // ==========================================
-    // FRONTEND TECHNOLOGIES
-    // ==========================================
-    'React', 'Vue', 'Angular', 'Svelte', 'NextJS',
-    'Nuxt', 'Bootstrap', 'Tailwind', 'jQuery',
-    'TypeScript', 'Webpack', 'Vite', 'Babel',
-    'ReactDOM', 'Component', 'Components', 'Props',
-    'State', 'Hook', 'Hooks', 'Router', 'Context',
+      <!-- History Footer -->
+      <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
+        <button id="btnClearHistory" class="text-xs text-rose-400 hover:text-rose-300 transition">Clear All History</button>
+        <button id="btnDoneHistory" class="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition">Close</button>
+      </div>
 
-    // ==========================================
-    // DATABASE
-    // ==========================================
-    'Database', 'SQL', 'MySQL', 'PostgreSQL',
-    'MongoDB', 'Firebase', 'Supabase', 'Table',
-    'Column', 'Row', 'Query', 'Queries', 'Record',
-    'Records', 'Schema', 'Collection', 'Document',
-    'Index', 'PrimaryKey', 'ForeignKey', 'Insert',
-    'Update', 'Delete', 'Select', 'Create',
+    </div>
+  </div>
 
-    // ==========================================
-    // SECURITY
-    // ==========================================
-    'Security', 'Secure', 'Password', 'Username',
-    'Login', 'Logout', 'Authentication', 'Authorization',
-    'Encryption', 'Hash', 'HTTPS', 'SSL', 'TLS',
-    'Session', 'Token', 'Cookie', 'Permission',
-    'Access', 'Protection', 'Validation', 'Sanitize',
+  <script>
+    /**
+     * Application State & Persistent Store
+     */
+    const PRESET_TEXTS = {
+      standard: [
+        "The quick brown fox jumps over the lazy dog while the sun sets behind the distant emerald hills. Precision and continuous rhythm are the secrets to developing effortless keyboard fluency. As fingertips dance across the mechanical keys, muscle memory begins to replace conscious hesitation, transforming thought into swift digital expression without friction.",
+        "Success in typing is not merely about rushing fingers forward with reckless abandon; it is about establishing a continuous cadence that stays calm under pressure. When each keystroke lands accurately, speed naturally follows without strain or unnecessary tension.",
+        "Technology shapes the modern workplace, yet the humble mechanical keyboard remains one of our primary gateways into the digital cosmos. Mastering this tool transforms how programmers, writers, and visionaries manifest ideas into reality."
+      ],
+      bangla: [
+        "জ্ঞান যেখানে সীমাবদ্ধ, বুদ্ধি সেখানে আড়ষ্ট, মুক্তি সেখানে অসম্ভব। নিয়মিত অনুশীলনের মাধ্যমেই যেকোনো বিষয়ে পারদর্শিতা ও নিখুঁত দক্ষতা অর্জন সম্ভব হয়।",
+        "আমাদের প্রিয় মাতৃভাষা বাংলা। কিবোর্ডে দ্রুত ও সঠিকভাবে টাইপ করার ক্ষমতা বর্তমান ডিজিটাল দুনিয়ায় কাজকে সহজ এবং গতিশীল করে তোলে।",
+        "মানুষের জীবনে বড় হওয়াটাই আসল নয়, বড় মনের মানুষ হওয়াটাই আসল কথা। সততা, নিষ্ঠা ও আত্মবিশ্বাস থাকলে সব কঠিন কাজই সহজ হয়ে যায়।"
+      ],
+      quotes: [
+        "Stay hungry, stay foolish. Never let the noise of others' opinions drown out your own inner voice. Have the courage to follow your heart and intuition.",
+        "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Do not settle. As with all matters of the heart, you will know when you find it.",
+        "Simplicity is prerequisite for reliability. Any fool can write code that a computer can understand. Good programmers write code that humans can understand.",
+        "It does not matter how slowly you go as long as you do not stop. Life is really simple, but we insist on making it complicated."
+      ],
+      code: [
+        "const calculateVelocity = (distance, time) => { if (time <= 0) return 0; const result = distance / time; return Math.round(result * 100) / 100; };",
+        "function createKeyboardListener(element) { const buffer = []; return element.addEventListener('keydown', (e) => { if (e.key === 'Backspace') { buffer.pop(); } else { buffer.push(e.key); } }); }",
+        "import React, { useState, useEffect } from 'react'; export default function Counter() { const [count, setCount] = useState(0); return <button onClick={() => setCount(c => c + 1)}>{count}</button>; }"
+      ],
+      blank: "Type whatever you wish into this blank canvas. Create your own thoughts, draft essays, experiment with finger placements, or enjoy uninterrupted tactile rhythm without fear of mistakes."
+    };
 
-    // ==========================================
-    // PERFORMANCE & SEO
-    // ==========================================
-    'Performance', 'Optimization', 'Optimize', 'Speed',
-    'Fast', 'Cache', 'Caching', 'Lazy', 'Loading',
-    'Compression', 'Minification', 'SEO', 'Search',
-    'Engine', 'Ranking', 'Keyword', 'Keywords',
-    'Metadata', 'Sitemap', 'Robots', 'Indexing',
-    'Accessibility', 'Semantic', 'Structure',
+    const THEMES = {
+      dark: {
+        bg: '#080d17',
+        surface: '#0d131f',
+        panel: '#111827',
+        textMuted: '#64748b',
+        correct: '#34d399',
+        wrong: '#f43f5e',
+        wrongBg: 'rgba(244, 63, 94, 0.2)',
+        caret: '#818cf8',
+        textMain: '#e2e8f0'
+      },
+      catppuccin: {
+        bg: '#1e1e2e',
+        surface: '#181825',
+        panel: '#24273a',
+        textMuted: '#6c7086',
+        correct: '#a6e3a1',
+        wrong: '#f38ba8',
+        wrongBg: 'rgba(243, 139, 168, 0.25)',
+        caret: '#cba6f7',
+        textMain: '#cdd6f4'
+      },
+      nord: {
+        bg: '#242933',
+        surface: '#2e3440',
+        panel: '#3b4252',
+        textMuted: '#677186',
+        correct: '#88c0d0',
+        wrong: '#bf616a',
+        wrongBg: 'rgba(191, 97, 106, 0.25)',
+        caret: '#81a1c1',
+        textMain: '#eceff4'
+      },
+      matrix: {
+        bg: '#050a06',
+        surface: '#08120b',
+        panel: '#0e1d13',
+        textMuted: '#2e5636',
+        correct: '#10b981',
+        wrong: '#ef4444',
+        wrongBg: 'rgba(239, 68, 68, 0.25)',
+        caret: '#34d399',
+        textMain: '#d1fae5'
+      },
+      paper: {
+        bg: '#faf8f5',
+        surface: '#f1ede6',
+        panel: '#e5ded1',
+        textMuted: '#9a8d79',
+        correct: '#059669',
+        wrong: '#dc2626',
+        wrongBg: 'rgba(220, 38, 38, 0.15)',
+        caret: '#4f46e5',
+        textMain: '#27272a'
+      },
+      dracula: {
+        bg: '#282a36',
+        surface: '#21222c',
+        panel: '#343746',
+        textMuted: '#6272a4',
+        correct: '#50fa7b',
+        wrong: '#ff5555',
+        wrongBg: 'rgba(255, 85, 85, 0.25)',
+        caret: '#bd93f9',
+        textMain: '#f8f8f2'
+      }
+    };
 
-    // ==========================================
-    // REAL PROJECT VOCABULARY
-    // ==========================================
-    'Website', 'Webapp', 'Dashboard', 'Homepage',
-    'Profile', 'Login', 'Register', 'Account',
-    'User', 'Users', 'Admin', 'Menu', 'Navbar',
-    'Sidebar', 'Card', 'Cards', 'Modal', 'Popup',
-    'Alert', 'Notification', 'Searchbar', 'Filter',
-    'Dropdown', 'Checkbox', 'Radio', 'Form',
-    'Validation', 'Message', 'Status', 'Settings',
-    'Profile', 'Upload', 'Download', 'Preview',
-    'Gallery', 'Image', 'File', 'Files', 'Folder',
-    'Dashboard', 'Analytics', 'Chart', 'Table',
+    // State Variables
+    let currentThemeKey = 'dark';
+    let currentFontSize = 26;
+    let currentFontFamily = 'font-mono';
+    let currentCursorType = 'cursor-line';
+    let currentMode = '30'; // 15, 30, 60, 120, 'custom', 'free'
+    let customTimerDuration = 45; // Default custom seconds
+    let currentSound = 'click';
 
-    // ==========================================
-    // LEVEL-1 PROGRAMMING & READING PRACTICE
-    // ==========================================
-    'strong', 'smart', 'hardworking', 'popular',
-    'easy', 'learn', 'book', 'teach', 'click',
-    'button', 'press', 'Ctrl', 'English', 'difficult',
-    'exploring', 'easier', 'afraid', 'learning',
-    'reading', 'crucial', 'practice', 'yourself',
-    'output', 'truly', 'understand', 'explanations',
-    'programmer', 'hands-on', 'builds', 'skills',
-    'better', 'test', 'often', 'wait', 'program',
-    'ready', 'Small', 'tests', 'help', 'avoid',
-    'big', 'mistakes', 'later', 'working', 'files',
-    'aware', 'large', 'upload', 'download',
-    'important', 'install', 'software', 'starting',
-    'project', 'Collaborate', 'others', 'discussing',
-    'ideas', 'peers', 'perspectives', 'solutions',
-    'problems', 'face'
-];
-            const WPM_STANDARD_WORD_LENGTH = 5;
+    let testStatus = 'idle'; // 'idle', 'running', 'completed'
+    let targetText = '';
+    let targetChars = [];
+    let typedChars = [];
+    let startTime = null;
+    let timerInterval = null;
+    let timeRemaining = 30;
+    let timeElapsed = 0;
 
-            const elements = {
-                typingArea: document.getElementById('typing-area'),
-                wordsContainer: document.getElementById('words-container'),
-                wordWrapper: document.getElementById('word-wrapper'),
-                typingInput: document.getElementById('typing-input'),
-                timerEl: document.getElementById('timer'),
-                wpmEl: document.getElementById('wpm'),
-                resultsEl: document.getElementById('results'),
-                restartBtn: document.getElementById('restart-btn'),
-                cursor: document.getElementById('cursor'),
-                timeSettings: document.getElementById('time-settings'),
-                modeSettings: document.getElementById('mode-settings'),
-                themeSelector: document.getElementById('theme-selector'),
-                customTextContainer: document.getElementById('custom-text-container'),
-                customTextInput: document.getElementById('custom-text-input'),
-                userDropdown: document.getElementById('user-dropdown'),
-                switchUserBtn: document.getElementById('switch-user-btn'),
-                resultWpm: document.querySelector('#result-wpm'),
-                resultInfo: document.getElementById('result-info'),
-                resultAccuracy: document.getElementById('result-accuracy'),
-                resultRawWpm: document.getElementById('result-raw-wpm'),
-                fullscreenBtn: document.getElementById('fullscreen-btn'),
-                historyBtn: document.getElementById('history-btn'),
-                historyModal: document.getElementById('history-modal'),
-                closeHistoryBtn: document.getElementById('close-history-btn'),
-                historyList: document.getElementById('history-list'),
-                historyUserFilter: document.getElementById('history-user-filter'),
-                clearHistoryBtn: document.getElementById('clear-history-btn'),
-                userModal: document.getElementById('user-modal'),
-                modalExistingUsers: document.getElementById('modal-existing-users'),
-                modalUsernameInput: document.getElementById('modal-username-input'),
-                confirmUserBtn: document.getElementById('confirm-user-btn'),
-                avgWpmEl: document.getElementById('avg-wpm'),
-                avgAccEl: document.getElementById('avg-acc'),
-                totalTestsEl: document.getElementById('total-tests'),
-                bestWpmEl: document.getElementById('best-wpm'),
-            };
+    let totalTestsCompleted = 0;
+    let topWpm = 0;
+    let testHistory = [];
 
-            let state = {
-                timeLimit: 60,
-                timeLeft: 60,
-                testMode: 'words',
-                charIndex: 0,
-                correctChars: 0,
-                incorrectChars: 0,
-                isTestActive: false,
-                timerInterval: null,
-                currentText: '',
-                currentLine: 0,
-                startTime: null,
-                currentUser: 'Guest'
-            };
+    let audioCtx = null;
 
-            function init() {
-                loadTheme();
-                loadUserList();
-                setupEventListeners();
-                checkUserOnEntry();
-                startGame();
+    function playKeySound() {
+      if (currentSound === 'none') return;
+      try {
+        if (!audioCtx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) audioCtx = new AudioContext();
+        }
+        if (audioCtx && audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        if (!audioCtx) return;
+
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (currentSound === 'click') {
+          // Sharp mechanical click
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(1400, now);
+          osc.frequency.exponentialRampToValueAtTime(120, now + 0.035);
+          gain.gain.setValueAtTime(0.14, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+          osc.start(now);
+          osc.stop(now + 0.035);
+        } else if (currentSound === 'thock') {
+          // Deep mechanical switch thock
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.exponentialRampToValueAtTime(80, now + 0.06);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (currentSound === 'beep') {
+          // Soft bubble pop
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(600 + Math.random() * 100, now);
+          gain.gain.setValueAtTime(0.08, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+          osc.start(now);
+          osc.stop(now + 0.04);
+        }
+      } catch (err) {
+        // Audio might be blocked by browser policy before first interaction
+      }
+    }
+
+    const bodyEl = document.getElementById('appBody');
+    const liveClockEl = document.getElementById('liveClock');
+    const textDisplayBox = document.getElementById('textDisplayBox');
+    const hiddenInput = document.getElementById('hiddenTypingInput');
+    const focusOverlay = document.getElementById('focusOverlay');
+    const testProgressBar = document.getElementById('testProgressBar');
+    const charCountSummary = document.getElementById('charCountSummary');
+
+    // Controls
+    const btnFontInc = document.getElementById('btnFontInc');
+    const btnFontDec = document.getElementById('btnFontDec');
+    const lblFontSize = document.getElementById('lblFontSize');
+    const selFontFamily = document.getElementById('selFontFamily');
+    const selCursorType = document.getElementById('selCursorType');
+    const btnSoundToggle = document.getElementById('btnSoundToggle');
+    const soundIconOn = document.getElementById('soundIconOn');
+    const soundIconOff = document.getElementById('soundIconOff');
+    const btnFullscreen = document.getElementById('btnFullscreen');
+    const fsIconEnter = document.getElementById('fsIconEnter');
+    const fsIconExit = document.getElementById('fsIconExit');
+    const btnMainAction = document.getElementById('btnMainAction');
+    const lblMainAction = document.getElementById('lblMainAction');
+
+    // Metrics
+    const metricWpm = document.getElementById('metricWpm');
+    const metricAcc = document.getElementById('metricAcc');
+    const metricTime = document.getElementById('metricTime');
+    const metricTopWpm = document.getElementById('metricTopWpm');
+    const metricTotalTests = document.getElementById('metricTotalTests');
+    const mobileTopWpm = document.getElementById('mobileTopWpm');
+    const mobileTotalTests = document.getElementById('mobileTotalTests');
+
+    // Modals
+    const modalCustomText = document.getElementById('modalCustomText');
+    const btnOpenCustomText = document.getElementById('btnOpenCustomText');
+    const btnCloseCustomText = document.getElementById('btnCloseCustomText');
+    const btnCancelCustomText = document.getElementById('btnCancelCustomText');
+    const btnApplyCustomText = document.getElementById('btnApplyCustomText');
+    const txtCustomInput = document.getElementById('txtCustomInput');
+    const customWordCharCount = document.getElementById('customWordCharCount');
+    const btnClearCustom = document.getElementById('btnClearCustom');
+
+    const modalCustomTimer = document.getElementById('modalCustomTimer');
+    const btnCustomTimerDesktop = document.getElementById('btnCustomTimerDesktop');
+    const btnCustomTimerMobile = document.getElementById('btnCustomTimerMobile');
+    const btnCloseCustomTimer = document.getElementById('btnCloseCustomTimer');
+    const btnCancelCustomTimer = document.getElementById('btnCancelCustomTimer');
+    const btnSetCustomTimer = document.getElementById('btnSetCustomTimer');
+    const numCustomTimerInput = document.getElementById('numCustomTimerInput');
+    const lblCustomDesktop = document.getElementById('lblCustomDesktop');
+    const lblCustomMobile = document.getElementById('lblCustomMobile');
+
+    const modalSettings = document.getElementById('modalSettings');
+    const btnOpenSettings = document.getElementById('btnOpenSettings');
+    const btnCloseSettings = document.getElementById('btnCloseSettings');
+    const btnDoneSettings = document.getElementById('btnDoneSettings');
+    const mobileSelFont = document.getElementById('mobileSelFont');
+    const mobileSelCursor = document.getElementById('mobileSelCursor');
+    const selSoundType = document.getElementById('selSoundType');
+
+    const pickerCorrectColor = document.getElementById('pickerCorrectColor');
+    const pickerWrongColor = document.getElementById('pickerWrongColor');
+    const pickerCaretColor = document.getElementById('pickerCaretColor');
+
+    const modalHistory = document.getElementById('modalHistory');
+    const btnOpenHistory = document.getElementById('btnOpenHistory');
+    const btnCloseHistory = document.getElementById('btnCloseHistory');
+    const btnDoneHistory = document.getElementById('btnDoneHistory');
+    const btnClearHistory = document.getElementById('btnClearHistory');
+    const historyTableBody = document.getElementById('historyTableBody');
+    const historyStatTopWpm = document.getElementById('historyStatTopWpm');
+    const historyStatAvgWpm = document.getElementById('historyStatAvgWpm');
+    const historyStatCount = document.getElementById('historyStatCount');
+
+    function loadPersistedData() {
+      try {
+        const storedHistory = localStorage.getItem('typeflow_history');
+        if (storedHistory) testHistory = JSON.parse(storedHistory);
+
+        const storedTop = localStorage.getItem('typeflow_top_wpm');
+        if (storedTop) topWpm = parseInt(storedTop, 10) || 0;
+
+        const storedTotal = localStorage.getItem('typeflow_total_tests');
+        if (storedTotal) totalTestsCompleted = parseInt(storedTotal, 10) || 0;
+
+        const storedTheme = localStorage.getItem('typeflow_theme');
+        if (storedTheme && THEMES[storedTheme]) currentThemeKey = storedTheme;
+
+        const storedCustomSec = localStorage.getItem('typeflow_custom_duration');
+        if (storedCustomSec) {
+          customTimerDuration = parseInt(storedCustomSec, 10) || 45;
+          numCustomTimerInput.value = customTimerDuration;
+          updateCustomTimerLabels();
+        }
+
+        const storedFont = localStorage.getItem('typeflow_font');
+        if (storedFont) currentFontFamily = storedFont;
+
+        const storedSize = localStorage.getItem('typeflow_fontsize');
+        if (storedSize) currentFontSize = parseInt(storedSize, 10) || 26;
+
+        const storedCursor = localStorage.getItem('typeflow_cursor');
+        if (storedCursor) currentCursorType = storedCursor;
+
+        const storedSound = localStorage.getItem('typeflow_sound');
+        if (storedSound) currentSound = storedSound;
+
+        const customCorrect = localStorage.getItem('typeflow_color_correct');
+        if (customCorrect && pickerCorrectColor) pickerCorrectColor.value = customCorrect;
+
+        const customWrong = localStorage.getItem('typeflow_color_wrong');
+        if (customWrong && pickerWrongColor) pickerWrongColor.value = customWrong;
+
+        const customCaret = localStorage.getItem('typeflow_color_caret');
+        if (customCaret && pickerCaretColor) pickerCaretColor.value = customCaret;
+
+      } catch (err) {
+        console.warn('Storage read fallback:', err);
+      }
+
+      updateMetricsHeader();
+    }
+
+    function applyTheme(themeKey) {
+      const theme = THEMES[themeKey] || THEMES.dark;
+      currentThemeKey = themeKey;
+
+      // Update custom root variables
+      const correctColor = (pickerCorrectColor && pickerCorrectColor.value) || theme.correct;
+      const wrongColor = (pickerWrongColor && pickerWrongColor.value) || theme.wrong;
+      const caretColor = (pickerCaretColor && pickerCaretColor.value) || theme.caret;
+
+      document.documentElement.style.setProperty('--color-correct', correctColor);
+      document.documentElement.style.setProperty('--color-wrong', wrongColor);
+      document.documentElement.style.setProperty('--color-wrong-bg', theme.wrongBg);
+      document.documentElement.style.setProperty('--color-caret', caretColor);
+      document.documentElement.style.setProperty('--accent-color', caretColor);
+
+      bodyEl.style.backgroundColor = theme.bg;
+      bodyEl.style.color = theme.textMain;
+
+      // Update control panel background
+      const panel = document.getElementById('controlPanel');
+      panel.style.backgroundColor = theme.surface;
+      panel.style.borderColor = `${theme.panel}cc`;
+
+      // Update modal backgrounds
+      ['modalCustomCard', 'modalSettingsCard', 'modalHistoryCard', 'modalCustomTimerCard'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          el.style.backgroundColor = theme.surface;
+          el.style.borderColor = theme.panel;
+        }
+      });
+
+      // Update active highlight on theme buttons
+      document.querySelectorAll('.theme-btn').forEach(btn => {
+        if (btn.dataset.theme === themeKey) {
+          btn.classList.add('ring-2', 'ring-indigo-500', 'border-transparent');
+        } else {
+          btn.classList.remove('ring-2', 'ring-indigo-500', 'border-transparent');
+        }
+      });
+
+      try {
+        localStorage.setItem('typeflow_theme', themeKey);
+      } catch (e) {}
+
+      renderTargetTextDisplay();
+    }
+
+    function startLiveClock() {
+      function update() {
+        const now = new Date();
+        const options = { 
+          hour: '2-digit', 
+          minute: '2-digit', 
+          second: '2-digit', 
+          hour12: true, 
+          month: 'short', 
+          day: 'numeric' 
+        };
+        liveClockEl.textContent = now.toLocaleDateString(undefined, options);
+      }
+      update();
+      setInterval(update, 1000);
+    }
+
+    function setFontSize(newSize) {
+      currentFontSize = Math.min(Math.max(newSize, 16), 46);
+      lblFontSize.textContent = `${currentFontSize}px`;
+      textDisplayBox.style.fontSize = `${currentFontSize}px`;
+      try {
+        localStorage.setItem('typeflow_fontsize', currentFontSize);
+      } catch (e) {}
+    }
+
+    function setFontFamily(fontClass) {
+      textDisplayBox.classList.remove('font-mono', 'font-sans', 'font-roboto-mono', 'font-space-mono', 'font-serif', 'font-hind');
+      textDisplayBox.classList.add(fontClass);
+      currentFontFamily = fontClass;
+      selFontFamily.value = fontClass;
+      mobileSelFont.value = fontClass;
+      try {
+        localStorage.setItem('typeflow_font', fontClass);
+      } catch (e) {}
+    }
+
+    function setCursorType(cursorClass) {
+      currentCursorType = cursorClass;
+      selCursorType.value = cursorClass;
+      mobileSelCursor.value = cursorClass;
+      try {
+        localStorage.setItem('typeflow_cursor', cursorClass);
+      } catch (e) {}
+      renderTargetTextDisplay();
+    }
+
+    function prepareText(sourceText) {
+      if (!sourceText || sourceText.trim() === '') {
+        const randomList = PRESET_TEXTS.standard;
+        targetText = randomList[Math.floor(Math.random() * randomList.length)];
+      } else {
+        targetText = sourceText.trim().replace(/\s+/g, ' ');
+      }
+      targetChars = targetText.split('');
+      typedChars = [];
+      renderTargetTextDisplay();
+      updateMetricsHeader();
+    }
+
+    function renderTargetTextDisplay() {
+      textDisplayBox.innerHTML = '';
+      if (targetChars.length === 0) return;
+
+      const words = targetText.split(' ');
+      let globalCharIndex = 0;
+      const caretColor = pickerCaretColor.value || 'var(--color-caret)';
+      const correctColor = pickerCorrectColor.value || 'var(--color-correct)';
+      const wrongColor = pickerWrongColor.value || 'var(--color-wrong)';
+
+      words.forEach((word, wIdx) => {
+        const wordSpan = document.createElement('span');
+        wordSpan.className = 'typing-word';
+
+        const chars = word.split('');
+        chars.forEach((ch) => {
+          const charSpan = document.createElement('span');
+          charSpan.className = 'char-node';
+          charSpan.dataset.idx = globalCharIndex;
+          charSpan.textContent = ch;
+
+          // Status coloring
+          if (globalCharIndex < typedChars.length) {
+            const typed = typedChars[globalCharIndex];
+            if (typed === ch) {
+              charSpan.style.color = correctColor;
+            } else {
+              charSpan.style.color = wrongColor;
+              charSpan.style.backgroundColor = 'var(--color-wrong-bg, rgba(239,68,68,0.2))';
+              charSpan.style.borderRadius = '3px';
             }
+          } else {
+            // Untyped character
+            charSpan.style.color = currentThemeKey === 'paper' ? '#9a8d79' : '#4b5563';
+          }
 
-            function setupEventListeners() {
-                document.addEventListener('keydown', (e) => {
-                    const activeEl = document.activeElement;
-                    const isInputTarget = activeEl && (
-                        activeEl.tagName === 'INPUT' || 
-                        activeEl.tagName === 'TEXTAREA' || 
-                        activeEl.tagName === 'SELECT'
-                    );
-                    const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
-                                        (elements.historyModal && elements.historyModal.style.display === 'flex');
+          // Render Caret at active index
+          if (globalCharIndex === typedChars.length) {
+            applyCaretStyle(charSpan, caretColor);
+          }
 
-                    if (!isInputTarget && !isModalOpen) {
-                        elements.typingInput.focus();
-                    }
-                });
-
-                elements.wordsContainer.addEventListener('click', () => {
-                    const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
-                                        (elements.historyModal && elements.historyModal.style.display === 'flex');
-                    if (!isModalOpen) {
-                        elements.typingInput.focus();
-                    }
-                });
-
-                // Primary Typing Handler (Handles typing forward, spacebar, and backspacing)
-                elements.typingInput.addEventListener('input', handleTyping);
-                elements.typingInput.addEventListener('focus', () => elements.wordsContainer.classList.remove('unfocused'));
-                elements.typingInput.addEventListener('blur', () => elements.wordsContainer.classList.add('unfocused'));
-                
-                elements.restartBtn.addEventListener('click', startGame);
-                
-                elements.userDropdown.addEventListener('change', (e) => {
-                    if (e.target.value === '__ADD_NEW__') {
-                        openUserModal();
-                    } else if (e.target.value) {
-                        setUser(e.target.value);
-                    }
-                });
-
-                elements.switchUserBtn.addEventListener('click', openUserModal);
-                elements.confirmUserBtn.addEventListener('click', handleUserConfirm);
-
-                elements.timeSettings.addEventListener('click', (e) => {
-                    if (e.target.tagName === 'BUTTON') {
-                        state.timeLimit = parseInt(e.target.dataset.time, 10);
-                        document.querySelector('#time-settings .active').classList.remove('active');
-                        e.target.classList.add('active');
-                        startGame();
-                    }
-                });
-
-                elements.modeSettings.addEventListener('click', (e) => {
-                    if (e.target.tagName === 'BUTTON') {
-                        state.testMode = e.target.dataset.mode;
-                        document.querySelector('#mode-settings .active').classList.remove('active');
-                        e.target.classList.add('active');
-                        elements.customTextContainer.style.display = state.testMode === 'custom' ? 'block' : 'none';
-                        startGame();
-                    }
-                });
-
-                elements.themeSelector.addEventListener('change', (e) => setTheme(e.target.value));
-                elements.fullscreenBtn.addEventListener('click', toggleFullscreen);
-                
-                // History modal control & filter listeners
-                elements.historyBtn.addEventListener('click', showHistory);
-                elements.closeHistoryBtn.addEventListener('click', () => elements.historyModal.style.display = 'none');
-                elements.historyUserFilter.addEventListener('change', renderHistoryView);
-                elements.clearHistoryBtn.addEventListener('click', handleClearHistory);
-
-                window.addEventListener('click', (e) => {
-                    if (e.target === elements.historyModal) elements.historyModal.style.display = 'none';
-                });
-            }
-
-            function getHistory() {
-                return JSON.parse(localStorage.getItem('typingTestHistory')) || [];
-            }
-
-            function getUsersList() {
-                let savedUsers = JSON.parse(localStorage.getItem('typingTestUsersList')) || [];
-                let history = getHistory();
-                history.forEach(item => {
-                    if (item.username && !savedUsers.includes(item.username)) {
-                        savedUsers.push(item.username);
-                    }
-                });
-                const savedUser = localStorage.getItem('typingTestUsername');
-                if (savedUser && !savedUsers.includes(savedUser)) {
-                    savedUsers.push(savedUser);
-                }
-                if (savedUsers.length === 0) savedUsers.push('Guest');
-                
-                localStorage.setItem('typingTestUsersList', JSON.stringify(savedUsers));
-                return savedUsers;
-            }
-
-            function loadUserList() {
-                const users = getUsersList();
-                const savedUser = localStorage.getItem('typingTestUsername') || users[0] || 'Guest';
-                state.currentUser = savedUser;
-
-                elements.userDropdown.innerHTML = '';
-                users.forEach(u => {
-                    const opt = document.createElement('option');
-                    opt.value = u;
-                    opt.textContent = u;
-                    if (u === state.currentUser) opt.selected = true;
-                    elements.userDropdown.appendChild(opt);
-                });
-                
-                const addOpt = document.createElement('option');
-                addOpt.value = '__ADD_NEW__';
-                addOpt.textContent = '➕ Add New User...';
-                elements.userDropdown.appendChild(addOpt);
-
-                elements.modalExistingUsers.innerHTML = '<option value="">-- Select Existing User --</option>';
-                users.forEach(u => {
-                    const opt = document.createElement('option');
-                    opt.value = u;
-                    opt.textContent = u;
-                    if (u === state.currentUser) opt.selected = true;
-                    elements.modalExistingUsers.appendChild(opt);
-                });
-            }
-
-            function checkUserOnEntry() {
-                const savedUser = localStorage.getItem('typingTestUsername');
-                if (!savedUser) {
-                    openUserModal();
-                }
-            }
-
-            function openUserModal() {
-                loadUserList();
-                elements.modalUsernameInput.value = '';
-                elements.userModal.style.display = 'flex';
-                elements.modalUsernameInput.focus();
-            }
-
-            function handleUserConfirm() {
-                const selectedExisting = elements.modalExistingUsers.value;
-                const typedName = elements.modalUsernameInput.value.trim();
-                const username = typedName || selectedExisting || state.currentUser || 'Guest';
-
-                setUser(username);
-                elements.userModal.style.display = 'none';
-                elements.typingInput.focus();
-            }
-
-            function setUser(username) {
-                if (!username || !username.trim()) return;
-                const cleanName = username.trim();
-                state.currentUser = cleanName;
-                localStorage.setItem('typingTestUsername', cleanName);
-
-                let users = JSON.parse(localStorage.getItem('typingTestUsersList')) || [];
-                if (!users.includes(cleanName)) {
-                    users.push(cleanName);
-                    localStorage.setItem('typingTestUsersList', JSON.stringify(users));
-                }
-
-                loadUserList();
-            }
-
-            function toggleFullscreen() {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(err => alert(err.message));
-                } else if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
-            }
-
-            function startGame() {
-                clearInterval(state.timerInterval);
-                Object.assign(state, {
-                    timeLeft: state.timeLimit,
-                    charIndex: 0, correctChars: 0, incorrectChars: 0,
-                    isTestActive: false,
-                    currentLine: 0,
-                    startTime: null,
-                });
-                
-                elements.timerEl.textContent = state.timeLeft;
-                elements.wpmEl.textContent = '0';
-                elements.resultsEl.style.display = 'none';
-                elements.typingArea.style.display = 'flex';
-                elements.typingInput.value = '';
-                elements.wordWrapper.style.transform = 'translateY(0px)';
-                
-                generateText();
-                renderText();
-                updateCursorPosition();
-            }
-
-            function shuffleArray(array) {
-                const arrCopy = [...array];
-                for (let i = arrCopy.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [arrCopy[i], arrCopy[j]] = [arrCopy[j], arrCopy[i]];
-                }
-                return arrCopy;
-            }
-
-            function generateText() {
-                if (state.testMode === 'custom') {
-                    state.currentText = elements.customTextInput.value.trim().replace(/\s+/g, ' ') || 'Please enter custom text above.';
-                } else {
-                    let wordList = [];
-                    for (let i = 0; i < 5; i++) wordList = wordList.concat(COMMON_WORDS);
-                    state.currentText = shuffleArray(wordList).slice(0, 1000).join(' ');
-                }
-            }
-            
-            function renderText() {
-                elements.wordWrapper.innerHTML = '';
-                state.currentText.split('').forEach(char => {
-                    const charSpan = document.createElement('span');
-                    charSpan.textContent = char; // Use textContent to preserve space characters
-                    elements.wordWrapper.appendChild(charSpan);
-                });
-            }
-
-            function handleTyping(e) {
-                if (state.timeLeft === 0) return;
-                const isModalOpen = (elements.userModal && elements.userModal.style.display === 'flex') || 
-                                    (elements.historyModal && elements.historyModal.style.display === 'flex');
-                if (isModalOpen) return;
-
-                const typedValue = elements.typingInput.value;
-                
-                if (!state.isTestActive && typedValue.length > 0) {
-                    startTimer();
-                }
-
-                const charSpans = elements.wordWrapper.querySelectorAll('span');
-                
-                // Case 1: Typing characters forward (including spacebar)
-                if (typedValue.length > state.charIndex) {
-                    for (let i = state.charIndex; i < typedValue.length && i < charSpans.length; i++) {
-                        const typedChar = typedValue[i];
-                        const expectedChar = charSpans[i].textContent;
-
-                        if (typedChar === expectedChar) {
-                            charSpans[i].classList.add('correct');
-                            charSpans[i].classList.remove('incorrect');
-                            state.correctChars++;
-                        } else {
-                            charSpans[i].classList.add('incorrect');
-                            charSpans[i].classList.remove('correct');
-                            state.incorrectChars++;
-                        }
-                    }
-                    state.charIndex = Math.min(typedValue.length, charSpans.length);
-                } 
-                // Case 2: Deleting characters backwards (Backspace)
-                else if (typedValue.length < state.charIndex) {
-                    for (let i = state.charIndex - 1; i >= typedValue.length; i--) {
-                        if (charSpans[i]) {
-                            if (charSpans[i].classList.contains('correct')) {
-                                state.correctChars = Math.max(0, state.correctChars - 1);
-                            } else if (charSpans[i].classList.contains('incorrect')) {
-                                state.incorrectChars = Math.max(0, state.incorrectChars - 1);
-                            }
-                            charSpans[i].classList.remove('correct', 'incorrect');
-                        }
-                    }
-                    state.charIndex = typedValue.length;
-                }
-
-                updateCursorPosition();
-                updateWPM();
-
-                if (state.charIndex >= charSpans.length && charSpans.length > 0) {
-                    endGame();
-                }
-            }
-
-            function startTimer() {
-                state.isTestActive = true;
-                state.startTime = Date.now();
-                state.timerInterval = setInterval(() => {
-                    state.timeLeft--;
-                    elements.timerEl.textContent = state.timeLeft;
-                    updateWPM();
-                    if (state.timeLeft === 0) endGame();
-                }, 1000);
-            }
-
-            function updateWPM() {
-                if (!state.isTestActive || !state.startTime) return;
-                const timeElapsed = (Date.now() - state.startTime) / 1000 / 60;
-                if (timeElapsed > 0) {
-                    const netWPM = Math.round((state.correctChars / WPM_STANDARD_WORD_LENGTH) / timeElapsed);
-                    elements.wpmEl.textContent = Math.max(0, netWPM);
-                }
-            }
-
-            function updateCursorPosition() {
-                const charSpans = elements.wordWrapper.querySelectorAll('span');
-                if (charSpans.length === 0) return;
-                
-                const isEnd = state.charIndex >= charSpans.length;
-                const targetSpan = charSpans[isEnd ? charSpans.length - 1 : state.charIndex];
-                
-                if (!targetSpan) return;
-
-                if (isEnd) {
-                    elements.cursor.style.top = `${targetSpan.offsetTop}px`;
-                    elements.cursor.style.left = `${targetSpan.offsetLeft + targetSpan.offsetWidth}px`;
-                } else {
-                    elements.cursor.style.top = `${targetSpan.offsetTop}px`;
-                    elements.cursor.style.left = `${targetSpan.offsetLeft}px`;
-                }
-
-                const lineHeight = parseFloat(getComputedStyle(elements.wordsContainer).fontSize) * 2.2;
-                const currentLine = Math.floor(targetSpan.offsetTop / lineHeight);
-
-                // Smoothly scroll text upward/downward on line changes
-                if (currentLine !== state.currentLine) {
-                    state.currentLine = currentLine;
-                    elements.wordWrapper.style.transform = `translateY(${-currentLine * lineHeight}px)`;
-                }
-            }
-
-            function saveHistory(resultData) {
-                let history = getHistory();
-                history.unshift(resultData);
-                if (history.length > 50) history.pop();
-                localStorage.setItem('typingTestHistory', JSON.stringify(history));
-                loadUserList();
-            }
-
-            function showHistory() {
-                populateHistoryUserFilter();
-                renderHistoryView();
-                elements.historyModal.style.display = 'flex';
-            }
-
-            function populateHistoryUserFilter() {
-                const users = getUsersList();
-                elements.historyUserFilter.innerHTML = '';
-                
-                const allOpt = document.createElement('option');
-                allOpt.value = '__ALL__';
-                allOpt.textContent = '🌐 All Users';
-                elements.historyUserFilter.appendChild(allOpt);
-
-                users.forEach(u => {
-                    const opt = document.createElement('option');
-                    opt.value = u;
-                    opt.textContent = `👤 ${u}`;
-                    if (u === state.currentUser) opt.selected = true;
-                    elements.historyUserFilter.appendChild(opt);
-                });
-            }
-
-            function renderHistoryView() {
-                let history = getHistory();
-                const filterValue = elements.historyUserFilter.value || state.currentUser;
-
-                if (filterValue !== '__ALL__') {
-                    history = history.filter(item => item.username === filterValue);
-                }
-
-                elements.historyList.innerHTML = '';
-                
-                if (history.length === 0) {
-                    elements.historyList.innerHTML = '<li style="color:var(--subtle-text-color); text-align:center; padding: 1rem;">No history available for this view!</li>';
-                    elements.avgWpmEl.textContent = '0';
-                    elements.avgAccEl.textContent = '0%';
-                    elements.totalTestsEl.textContent = '0';
-                    elements.bestWpmEl.textContent = '0';
-                } else {
-                    const totalWpm = history.reduce((acc, curr) => acc + (curr.wpm || 0), 0);
-                    const totalAcc = history.reduce((acc, curr) => acc + (curr.accuracy || 0), 0);
-                    const bestWpm = Math.max(...history.map(item => item.wpm || 0));
-
-                    elements.avgWpmEl.textContent = Math.round(totalWpm / history.length);
-                    elements.avgAccEl.textContent = `${Math.round(totalAcc / history.length)}%`;
-                    elements.totalTestsEl.textContent = history.length;
-                    elements.bestWpmEl.textContent = bestWpm;
-
-                    history.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = 'history-item';
-                        li.innerHTML = `
-                            <span class="h-user">${item.username}</span>
-                            <span class="h-time">${item.timestamp}</span>
-                            <div class="h-details">
-                                <span>WPM: <b>${item.wpm}</b></span>
-                                <span>Accuracy: <b>${item.accuracy}%</b></span>
-                                <span>Mode: <b>${item.mode}</b></span>
-                                <span>Time: <b>${item.timeLimit}s</b></span>
-                            </div>
-                        `;
-                        elements.historyList.appendChild(li);
-                    });
-                }
-            }
-
-            function handleClearHistory() {
-                const filterValue = elements.historyUserFilter.value;
-                let history = getHistory();
-
-                if (history.length === 0) return;
-
-                if (filterValue === '__ALL__') {
-                    localStorage.removeItem('typingTestHistory');
-                } else {
-                    history = history.filter(item => item.username !== filterValue);
-                    localStorage.setItem('typingTestHistory', JSON.stringify(history));
-                }
-                renderHistoryView();
-            }
-
-            function endGame() {
-                clearInterval(state.timerInterval);
-                state.isTestActive = false;
-                elements.typingInput.blur();
-                elements.typingArea.style.display = 'none';
-
-                const timeTakenMin = (state.timeLimit - (state.timeLeft || 0)) / 60;
-                const totalCharsTyped = state.correctChars + state.incorrectChars;
-                
-                const netWPM = timeTakenMin > 0 ? Math.round((state.correctChars / WPM_STANDARD_WORD_LENGTH) / timeTakenMin) : 0;
-                const rawWPM = timeTakenMin > 0 ? Math.round((totalCharsTyped / WPM_STANDARD_WORD_LENGTH) / timeTakenMin) : 0;
-                const accuracy = totalCharsTyped > 0 ? Math.round((state.correctChars / totalCharsTyped) * 100) : 0;
-                const finalWPM = Math.max(0, netWPM);
-
-                elements.resultWpm.innerHTML = `${finalWPM}<span class="label">WPM</span>`;
-                elements.resultInfo.textContent = `${state.timeLimit}s | ${state.testMode}`;
-                elements.resultAccuracy.textContent = `${accuracy}%`;
-                elements.resultRawWpm.textContent = Math.max(0, rawWPM);
-
-                elements.resultsEl.style.display = 'flex';
-
-                const username = state.currentUser || 'Guest';
-                const now = new Date();
-                const timestamp = now.toLocaleString();
-
-                const resultRecord = {
-                    username: username,
-                    timestamp: timestamp,
-                    wpm: finalWPM,
-                    rawWpm: Math.max(0, rawWPM),
-                    accuracy: accuracy,
-                    correctChars: state.correctChars,
-                    incorrectChars: state.incorrectChars,
-                    timeLimit: state.timeLimit,
-                    mode: state.testMode
-                };
-
-                saveHistory(resultRecord);
-            }
-
-            function setTheme(themeName) {
-                document.body.dataset.theme = themeName;
-                localStorage.setItem('typingTestTheme', themeName);
-            }
-
-            function loadTheme() {
-                const savedTheme = localStorage.getItem('typingTestTheme') || 'dracula';
-                elements.themeSelector.value = savedTheme;
-                setTheme(savedTheme);
-            }
-
-            init();
+          wordSpan.appendChild(charSpan);
+          globalCharIndex++;
         });
-    </script>
+
+        // Add space character between words if not last word
+        if (wIdx < words.length - 1) {
+          const spaceSpan = document.createElement('span');
+          spaceSpan.className = 'char-node';
+          spaceSpan.dataset.idx = globalCharIndex;
+          spaceSpan.innerHTML = '&nbsp;';
+
+          if (globalCharIndex < typedChars.length) {
+            const typed = typedChars[globalCharIndex];
+            if (typed === ' ') {
+              spaceSpan.style.color = correctColor;
+            } else {
+              spaceSpan.style.color = wrongColor;
+              spaceSpan.style.backgroundColor = 'var(--color-wrong-bg, rgba(239,68,68,0.2))';
+              spaceSpan.style.borderRadius = '3px';
+            }
+          } else {
+            spaceSpan.style.color = currentThemeKey === 'paper' ? '#9a8d79' : '#4b5563';
+          }
+
+          if (globalCharIndex === typedChars.length) {
+            applyCaretStyle(spaceSpan, caretColor);
+          }
+
+          wordSpan.appendChild(spaceSpan);
+          globalCharIndex++;
+        }
+
+        textDisplayBox.appendChild(wordSpan);
+      });
+
+      // Handle Caret at the end of the text
+      if (typedChars.length >= targetChars.length && targetChars.length > 0) {
+        const endCaret = document.createElement('span');
+        endCaret.className = 'char-node';
+        endCaret.innerHTML = '&nbsp;';
+        applyCaretStyle(endCaret, caretColor);
+        textDisplayBox.appendChild(endCaret);
+      }
+
+      // Auto scroll to active caret line
+      scrollToActiveChar();
+
+      // Update progress bar
+      const progressPercent = Math.min((typedChars.length / targetChars.length) * 100, 100);
+      testProgressBar.style.width = currentMode === 'free' ? `${progressPercent}%` : `${progressPercent}%`;
+      charCountSummary.textContent = `${typedChars.length} / ${targetChars.length} chars`;
+    }
+
+    function applyCaretStyle(span, color) {
+      if (currentCursorType === 'cursor-line') {
+        const line = document.createElement('span');
+        line.className = 'cursor-line';
+        line.style.backgroundColor = color;
+        line.style.height = `${currentFontSize * 1.15}px`;
+        span.prepend(line);
+      } else if (currentCursorType === 'cursor-block') {
+        span.classList.add('cursor-block');
+        span.style.backgroundColor = color;
+        span.style.color = '#000';
+      } else if (currentCursorType === 'cursor-underline') {
+        span.classList.add('cursor-underline');
+        span.style.borderBottomColor = color;
+      } else if (currentCursorType === 'cursor-pulse') {
+        const pulse = document.createElement('span');
+        pulse.className = 'cursor-pulse';
+        pulse.style.backgroundColor = color;
+        pulse.style.height = `${currentFontSize * 1.15}px`;
+        span.prepend(pulse);
+      }
+    }
+
+    function scrollToActiveChar() {
+      const activeChar = textDisplayBox.querySelector(`[data-idx="${typedChars.length}"]`);
+      if (activeChar) {
+        const containerRect = textDisplayBox.getBoundingClientRect();
+        const charRect = activeChar.getBoundingClientRect();
+        const offset = charRect.top - containerRect.top - containerRect.height / 2 + charRect.height / 2;
+        if (Math.abs(offset) > 40) {
+          textDisplayBox.scrollBy({ top: offset, behavior: 'smooth' });
+        }
+      }
+    }
+
+    function startTypingSession() {
+      if (testStatus === 'running') return;
+      testStatus = 'running';
+      startTime = Date.now();
+      timeElapsed = 0;
+
+      if (currentMode === 'free') {
+        timeRemaining = 0;
+      } else if (currentMode === 'custom') {
+        timeRemaining = customTimerDuration;
+      } else {
+        timeRemaining = parseInt(currentMode, 10);
+      }
+
+      metricTime.textContent = currentMode === 'free' ? '0s' : `${timeRemaining}s`;
+      lblMainAction.textContent = 'Restart';
+
+      clearInterval(timerInterval);
+      timerInterval = setInterval(() => {
+        timeElapsed++;
+
+        if (currentMode === 'free') {
+          metricTime.textContent = `${timeElapsed}s`;
+          updateMetricsLive();
+        } else {
+          timeRemaining--;
+          metricTime.textContent = `${timeRemaining}s`;
+          const totalDuration = currentMode === 'custom' ? customTimerDuration : parseInt(currentMode, 10);
+          const timeProgress = ((totalDuration - timeRemaining) / totalDuration) * 100;
+          testProgressBar.style.width = `${timeProgress}%`;
+          updateMetricsLive();
+
+          if (timeRemaining <= 0) {
+            completeTypingSession();
+          }
+        }
+      }, 1000);
+    }
+
+    function handleUserInputChar(key) {
+      if (testStatus === 'completed') return;
+
+      // Start on first keypress
+      if (testStatus === 'idle') {
+        startTypingSession();
+      }
+
+      if (key === 'Backspace') {
+        if (typedChars.length > 0) {
+          typedChars.pop();
+          playKeySound();
+          renderTargetTextDisplay();
+          updateMetricsLive();
+        }
+        return;
+      }
+
+      // Ignore modifiers and function keys
+      if (key.length > 1) return;
+
+      // Normal Character Input
+      if (typedChars.length < targetChars.length) {
+        typedChars.push(key);
+        playKeySound();
+        renderTargetTextDisplay();
+        updateMetricsLive();
+
+        // Check if finished entire text
+        if (typedChars.length >= targetChars.length) {
+          completeTypingSession();
+        }
+      }
+    }
+
+    function calculateMetrics() {
+      if (!startTime || typedChars.length === 0) {
+        return { wpm: 0, accuracy: 100, correctCount: 0, totalTyped: 0 };
+      }
+
+      const minutes = Math.max((Date.now() - startTime) / 60000, 0.005);
+      let correctChars = 0;
+
+      for (let i = 0; i < typedChars.length; i++) {
+        if (typedChars[i] === targetChars[i]) {
+          correctChars++;
+        }
+      }
+
+      // Standard typing metric formula: 1 word = 5 characters
+      const wpm = Math.max(Math.round((correctChars / 5) / minutes), 0);
+      const accuracy = Math.round((correctChars / typedChars.length) * 100) || 0;
+
+      return { wpm, accuracy, correctCount: correctChars, totalTyped: typedChars.length };
+    }
+
+    function updateMetricsLive() {
+      const { wpm, accuracy } = calculateMetrics();
+      metricWpm.textContent = wpm;
+      metricAcc.textContent = `${accuracy}%`;
+    }
+
+    function updateMetricsHeader() {
+      metricTopWpm.textContent = topWpm;
+      metricTotalTests.textContent = totalTestsCompleted;
+      mobileTopWpm.textContent = topWpm;
+      mobileTotalTests.textContent = totalTestsCompleted;
+    }
+
+    function completeTypingSession() {
+      clearInterval(timerInterval);
+      testStatus = 'completed';
+
+      const finalMetrics = calculateMetrics();
+      const elapsedSec = Math.round((Date.now() - startTime) / 1000) || 1;
+
+      // Update all-time stats
+      totalTestsCompleted++;
+      if (finalMetrics.wpm > topWpm) {
+        topWpm = finalMetrics.wpm;
+      }
+
+      // Record History item
+      const record = {
+        id: Date.now(),
+        date: new Date().toLocaleString(),
+        wpm: finalMetrics.wpm,
+        accuracy: finalMetrics.accuracy,
+        duration: `${elapsedSec}s`,
+        mode: currentMode === 'free' ? 'Free' : (currentMode === 'custom' ? `${customTimerDuration}s (Custom)` : `${currentMode}s`)
+      };
+
+      testHistory.unshift(record);
+      if (testHistory.length > 50) testHistory.pop();
+
+      try {
+        localStorage.setItem('typeflow_top_wpm', topWpm);
+        localStorage.setItem('typeflow_total_tests', totalTestsCompleted);
+        localStorage.setItem('typeflow_history', JSON.stringify(testHistory));
+      } catch (err) {}
+
+      updateMetricsHeader();
+      renderHistoryTable();
+
+      // Celebrate or highlight completion
+      testProgressBar.style.width = '100%';
+      lblMainAction.textContent = 'Next Test';
+    }
+
+    function resetTest(customParagraph = null) {
+      clearInterval(timerInterval);
+      testStatus = 'idle';
+      startTime = null;
+      timeElapsed = 0;
+      
+      if (currentMode === 'free') {
+        timeRemaining = 0;
+        metricTime.textContent = 'Free';
+      } else if (currentMode === 'custom') {
+        timeRemaining = customTimerDuration;
+        metricTime.textContent = `${customTimerDuration}s`;
+      } else {
+        timeRemaining = parseInt(currentMode, 10);
+        metricTime.textContent = `${timeRemaining}s`;
+      }
+      
+      metricWpm.textContent = '0';
+      metricAcc.textContent = '100%';
+      testProgressBar.style.width = '0%';
+      lblMainAction.textContent = 'Restart';
+
+      if (customParagraph !== null) {
+        prepareText(customParagraph);
+      } else {
+        prepareText(targetText);
+      }
+
+      focusTyping();
+    }
+
+    function focusTyping() {
+      hiddenInput.focus({ preventScroll: true });
+      focusOverlay.classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function showFocusPrompt() {
+      focusOverlay.classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    // Global Key Listener for desktop typing experience
+    window.addEventListener('keydown', (e) => {
+      // Don't intercept if typing in modal input
+      if (['TEXTAREA', 'INPUT'].includes(e.target.tagName) && e.target !== hiddenInput) {
+        return;
+      }
+
+      // Quick restart via Tab or Escape
+      if (e.key === 'Tab' || e.key === 'Escape') {
+        e.preventDefault();
+        resetTest();
+        return;
+      }
+
+      // Prevent page scrolling on space
+      if (e.key === ' ') {
+        e.preventDefault();
+      }
+
+      handleUserInputChar(e.key);
+    });
+
+    // Hidden input listener for mobile software keyboards & IME
+    hiddenInput.addEventListener('input', (e) => {
+      const val = hiddenInput.value;
+      if (val.length > 0) {
+        const lastChar = val[val.length - 1];
+        handleUserInputChar(lastChar);
+        hiddenInput.value = '';
+      }
+    });
+
+    hiddenInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Backspace') {
+        handleUserInputChar('Backspace');
+      }
+    });
+
+    // Clicking anywhere in the preview area focuses typing
+    document.getElementById('typingArena').addEventListener('click', () => {
+      focusTyping();
+    });
+
+    document.getElementById('btnFocusPrompt').addEventListener('click', (e) => {
+      e.stopPropagation();
+      focusTyping();
+    });
+
+    window.addEventListener('blur', () => {
+      if (testStatus === 'running') {
+        showFocusPrompt();
+      }
+    });
+
+    function openModal(modalEl) {
+      modalEl.classList.remove('hidden');
+      requestAnimationFrame(() => {
+        modalEl.classList.remove('opacity-0');
+        const card = modalEl.querySelector('div');
+        if (card) card.classList.remove('scale-95');
+      });
+    }
+
+    function closeModal(modalEl) {
+      modalEl.classList.add('opacity-0');
+      const card = modalEl.querySelector('div');
+      if (card) card.classList.add('scale-95');
+      setTimeout(() => {
+        modalEl.classList.add('hidden');
+        focusTyping();
+      }, 200);
+    }
+
+    // Custom Text Modal Events
+    btnOpenCustomText.addEventListener('click', () => {
+      txtCustomInput.value = targetText;
+      updateCustomWordCounts();
+      openModal(modalCustomText);
+    });
+
+    btnCloseCustomText.addEventListener('click', () => closeModal(modalCustomText));
+    btnCancelCustomText.addEventListener('click', () => closeModal(modalCustomText));
+
+    txtCustomInput.addEventListener('input', updateCustomWordCounts);
+
+    function updateCustomWordCounts() {
+      const val = txtCustomInput.value.trim();
+      const chars = val.length;
+      const words = val.length > 0 ? val.split(/\s+/).length : 0;
+      customWordCharCount.textContent = `${chars} characters • ${words} words`;
+    }
+
+    btnClearCustom.addEventListener('click', () => {
+      txtCustomInput.value = '';
+      updateCustomWordCounts();
+    });
+
+    function updateCustomTimerLabels() {
+      lblCustomDesktop.textContent = `${customTimerDuration}s`;
+      lblCustomMobile.textContent = `${customTimerDuration}s`;
+    }
+
+    function openCustomTimerModal() {
+      numCustomTimerInput.value = customTimerDuration;
+      openModal(modalCustomTimer);
+    }
+
+    btnCustomTimerDesktop.addEventListener('click', () => {
+      openCustomTimerModal();
+    });
+
+    btnCustomTimerMobile.addEventListener('click', () => {
+      openCustomTimerModal();
+    });
+
+    btnCloseCustomTimer.addEventListener('click', () => closeModal(modalCustomTimer));
+    btnCancelCustomTimer.addEventListener('click', () => closeModal(modalCustomTimer));
+
+    document.querySelectorAll('.quick-timer-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        numCustomTimerInput.value = btn.dataset.seconds;
+      });
+    });
+
+    btnSetCustomTimer.addEventListener('click', () => {
+      let sec = parseInt(numCustomTimerInput.value, 10);
+      if (isNaN(sec) || sec < 5) sec = 5;
+      if (sec > 3600) sec = 3600;
+
+      customTimerDuration = sec;
+      updateCustomTimerLabels();
+
+      try {
+        localStorage.setItem('typeflow_custom_duration', customTimerDuration);
+      } catch (e) {}
+
+      closeModal(modalCustomTimer);
+      setTestMode('custom');
+    });
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const presetKey = btn.dataset.preset;
+        const options = PRESET_TEXTS[presetKey];
+        if (Array.isArray(options)) {
+          txtCustomInput.value = options[Math.floor(Math.random() * options.length)];
+        } else {
+          txtCustomInput.value = options;
+        }
+        if (presetKey === 'bangla') {
+          setFontFamily('font-hind');
+        }
+        updateCustomWordCounts();
+      });
+    });
+
+    btnApplyCustomText.addEventListener('click', () => {
+      const textToUse = txtCustomInput.value.trim() || PRESET_TEXTS.standard[0];
+      closeModal(modalCustomText);
+      resetTest(textToUse);
+    });
+
+    // Settings Modal Events
+    btnOpenSettings.addEventListener('click', () => openModal(modalSettings));
+    btnCloseSettings.addEventListener('click', () => closeModal(modalSettings));
+    btnDoneSettings.addEventListener('click', () => closeModal(modalSettings));
+
+    document.querySelectorAll('.theme-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        applyTheme(btn.dataset.theme);
+      });
+    });
+
+    [pickerCorrectColor, pickerWrongColor, pickerCaretColor].forEach(picker => {
+      picker.addEventListener('input', () => {
+        try {
+          localStorage.setItem('typeflow_color_correct', pickerCorrectColor.value);
+          localStorage.setItem('typeflow_color_wrong', pickerWrongColor.value);
+          localStorage.setItem('typeflow_color_caret', pickerCaretColor.value);
+        } catch (e) {}
+        applyTheme(currentThemeKey);
+      });
+    });
+
+    // History Modal Events
+    btnOpenHistory.addEventListener('click', () => {
+      renderHistoryTable();
+      openModal(modalHistory);
+    });
+    btnCloseHistory.addEventListener('click', () => closeModal(modalHistory));
+    btnDoneHistory.addEventListener('click', () => closeModal(modalHistory));
+
+    btnClearHistory.addEventListener('click', () => {
+      testHistory = [];
+      try {
+        localStorage.removeItem('typeflow_history');
+      } catch (e) {}
+      renderHistoryTable();
+    });
+
+    function renderHistoryTable() {
+      historyTableBody.innerHTML = '';
+
+      if (testHistory.length === 0) {
+        historyTableBody.innerHTML = `
+          <tr>
+            <td colspan="5" class="py-6 text-center text-slate-500 font-sans italic">
+              No test history recorded yet. Complete a test to see your analytics here!
+            </td>
+          </tr>`;
+        historyStatTopWpm.textContent = '0';
+        historyStatAvgWpm.textContent = '0';
+        historyStatCount.textContent = '0';
+        return;
+      }
+
+      let totalWpm = 0;
+      testHistory.forEach(item => {
+        totalWpm += item.wpm;
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition';
+        tr.innerHTML = `
+          <td class="py-2 px-3 text-slate-400 font-sans text-[11px]">${item.date}</td>
+          <td class="py-2 px-3 font-bold text-amber-400">${item.wpm}</td>
+          <td class="py-2 px-3 text-emerald-400 font-bold">${item.accuracy}%</td>
+          <td class="py-2 px-3 text-indigo-300">${item.duration}</td>
+          <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700 font-sans">${item.mode}</span></td>
+        `;
+        historyTableBody.appendChild(tr);
+      });
+
+      const avgWpm = Math.round(totalWpm / testHistory.length);
+      historyStatTopWpm.textContent = topWpm;
+      historyStatAvgWpm.textContent = avgWpm;
+      historyStatCount.textContent = testHistory.length;
+    }
+
+    function setTestMode(modeVal) {
+      currentMode = modeVal;
+      document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
+        if (btn.dataset.mode === modeVal) {
+          btn.classList.add('bg-indigo-600', 'text-white', 'font-semibold');
+          btn.classList.remove('bg-slate-800', 'text-slate-300');
+        } else {
+          btn.classList.remove('bg-indigo-600', 'text-white', 'font-semibold');
+          btn.classList.add('text-slate-300');
+        }
+      });
+
+      if (modeVal === 'custom') {
+        updateCustomTimerLabels();
+      }
+
+      resetTest();
+    }
+
+    document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const mode = btn.dataset.mode;
+        if (mode === 'custom') {
+          // If clicked and not already opened from the button, mode is set
+          setTestMode('custom');
+        } else {
+          setTestMode(mode);
+        }
+      });
+    });
+
+    btnFontInc.addEventListener('click', () => setFontSize(currentFontSize + 2));
+    btnFontDec.addEventListener('click', () => setFontSize(currentFontSize - 2));
+
+    selFontFamily.addEventListener('change', (e) => setFontFamily(e.target.value));
+    mobileSelFont.addEventListener('change', (e) => setFontFamily(e.target.value));
+
+    selCursorType.addEventListener('change', (e) => setCursorType(e.target.value));
+    mobileSelCursor.addEventListener('change', (e) => setCursorType(e.target.value));
+
+    selSoundType.addEventListener('change', (e) => {
+      currentSound = e.target.value;
+      updateSoundIcons();
+      try {
+        localStorage.setItem('typeflow_sound', currentSound);
+      } catch (err) {}
+    });
+
+    btnSoundToggle.addEventListener('click', () => {
+      if (currentSound === 'none') {
+        currentSound = 'click';
+      } else {
+        currentSound = 'none';
+      }
+      selSoundType.value = currentSound;
+      updateSoundIcons();
+      try {
+        localStorage.setItem('typeflow_sound', currentSound);
+      } catch (err) {}
+    });
+
+    function updateSoundIcons() {
+      if (currentSound === 'none') {
+        soundIconOn.classList.add('hidden');
+        soundIconOff.classList.remove('hidden');
+      } else {
+        soundIconOn.classList.remove('hidden');
+        soundIconOff.classList.add('hidden');
+      }
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(err => {
+          console.warn(`Fullscreen error: ${err.message}`);
+        });
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    }
+
+    function updateFullscreenIcons() {
+      if (document.fullscreenElement) {
+        fsIconEnter.classList.add('hidden');
+        fsIconExit.classList.remove('hidden');
+        btnFullscreen.title = 'Exit Fullscreen';
+      } else {
+        fsIconEnter.classList.remove('hidden');
+        fsIconExit.classList.add('hidden');
+        btnFullscreen.title = 'Enter Fullscreen';
+      }
+    }
+
+    btnFullscreen.addEventListener('click', toggleFullscreen);
+    document.addEventListener('fullscreenchange', updateFullscreenIcons);
+
+    btnMainAction.addEventListener('click', () => {
+      resetTest();
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadPersistedData();
+      startLiveClock();
+      setFontSize(currentFontSize);
+      setFontFamily(currentFontFamily);
+      setCursorType(currentCursorType);
+      applyTheme(currentThemeKey);
+      updateSoundIcons();
+      selSoundType.value = currentSound;
+
+      // Load initial text and focus typing arena
+      prepareText();
+      focusTyping();
+    });
+  </script>
 </body>
-</html>
+        </html>
