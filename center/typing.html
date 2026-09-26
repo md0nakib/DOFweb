@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TypeFlow Pro — Custom / Blank Typing Test Machine</title>
   
-  <!-- Tailwind CSS -->
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
   <!-- Google Fonts: Hind Siliguri, JetBrains Mono, Inter, Roboto Mono, Space Mono, Playfair Display -->
@@ -32,16 +32,15 @@
   </script>
 
   <style>
-    /* CSS Variables controlled dynamically by theme pickers */
     :root {
       --color-correct: #10b981;
       --color-wrong: #f43f5e;
-      --color-wrong-bg: rgba(244, 63, 94, 0.22);
+      --color-wrong-bg: rgba(244, 63, 94, 0.2);
       --color-caret: #6366f1;
-      --color-muted: #64748b;
       --bg-main: #070d18;
       --bg-panel: #0d1527;
       --text-main: #f1f5f9;
+      --color-untyped: #475569;
     }
 
     body {
@@ -49,10 +48,10 @@
       color: var(--text-main);
     }
 
-    /* Custom subtle scrollbars */
+    /* Subtle scrollbars */
     ::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
+      width: 4px;
+      height: 4px;
     }
     ::-webkit-scrollbar-track {
       background: transparent;
@@ -66,13 +65,14 @@
     }
 
     /* Caret Keyframes */
-    @keyframes cursor-blink {
-      0%, 48% { opacity: 1; }
-      50%, 100% { opacity: 0; }
+    @keyframes caret-blink {
+      0%, 45% { opacity: 1; }
+      50%, 95% { opacity: 0; }
+      100% { opacity: 1; }
     }
-    @keyframes cursor-smooth-pulse {
-      0%, 100% { opacity: 1; transform: scaleY(1); }
-      50% { opacity: 0.25; transform: scaleY(0.88); }
+    @keyframes caret-pulse {
+      0%, 100% { transform: scaleY(1); opacity: 1; }
+      50% { transform: scaleY(0.7); opacity: 0.3; }
     }
 
     .cursor-line {
@@ -82,7 +82,7 @@
       margin-right: -2px;
       vertical-align: text-bottom;
       background-color: var(--color-caret);
-      animation: cursor-blink 0.95s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      animation: caret-blink 0.9s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
 
     .cursor-block {
@@ -90,13 +90,13 @@
       background-color: var(--color-caret) !important;
       color: #000000 !important;
       border-radius: 2px;
-      animation: cursor-smooth-pulse 1s ease-in-out infinite;
+      animation: caret-pulse 1s ease-in-out infinite;
     }
 
     .cursor-underline {
       display: inline;
       border-bottom: 3.5px solid var(--color-caret);
-      animation: cursor-blink 0.95s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      animation: caret-blink 0.9s infinite;
     }
 
     .cursor-pulse {
@@ -106,38 +106,38 @@
       margin-left: -1px;
       margin-right: -2.5px;
       background-color: var(--color-caret);
-      animation: cursor-smooth-pulse 0.75s ease-in-out infinite;
+      animation: caret-pulse 0.75s ease-in-out infinite;
     }
 
-    /* Character & Word Layout */
     .word-token {
       display: inline-block;
       white-space: pre;
-      margin-bottom: 0.4em;
+      margin-bottom: 0.35em;
     }
+
     .char-node {
       position: relative;
-      transition: color 0.05s ease, background-color 0.05s ease;
+      transition: color 0.04s ease, background-color 0.04s ease;
     }
-    
+
     /* Strict 10% / 90% desktop height breakdown */
     @media (min-width: 1024px) {
       .desktop-panel-10 {
-        height: 10vh !important;
-        max-height: 10vh !important;
+        min-height: 10vh !important;
+        max-height: 11vh !important;
       }
       .desktop-arena-90 {
-        height: 90vh !important;
+        height: 89vh !important;
         max-height: 90vh !important;
       }
     }
   </style>
 </head>
-<body id="appBody" class="h-screen w-screen flex flex-col overflow-hidden font-hind select-none antialiased transition-colors duration-300">
+<body id="appBody" class="h-screen w-screen flex flex-col overflow-hidden font-hind select-none antialiased">
 
-  <!-- Hidden proxy input capturing physical and mobile virtual keystrokes flawlessly -->
+  <!-- Hidden proxy input capturing physical and mobile virtual keystrokes flawlessly without duplicates -->
   <textarea id="hiddenTypingInput" 
-    class="absolute opacity-0 pointer-events-none -left-[9999px] -top-[9999px] w-1 h-1 select-none" 
+    class="fixed opacity-0 pointer-events-none -left-[9999px] -top-[9999px] w-1 h-1 select-none" 
     autocapitalize="off" 
     autocomplete="off" 
     autocorrect="off" 
@@ -145,209 +145,172 @@
     tabindex="-1"></textarea>
 
   <!-- 🖥️ DESKTOP ১০%: CONTROL & INFORMATION PANEL -->
-  <header id="controlPanel" class="w-full flex-none border-b border-slate-800/80 bg-slate-900/95 backdrop-blur-md z-30 flex items-center desktop-panel-10 min-h-[58px] transition-all px-2 sm:px-4 lg:px-6">
-    <div class="w-full flex flex-col justify-center h-full gap-1.5 py-1 lg:py-0">
+  <header id="controlPanel" class="w-full flex-none border-b border-slate-800 bg-slate-900/95 backdrop-blur-md z-30 desktop-panel-10 flex flex-col justify-center px-2 sm:px-4 py-1.5 transition-all">
+    
+    <!-- Top Row: Branding, Timer Period/Modes, Font, Cursor, Colors, Custom Text, Fullscreen & History -->
+    <div class="w-full flex items-center justify-between gap-1.5 sm:gap-2.5 flex-wrap">
       
-      <!-- Primary Bar: Branding, Live Info, Quick Controls, Prominent Fullscreen & Start/End Button -->
-      <div class="flex items-center justify-between gap-1.5 sm:gap-2.5 flex-wrap lg:flex-nowrap">
-        
-        <!-- Left: Logo & Live Date/Time Clock -->
-        <div class="flex items-center gap-2 shrink-0">
-          <div class="flex items-center gap-2">
-            <span class="p-1.5 rounded-lg bg-indigo-600/25 text-indigo-400 border border-indigo-500/40 flex items-center justify-center">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <rect x="2" y="4" width="20" height="16" rx="3" stroke-width="2"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/>
-              </svg>
-            </span>
-            <div class="leading-tight">
-              <div class="flex items-center gap-1">
-                <span class="font-extrabold text-xs sm:text-sm tracking-tight text-white">TypeFlow</span>
-                <span class="text-[9px] uppercase font-mono px-1 py-0.2 rounded bg-indigo-500/20 text-indigo-300 font-bold hidden sm:inline-block">PRO</span>
-              </div>
-              <!-- Date & Time Requirement -->
-              <div id="liveClock" class="text-[9px] sm:text-[11px] font-mono text-slate-400 truncate">--:--:--</div>
-            </div>
-          </div>
+      <!-- Brand & Date / Time -->
+      <div class="flex items-center gap-2 shrink-0">
+        <div class="flex items-center gap-1.5">
+          <span class="p-1 rounded bg-indigo-600/30 text-indigo-400 border border-indigo-500/40">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="3" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M8 16h8"/></svg>
+          </span>
+          <span class="font-extrabold text-xs sm:text-sm tracking-tight text-white">TypeFlow</span>
         </div>
-
-        <!-- Center Desktop Controls (Font, Cursor, Mode, Duration) -->
-        <div class="hidden lg:flex items-center gap-2 shrink-0">
-          
-          <!-- Font Size Stepper (+ / -) -->
-          <div class="flex items-center bg-slate-800/90 border border-slate-700/70 rounded-lg p-0.5 text-xs shadow-inner">
-            <button id="btnFontDec" title="ফন্ট সাইজ কমান (A-)" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold cursor-pointer">A−</button>
-            <span id="lblFontSize" class="px-1.5 font-mono text-indigo-300 text-xs font-bold min-w-[2.8rem] text-center">28px</span>
-            <button id="btnFontInc" title="ফন্ট সাইজ বাড়ান (A+)" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded transition font-bold cursor-pointer">A+</button>
-          </div>
-
-          <!-- Font Selection (Hind Siliguri as first-class citizen) -->
-          <div class="relative">
-            <select id="selFontFamily" class="bg-slate-800/90 border border-slate-700/70 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
-              <option value="font-hind" selected>হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
-              <option value="font-mono">JetBrains Mono</option>
-              <option value="font-sans">Inter (Modern Sans)</option>
-              <option value="font-roboto-mono">Roboto Mono</option>
-              <option value="font-space-mono">Space Mono</option>
-              <option value="font-serif">Playfair Display</option>
-            </select>
-            <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </div>
-          </div>
-
-          <!-- Cursor Selection -->
-          <div class="relative">
-            <select id="selCursorType" class="bg-slate-800/90 border border-slate-700/70 text-slate-200 text-xs rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium">
-              <option value="cursor-line">Caret: Line |</option>
-              <option value="cursor-block">Caret: Block █</option>
-              <option value="cursor-underline">Caret: Underline _</option>
-              <option value="cursor-pulse">Caret: Pulse •</option>
-            </select>
-            <div class="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-400">
-              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </div>
-          </div>
-
-          <!-- Timer Period / Modes (15s, 30s, 60s, 120s, Custom, Free) -->
-          <div class="flex items-center bg-slate-800/90 border border-slate-700/70 rounded-lg p-0.5 text-xs font-medium shadow-inner">
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="15">15s</button>
-            <button class="mode-btn px-2.5 py-1 rounded bg-indigo-600 text-white font-bold shadow transition" data-mode="30">30s</button>
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="60">60s</button>
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="120">120s</button>
-            <button id="btnCustomTimerTrigger" class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white flex items-center gap-1 transition" data-mode="custom">
-              <span id="lblCustomMode">Custom</span>
-              <svg class="w-2.5 h-2.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
-            </button>
-            <button class="mode-btn px-2.5 py-1 rounded text-slate-300 hover:text-white transition" data-mode="free">Free</button>
-          </div>
-
-          <!-- Keyboard Audio Toggle -->
-          <button id="btnSoundToggle" title="ক্লিক সাউন্ড অন/অফ" class="p-2 text-slate-300 hover:text-white rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/70 transition shadow-inner">
-            <svg id="soundIconOn" class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
-            </svg>
-            <svg id="soundIconOff" class="w-3.5 h-3.5 text-slate-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/>
-            </svg>
-          </button>
-        </div>
-
-        <!-- Right: Live Info (WPM, Accuracy, Top WPM, Total Tests, Time), Fullscreen & Start/End Button -->
-        <div class="flex items-center gap-1.5 sm:gap-2 ml-auto lg:ml-0">
-          
-          <!-- Live Info: WPM -->
-          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-1 rounded-lg shadow-inner" title="বর্তমান গতি (Words Per Minute)">
-            <span class="text-[9px] uppercase font-bold text-slate-400">WPM</span>
-            <span id="metricWpm" class="font-mono text-xs sm:text-base font-black text-amber-400">0</span>
-          </div>
-
-          <!-- Live Info: Accuracy -->
-          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-1 rounded-lg shadow-inner" title="সঠিকতার হার (Accuracy)">
-            <span class="text-[9px] uppercase font-bold text-slate-400">ACC</span>
-            <span id="metricAcc" class="font-mono text-xs sm:text-base font-black text-emerald-400">100%</span>
-          </div>
-
-          <!-- Live Info: Time -->
-          <div class="flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 sm:px-2.5 py-1 rounded-lg shadow-inner" title="বাকি সময় / অতিবাহিত সময়">
-            <svg class="w-3 h-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
-            <span id="metricTime" class="font-mono text-xs sm:text-base font-black text-indigo-300 min-w-[2.2rem] text-center">30s</span>
-          </div>
-
-          <!-- Live Info: Top WPM (Desktop Visible) -->
-          <div class="hidden xl:flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 py-1 rounded-lg shadow-inner" title="সর্বোচ্চ গতি">
-            <span class="text-[9px] uppercase font-bold text-amber-400/90">TOP</span>
-            <span id="metricTopWpm" class="font-mono text-xs sm:text-sm font-black text-amber-300">0</span>
-          </div>
-
-          <!-- Live Info: Total Tests (Desktop Visible) -->
-          <div class="hidden xl:flex items-center gap-1 bg-slate-900/90 border border-slate-700/80 px-2 py-1 rounded-lg shadow-inner" title="মোট সম্পন্ন টেস্ট">
-            <span class="text-[9px] uppercase font-bold text-slate-400">TESTS</span>
-            <span id="metricTotalTests" class="font-mono text-xs sm:text-sm font-black text-slate-300">0</span>
-          </div>
-
-          <!-- 🔥 PROMINENT FULLSCREEN BUTTON (Always visible & highlighted on Desktop + Mobile) -->
-          <button id="btnFullscreen" 
-                  title="ফুল স্ক্রিন চালু / বন্ধ করুন" 
-                  class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-indigo-950/90 hover:bg-indigo-900 text-indigo-300 hover:text-white border border-indigo-500/70 font-bold text-xs shadow-md transition active:scale-95 cursor-pointer">
-            <svg id="fsIconEnter" class="w-3.5 h-3.5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
-            </svg>
-            <svg id="fsIconExit" class="w-3.5 h-3.5 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 4v4H5m0 0l4-4M15 4v4h4m0 0l-4-4M9 20v-4H5m0 0l4 4m6-4v4h4m0 0l-4-4"/>
-            </svg>
-            <span id="lblFullscreenText" class="font-semibold text-xs">ফুলস্ক্রিন</span>
-          </button>
-
-          <!-- 🔘 START / END BUTTON (Explicit Start & End Toggle Requirement) -->
-          <button id="btnStartEndAction" 
-                  class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 transition cursor-pointer">
-            <span id="iconStartEnd">
-              <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-            </span>
-            <span id="lblStartEndAction">Start</span>
-          </button>
-
-          <!-- Quick Restart Icon Button -->
-          <button id="btnQuickRestart" title="রিস্টার্ট টেস্ট (Tab / Esc)" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-            </svg>
-          </button>
-
-          <!-- Custom Text / Presets Modal Button -->
-          <button id="btnOpenCustomText" title="কাস্টম টেক্সট ও প্রিসেট" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-            </svg>
-          </button>
-
-          <!-- History Logs Modal Button -->
-          <button id="btnOpenHistory" title="হিস্ট্রি ও পারফরম্যান্স লগ" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </button>
-
-          <!-- Appearance & Themes Button -->
-          <button id="btnOpenSettings" title="কালার, থিম ও সেটিংস" class="p-1.5 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-          </button>
-
+        <!-- 6. Date & Time -->
+        <div id="liveClock" class="text-[10px] sm:text-xs font-mono text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded border border-slate-700/60" title="বর্তমান তারিখ ও সময়">
+          --:--:--
         </div>
       </div>
 
-      <!-- Mobile Quick Ribbon: Mode buttons & quick stats on small screens -->
-      <div class="flex lg:hidden items-center justify-between gap-1 pt-1 border-t border-slate-800/80 text-[11px] overflow-x-auto no-scrollbar">
-        <div class="flex items-center gap-1 font-medium flex-nowrap shrink-0">
-          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="15">15s</button>
-          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-indigo-600 text-white font-bold shrink-0" data-mode="30">30s</button>
-          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="60">60s</button>
-          <button id="btnMobileCustomTimer" class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="custom">
-            <span id="lblMobileCustomMode">Custom</span>
-          </button>
-          <button class="mobile-mode-btn px-2 py-0.5 rounded bg-slate-800 text-slate-300 shrink-0" data-mode="free">Free</button>
+      <!-- 8. Timer Period / Mode (15s, 30s, 60s, 120s, Custom, Free) -->
+      <div class="flex items-center bg-slate-800/90 border border-slate-700/70 rounded-lg p-0.5 text-xs font-medium shrink-0">
+        <button class="mode-btn px-2 py-0.5 rounded text-slate-300 hover:text-white transition" data-mode="15">15s</button>
+        <button class="mode-btn px-2 py-0.5 rounded bg-indigo-600 text-white font-bold transition" data-mode="30">30s</button>
+        <button class="mode-btn px-2 py-0.5 rounded text-slate-300 hover:text-white transition" data-mode="60">60s</button>
+        <button class="mode-btn px-2 py-0.5 rounded text-slate-300 hover:text-white transition hidden md:inline-block" data-mode="120">120s</button>
+        <button id="btnCustomTimerTrigger" class="mode-btn px-2 py-0.5 rounded text-slate-300 hover:text-white flex items-center gap-1 transition" data-mode="custom" title="কাস্টম টাইমার সেট করুন">
+          <span id="lblCustomMode">Custom</span>
+          <svg class="w-2.5 h-2.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+        </button>
+        <button class="mode-btn px-2 py-0.5 rounded text-slate-300 hover:text-white transition" data-mode="free">Free</button>
+      </div>
+
+      <!-- 1. Font Size (+ / −) -->
+      <div class="hidden md:flex items-center bg-slate-800/90 border border-slate-700/70 rounded-lg p-0.5 text-xs">
+        <button id="btnFontDec" title="ফন্ট সাইজ কমান (A-)" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded font-bold cursor-pointer">A−</button>
+        <span id="lblFontSize" class="px-1.5 font-mono text-indigo-300 font-bold min-w-[2.6rem] text-center">28px</span>
+        <button id="btnFontInc" title="ফন্ট সাইজ বাড়ান (A+)" class="px-2 py-0.5 hover:bg-slate-700 text-slate-300 hover:text-white rounded font-bold cursor-pointer">A+</button>
+      </div>
+
+      <!-- 2. Font Selection (Hind Siliguri as first-class) -->
+      <div class="relative hidden sm:block">
+        <select id="selFontFamily" class="bg-slate-800/90 border border-slate-700/70 text-slate-200 text-xs rounded-lg px-2 py-1 pr-6 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium" title="ফন্ট সিলেক্ট করুন">
+          <option value="font-hind" selected>হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
+          <option value="font-mono">JetBrains Mono</option>
+          <option value="font-sans">Inter (Modern Sans)</option>
+          <option value="font-roboto-mono">Roboto Mono</option>
+          <option value="font-space-mono">Space Mono</option>
+          <option value="font-serif">Playfair Display</option>
+        </select>
+        <div class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400">
+          <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
-        <div class="flex items-center gap-2 text-slate-400 font-mono text-[10px] shrink-0 ml-auto pl-2 border-l border-slate-800">
-          <span>Top: <strong id="mobileTopWpm" class="text-amber-400">0</strong></span>
-          <span>Tests: <strong id="mobileTotalTests" class="text-slate-300">0</strong></span>
+      </div>
+
+      <!-- 3. Cursor Type -->
+      <div class="relative hidden md:block">
+        <select id="selCursorType" class="bg-slate-800/90 border border-slate-700/70 text-slate-200 text-xs rounded-lg px-2 py-1 pr-6 appearance-none focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer font-medium" title="কার্সার টাইপ">
+          <option value="cursor-line">Caret: Line |</option>
+          <option value="cursor-block">Caret: Block █</option>
+          <option value="cursor-underline">Caret: Underline _</option>
+          <option value="cursor-pulse">Caret: Pulse •</option>
+        </select>
+        <div class="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400">
+          <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
         </div>
+      </div>
+
+      <!-- 4. Correct & Wrong Text Color / Theme Trigger -->
+      <button id="btnOpenSettings" title="Correct, Wrong কালার ও থিম সেটিংস" class="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/70 text-slate-200 text-xs transition cursor-pointer">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+        <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+        <span class="hidden sm:inline font-medium">কালার/থিম</span>
+      </button>
+
+      <!-- 5. Custom Text Input / Update Trigger -->
+      <button id="btnOpenCustomText" title="কাস্টম টেক্সট ইনপুট ও আপডেট করুন" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-950/80 hover:bg-indigo-900 border border-indigo-600/50 text-indigo-200 text-xs font-semibold transition active:scale-95 cursor-pointer">
+        <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+        <span>কাস্টম টেক্সট</span>
+      </button>
+
+      <!-- 10. History Trigger Button -->
+      <button id="btnOpenHistory" title="টাইপিং ইতিহাস ও বিশ্লেষণ" class="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 border border-slate-700/70 text-slate-200 text-xs transition cursor-pointer">
+        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="hidden sm:inline font-medium">হিস্ট্রি</span>
+      </button>
+
+      <!-- Mechanical Sound Toggle -->
+      <button id="btnSoundToggle" title="কীবোর্ড সাউন্ড অন/অফ" class="p-1 text-slate-300 hover:text-white rounded-lg bg-slate-800/90 border border-slate-700/70">
+        <svg id="soundIconOn" class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg id="soundIconOff" class="w-3.5 h-3.5 text-slate-500 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+      </button>
+
+      <!-- PROMINENT FULLSCREEN BUTTON -->
+      <button id="btnFullscreen" title="ফুল স্ক্রিন টগল করুন" class="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-900/90 hover:bg-indigo-800 text-indigo-200 hover:text-white border border-indigo-400/60 font-bold text-xs shadow transition active:scale-95 cursor-pointer">
+        <svg id="fsIconEnter" class="w-3 h-3 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+        <svg id="fsIconExit" class="w-3 h-3 text-amber-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 4v4H5m0 0l4-4M15 4v4h4m0 0l-4-4M9 20v-4H5m0 0l4 4m6-4v4h4m0 0l-4-4"/></svg>
+        <span id="lblFullscreenText">ফুলস্ক্রিন</span>
+      </button>
+
+    </div>
+
+    <!-- Bottom Row: 9. Live Info (WPM, Accuracy, Time, Top WPM, Total Tests) and 7. Start/End Button -->
+    <div class="w-full flex items-center justify-between gap-1.5 sm:gap-3 pt-1 border-t border-slate-800/80 mt-1">
+      
+      <!-- Live Info Cards -->
+      <div class="flex items-center gap-1.5 sm:gap-2.5 flex-nowrap overflow-x-auto no-scrollbar">
+        
+        <!-- Live WPM -->
+        <div class="flex items-center gap-1 bg-slate-950/80 border border-slate-700/80 px-2 py-0.5 rounded shadow-inner" title="বর্তমান গতি (WPM)">
+          <span class="text-[9px] uppercase font-bold text-slate-400">WPM</span>
+          <span id="metricWpm" class="font-mono text-xs sm:text-sm font-black text-amber-400 min-w-[1.4rem]">0</span>
+        </div>
+
+        <!-- Live Accuracy -->
+        <div class="flex items-center gap-1 bg-slate-950/80 border border-slate-700/80 px-2 py-0.5 rounded shadow-inner" title="সঠিকতার হার (Accuracy)">
+          <span class="text-[9px] uppercase font-bold text-slate-400">ACC</span>
+          <span id="metricAcc" class="font-mono text-xs sm:text-sm font-black text-emerald-400 min-w-[2.2rem]">100%</span>
+        </div>
+
+        <!-- Live Timer -->
+        <div class="flex items-center gap-1 bg-slate-950/80 border border-slate-700/80 px-2 py-0.5 rounded shadow-inner" title="টাইমার">
+          <svg class="w-2.5 h-2.5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
+          <span id="metricTime" class="font-mono text-xs sm:text-sm font-black text-indigo-300 min-w-[2rem] text-center">30s</span>
+        </div>
+
+        <!-- Top WPM -->
+        <div class="flex items-center gap-1 bg-slate-950/80 border border-slate-700/80 px-2 py-0.5 rounded shadow-inner" title="সর্বোচ্চ গতি">
+          <span class="text-[9px] uppercase font-bold text-amber-400/90">TOP WPM</span>
+          <span id="metricTopWpm" class="font-mono text-xs sm:text-sm font-black text-amber-300">0</span>
+        </div>
+
+        <!-- Total Tests -->
+        <div class="flex items-center gap-1 bg-slate-950/80 border border-slate-700/80 px-2 py-0.5 rounded shadow-inner" title="মোট সম্পন্ন টেস্ট">
+          <span class="text-[9px] uppercase font-bold text-slate-400">TOTAL TESTS</span>
+          <span id="metricTotalTests" class="font-mono text-xs sm:text-sm font-black text-slate-300">0</span>
+        </div>
+
+      </div>
+
+      <!-- 7. Start / End Button & Reset -->
+      <div class="flex items-center gap-1.5 shrink-0 ml-auto">
+        <button id="btnStartEndAction" 
+                class="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 rounded-lg shadow-md shadow-emerald-600/30 transition cursor-pointer"
+                title="টেস্ট শুরু বা শেষ করুন">
+          <span id="iconStartEnd">
+            <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span id="lblStartEndAction">Start</span>
+        </button>
+
+        <button id="btnQuickRestart" title="রিস্টার্ট (Tab / Esc)" class="p-1 text-slate-300 hover:text-white rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 transition cursor-pointer">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
       </div>
 
     </div>
+
   </header>
 
   <!-- ⌨️ MAIN TYPING PREVIEW — ৯০% (STRICT DISTRACTION-FREE TYPING ARENA) -->
-  <main id="typingArena" class="flex-1 w-full desktop-arena-90 flex flex-col justify-center items-center relative overflow-hidden cursor-text px-4 sm:px-8 md:px-12 py-3 lg:py-6">
+  <main id="typingArena" class="flex-1 w-full desktop-arena-90 flex flex-col justify-center items-center relative overflow-hidden cursor-text px-4 sm:px-8 md:px-12 py-2 sm:py-4">
     
-    <!-- Focus Guide prompt when user clicks outside -->
+    <!-- Focus Guide prompt when clicked away -->
     <div id="focusOverlay" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-950/75 backdrop-blur-[2px] transition-opacity duration-200 pointer-events-none opacity-0">
-      <div class="px-5 py-3 rounded-2xl bg-indigo-600 text-white shadow-2xl flex items-center gap-3 text-sm font-semibold tracking-wide animate-bounce pointer-events-auto cursor-pointer" id="btnFocusPrompt">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+      <div class="px-5 py-2.5 rounded-2xl bg-indigo-600 text-white shadow-2xl flex items-center gap-2 text-xs sm:text-sm font-semibold tracking-wide animate-bounce pointer-events-auto cursor-pointer" id="btnFocusPrompt">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
         <span>টাইপিং চালু করতে এখানে ক্লিক বা ট্যাপ করুন</span>
       </div>
     </div>
@@ -356,25 +319,25 @@
     <div class="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center relative">
       
       <!-- Progress Bar (Time & Characters) -->
-      <div class="w-full bg-slate-800/80 rounded-full h-1.5 mb-4 lg:mb-6 overflow-hidden border border-slate-700/50">
+      <div class="w-full bg-slate-800/80 rounded-full h-1 mb-3 lg:mb-5 overflow-hidden border border-slate-700/50">
         <div id="testProgressBar" class="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-400 transition-all duration-100 w-0"></div>
       </div>
 
-      <!-- Live Typing Container (90% viewport focus, line wrapping without horizontal scroll) -->
+      <!-- Live Typing Container -->
       <div id="textDisplayBox" 
-           class="w-full max-h-[64vh] md:max-h-[74vh] overflow-y-auto px-2 py-3 select-none leading-relaxed transition-all scroll-smooth"
+           class="w-full max-h-[66vh] md:max-h-[75vh] overflow-y-auto px-2 py-2 select-none leading-relaxed transition-all scroll-smooth"
            tabindex="0"
            aria-label="Main Typing Preview Area">
-        <!-- Rendered character spans will populate here -->
+        <!-- Rendered character spans populating here -->
       </div>
 
       <!-- Footer indicator: reset hotkey and character counters -->
-      <div class="mt-3 lg:mt-4 flex items-center justify-between text-xs text-slate-500 font-mono">
-        <span class="flex items-center gap-1.5">
-          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold">Tab</kbd>
-          <span>or</span>
-          <kbd class="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold">Esc</kbd>
-          <span>to restart test</span>
+      <div class="mt-2 lg:mt-3 flex items-center justify-between text-[11px] text-slate-500 font-mono">
+        <span class="flex items-center gap-1">
+          <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold">Tab</kbd>
+          <span>/</span>
+          <kbd class="px-1 py-0.5 rounded bg-slate-800 border border-slate-700 text-slate-300 font-bold">Esc</kbd>
+          <span>to restart</span>
         </span>
         <span id="charCountSummary" class="text-slate-400 font-bold">0 / 0 chars</span>
       </div>
@@ -382,14 +345,14 @@
     </div>
   </main>
 
-  <!-- MODAL: Custom Text & Presets -->
-  <div id="modalCustomText" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomCard">
+  <!-- MODAL: Custom Text Input / Update -->
+  <div id="modalCustomText" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200">
       
-      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+      <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <h2 class="font-bold text-base text-white">Custom Text & Presets (কাস্টম টেক্সট)</h2>
+          <h2 class="font-bold text-sm sm:text-base text-white">Custom Text Input / Update (কাস্টম টেক্সট)</h2>
         </div>
         <button id="btnCloseCustomText" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
@@ -398,34 +361,34 @@
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">প্রিসেট দ্রুত নির্বাচন করুন</label>
           <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
-            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="bangla">
+            <button class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="bangla">
               <span class="block font-bold text-emerald-400">বাংলা অনুশীলন</span>
-              <span class="text-[10px] text-slate-400">হিন্দ শিলিগুড়ি ফন্ট</span>
+              <span class="text-[10px] text-slate-400">হিন্দ শিলিগুড়ি</span>
             </button>
-            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="standard">
+            <button class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="standard">
               <span class="block font-bold text-slate-200">Standard English</span>
-              <span class="text-[10px] text-slate-400">Common words & flow</span>
+              <span class="text-[10px] text-slate-400">Flow & Speed</span>
             </button>
-            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="quotes">
-              <span class="block font-bold text-slate-200">Famous Quotes</span>
-              <span class="text-[10px] text-slate-400">Inspirational lines</span>
+            <button class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="quotes">
+              <span class="block font-bold text-slate-200">Quotes</span>
+              <span class="text-[10px] text-slate-400">Inspirational</span>
             </button>
-            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="code">
+            <button class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="code">
               <span class="block font-bold text-slate-200">Programming</span>
-              <span class="text-[10px] text-slate-400">Code & syntax</span>
+              <span class="text-[10px] text-slate-400">Syntax & logic</span>
             </button>
-            <button class="preset-btn px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="blank">
+            <button class="preset-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600/30 hover:border-indigo-500 border border-slate-700 text-left transition" data-preset="blank">
               <span class="block font-bold text-amber-300">Blank Machine</span>
-              <span class="text-[10px] text-slate-400">ফাঁকা ক্যানভাস</span>
+              <span class="text-[10px] text-slate-400">মুক্ত টাইপিং</span>
             </button>
           </div>
         </div>
 
         <div>
           <label for="txtCustomInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
-            অথবা আপনার পছন্দের টেক্সট পেস্ট / টাইপ করুন
+            অথবা যেকোনো কাস্টম টেক্সট পেস্ট বা আপডেট করুন
           </label>
-          <textarea id="txtCustomInput" rows="5" class="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-3 text-sm font-hind text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed" placeholder="এখানে যেকোনো বাংলা বা ইংরেজি অনুচ্ছেদ পেস্ট করুন..."></textarea>
+          <textarea id="txtCustomInput" rows="5" class="w-full bg-slate-950/90 border border-slate-700/80 rounded-xl p-3 text-sm font-hind text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none leading-relaxed" placeholder="এখানে যেকোনো বাংলা বা ইংরেজি অনুচ্ছেদ পেস্ট বা টাইপ করুন..."></textarea>
           <div class="flex justify-between items-center text-xs text-slate-400 mt-1">
             <span id="customWordCharCount">0 characters • 0 words</span>
             <button id="btnClearCustom" class="text-rose-400 hover:text-rose-300 transition">ক্লিয়ার করুন</button>
@@ -434,20 +397,20 @@
       </div>
 
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end gap-2">
-        <button id="btnCancelCustomText" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">বাতিল</button>
-        <button id="btnApplyCustomText" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">Apply & Start Test</button>
+        <button id="btnCancelCustomText" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">বাতিল</button>
+        <button id="btnApplyCustomText" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow transition">Update & Apply Text</button>
       </div>
 
     </div>
   </div>
 
-  <!-- MODAL: Custom Timer Picker -->
-  <div id="modalCustomTimer" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalCustomTimerCard">
-      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+  <!-- MODAL: Custom Timer Duration Picker -->
+  <div id="modalCustomTimer" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200">
+      <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"/><path stroke-linecap="round" stroke-width="2" d="M12 6v6l4 2"/></svg>
-          <h2 class="font-bold text-base text-white">Custom Timer Duration (কাস্টম সময়)</h2>
+          <h2 class="font-bold text-sm sm:text-base text-white">Custom Timer Duration (কাস্টম সময়)</h2>
         </div>
         <button id="btnCloseCustomTimer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
@@ -456,10 +419,10 @@
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">দ্রুত প্রিসেট নির্বাচন</label>
           <div class="grid grid-cols-4 gap-2 text-xs">
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="45">45s</button>
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="90">90s</button>
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="180">3 min</button>
-            <button type="button" class="quick-timer-btn px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="300">5 min</button>
+            <button type="button" class="quick-timer-btn px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="45">45s</button>
+            <button type="button" class="quick-timer-btn px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="90">90s</button>
+            <button type="button" class="quick-timer-btn px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="180">3 min</button>
+            <button type="button" class="quick-timer-btn px-2 py-1.5 rounded-xl bg-slate-800 hover:bg-indigo-600 border border-slate-700 text-center font-mono font-bold text-slate-200 transition" data-seconds="300">5 min</button>
           </div>
         </div>
 
@@ -469,162 +432,100 @@
           </label>
           <div class="flex items-center gap-2">
             <input type="number" id="numCustomTimerInput" min="5" max="3600" step="5" value="45"
-              class="w-full bg-slate-950/90 border border-slate-700 rounded-xl px-4 py-2.5 text-base font-mono text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. 45">
+              class="w-full bg-slate-950/90 border border-slate-700 rounded-xl px-4 py-2 text-base font-mono text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <span class="text-xs font-mono text-slate-400 uppercase font-bold">Sec</span>
           </div>
         </div>
       </div>
 
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end gap-2">
-        <button id="btnCancelCustomTimer" class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">বাতিল</button>
-        <button id="btnSetCustomTimer" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/25 transition">সেট করুন</button>
+        <button id="btnCancelCustomTimer" class="px-3.5 py-1.5 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition">বাতিল</button>
+        <button id="btnSetCustomTimer" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">সেট করুন</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: Settings & Color Themes -->
-  <div id="modalSettings" class="fixed inset-0 z-50 flex items-center justify-center sm:p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-800 rounded-t-2xl sm:rounded-2xl w-full max-w-lg max-h-[85vh] flex flex-col shadow-2xl overflow-hidden mt-auto sm:my-auto" id="modalSettingsCard">
+  <!-- MODAL: 4. Correct & Wrong Text Color / Theme -->
+  <div id="modalSettings" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
       
-      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+      <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-          <h2 class="font-bold text-base text-white">Appearance, Colors & Audio</h2>
+          <h2 class="font-bold text-sm sm:text-base text-white">Correct & Wrong Text Color / Theme</h2>
         </div>
         <button id="btnCloseSettings" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
 
-      <div class="p-5 overflow-y-auto space-y-5 text-sm">
+      <div class="p-5 overflow-y-auto space-y-4 text-xs sm:text-sm">
         
-        <!-- Theme Presets -->
+        <!-- Live Color Pickers -->
         <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">থিম প্যালেট (Theme Palette)</label>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-slate-950 flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="dark">
-              <span class="text-xs font-bold text-slate-200">Cyber Dark</span>
-              <div class="flex items-center gap-1">
-                <span class="w-3.5 h-3.5 rounded-full bg-slate-900 border border-slate-700"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-emerald-400"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-rose-500"></span>
-              </div>
-            </button>
-            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#1e1e2e] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="catppuccin">
-              <span class="text-xs font-bold text-pink-200">Catppuccin</span>
-              <div class="flex items-center gap-1">
-                <span class="w-3.5 h-3.5 rounded-full bg-[#1e1e2e]"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-[#a6e3a1]"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-[#f38ba8]"></span>
-              </div>
-            </button>
-            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#0f172a] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="nord">
-              <span class="text-xs font-bold text-cyan-200">Nordic Frost</span>
-              <div class="flex items-center gap-1">
-                <span class="w-3.5 h-3.5 rounded-full bg-[#2e3440]"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-[#88c0d0]"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-[#bf616a]"></span>
-              </div>
-            </button>
-            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#050a06] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="matrix">
-              <span class="text-xs font-bold text-emerald-300">Matrix Hacker</span>
-              <div class="flex items-center gap-1">
-                <span class="w-3.5 h-3.5 rounded-full bg-black"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-emerald-500"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-lime-400"></span>
-              </div>
-            </button>
-            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#faf8f5] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="paper">
-              <span class="text-xs font-bold text-amber-950">Paper Light</span>
-              <div class="flex items-center gap-1">
-                <span class="w-3.5 h-3.5 rounded-full bg-[#eee9df]"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-emerald-600"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-rose-600"></span>
-              </div>
-            </button>
-            <button class="theme-btn p-2.5 rounded-xl border border-slate-700 bg-[#282a36] flex flex-col gap-1.5 text-left transition hover:scale-[1.02]" data-theme="dracula">
-              <span class="text-xs font-bold text-purple-300">Dracula Vamp</span>
-              <div class="flex items-center gap-1">
-                <span class="w-3.5 h-3.5 rounded-full bg-[#282a36]"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-[#50fa7b]"></span>
-                <span class="w-3.5 h-3.5 rounded-full bg-[#ff5555]"></span>
-              </div>
-            </button>
-          </div>
-        </div>
-
-        <!-- Correct & Wrong Text Color / Caret Color Picker Requirement -->
-        <div class="border-t border-slate-800 pt-4">
-          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2.5">Correct & Wrong Text Color/Theme</label>
-          <div class="grid grid-cols-3 gap-2.5 text-xs">
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">কাস্টম কালার নির্বাচন</label>
+          <div class="grid grid-cols-3 gap-2.5 text-center">
             <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
-              <span class="text-slate-300 font-semibold">Correct Text</span>
+              <span class="text-slate-300 font-bold text-xs">Correct Text</span>
               <input type="color" id="pickerCorrectColor" value="#10b981" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
             </div>
             <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
-              <span class="text-slate-300 font-semibold">Wrong Text</span>
+              <span class="text-slate-300 font-bold text-xs">Wrong Text</span>
               <input type="color" id="pickerWrongColor" value="#f43f5e" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
             </div>
             <div class="bg-slate-800/80 p-2.5 rounded-xl border border-slate-700 flex flex-col items-center gap-1.5">
-              <span class="text-slate-300 font-semibold">Caret / Cursor</span>
+              <span class="text-slate-300 font-bold text-xs">Caret / Cursor</span>
               <input type="color" id="pickerCaretColor" value="#6366f1" class="w-8 h-8 rounded-lg cursor-pointer bg-transparent border-0">
             </div>
           </div>
         </div>
 
-        <!-- Mobile Font & Caret Options inside Drawer -->
-        <div class="border-t border-slate-800 pt-4 lg:hidden space-y-3">
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Font Style</label>
-            <select id="mobileSelFont" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5">
-              <option value="font-hind">হিন্দ শিলিগুড়ি (Hind Siliguri)</option>
-              <option value="font-mono">JetBrains Mono</option>
-              <option value="font-sans">Inter (Modern Sans)</option>
-              <option value="font-roboto-mono">Roboto Mono</option>
-              <option value="font-space-mono">Space Mono</option>
-              <option value="font-serif">Playfair Display</option>
-            </select>
+        <!-- Preset Themes -->
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">থিম প্যালেট (Theme Presets)</label>
+          <div class="grid grid-cols-3 gap-2">
+            <button class="theme-btn p-2 rounded-xl border border-slate-700 bg-slate-950 flex flex-col gap-1 text-left transition" data-theme="dark">
+              <span class="text-[11px] font-bold text-slate-200">Cyber Dark</span>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span><span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span></div>
+            </button>
+            <button class="theme-btn p-2 rounded-xl border border-slate-700 bg-[#1e1e2e] flex flex-col gap-1 text-left transition" data-theme="catppuccin">
+              <span class="text-[11px] font-bold text-pink-200">Catppuccin</span>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#a6e3a1]"></span><span class="w-2.5 h-2.5 rounded-full bg-[#f38ba8]"></span></div>
+            </button>
+            <button class="theme-btn p-2 rounded-xl border border-slate-700 bg-[#0f172a] flex flex-col gap-1 text-left transition" data-theme="nord">
+              <span class="text-[11px] font-bold text-cyan-200">Nordic Frost</span>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#88c0d0]"></span><span class="w-2.5 h-2.5 rounded-full bg-[#bf616a]"></span></div>
+            </button>
+            <button class="theme-btn p-2 rounded-xl border border-slate-700 bg-[#050a06] flex flex-col gap-1 text-left transition" data-theme="matrix">
+              <span class="text-[11px] font-bold text-emerald-300">Matrix</span>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><span class="w-2.5 h-2.5 rounded-full bg-lime-400"></span></div>
+            </button>
+            <button class="theme-btn p-2 rounded-xl border border-slate-700 bg-[#faf8f5] flex flex-col gap-1 text-left transition" data-theme="paper">
+              <span class="text-[11px] font-bold text-amber-950">Paper Light</span>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span><span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span></div>
+            </button>
+            <button class="theme-btn p-2 rounded-xl border border-slate-700 bg-[#282a36] flex flex-col gap-1 text-left transition" data-theme="dracula">
+              <span class="text-[11px] font-bold text-purple-300">Dracula</span>
+              <div class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-[#50fa7b]"></span><span class="w-2.5 h-2.5 rounded-full bg-[#ff5555]"></span></div>
+            </button>
           </div>
-          <div>
-            <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Cursor Type</label>
-            <select id="mobileSelCursor" class="w-full bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-xl p-2.5">
-              <option value="cursor-line">Line |</option>
-              <option value="cursor-block">Block █</option>
-              <option value="cursor-underline">Underline _</option>
-              <option value="cursor-pulse">Smooth Pulse •</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Mechanical Key Audio Type -->
-        <div class="border-t border-slate-800 pt-4 flex items-center justify-between">
-          <div>
-            <span class="block text-xs font-semibold text-slate-200">Mechanical Key Sounds</span>
-            <span class="text-[11px] text-slate-400">কীবোর্ড টাইপিং সাউন্ড ফিডব্যাক</span>
-          </div>
-          <select id="selSoundType" class="bg-slate-800 border border-slate-700 text-slate-200 text-xs rounded-lg px-2.5 py-1.5">
-            <option value="click">Mechanical Click</option>
-            <option value="thock">Deep Thock</option>
-            <option value="beep">Soft Pop</option>
-            <option value="none">Muted / Off</option>
-          </select>
         </div>
 
       </div>
 
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-end">
-        <button id="btnDoneSettings" class="px-5 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">Done</button>
+        <button id="btnDoneSettings" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">ঠিক আছে</button>
       </div>
 
     </div>
   </div>
 
-  <!-- MODAL: History: Start/End Timestamp, Speed, Time, Accuracy -->
-  <div id="modalHistory" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
-    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden" id="modalHistoryCard">
+  <!-- MODAL: 10. History: Start/End Timestamp, Speed, Time, Accuracy -->
+  <div id="modalHistory" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-200">
+    <div class="bg-slate-900 border border-slate-700/80 rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
       
-      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between">
+      <div class="px-5 py-3.5 border-b border-slate-800 flex items-center justify-between">
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <h2 class="font-bold text-base text-white">Test History & Analytics (টাইপিং ইতিহাস)</h2>
+          <h2 class="font-bold text-sm sm:text-base text-white">History: Start/End Timestamp, Speed, Time, Accuracy</h2>
         </div>
         <button id="btnCloseHistory" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition">✕</button>
       </div>
@@ -632,34 +533,34 @@
       <div class="p-5 flex-1 overflow-y-auto space-y-4">
         
         <div class="grid grid-cols-3 gap-3">
-          <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl text-center">
-            <div class="text-[10px] uppercase text-slate-400 font-bold">Best WPM</div>
-            <div id="historyStatTopWpm" class="text-xl font-mono font-black text-amber-400 mt-0.5">0</div>
+          <div class="bg-slate-800/60 border border-slate-700/60 p-2.5 rounded-xl text-center">
+            <div class="text-[10px] uppercase text-slate-400 font-bold">Top WPM</div>
+            <div id="historyStatTopWpm" class="text-lg font-mono font-black text-amber-400 mt-0.5">0</div>
           </div>
-          <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl text-center">
+          <div class="bg-slate-800/60 border border-slate-700/60 p-2.5 rounded-xl text-center">
             <div class="text-[10px] uppercase text-slate-400 font-bold">Avg WPM</div>
-            <div id="historyStatAvgWpm" class="text-xl font-mono font-black text-indigo-400 mt-0.5">0</div>
+            <div id="historyStatAvgWpm" class="text-lg font-mono font-black text-indigo-400 mt-0.5">0</div>
           </div>
-          <div class="bg-slate-800/60 border border-slate-700/60 p-3 rounded-xl text-center">
+          <div class="bg-slate-800/60 border border-slate-700/60 p-2.5 rounded-xl text-center">
             <div class="text-[10px] uppercase text-slate-400 font-bold">Total Tests</div>
-            <div id="historyStatCount" class="text-xl font-mono font-black text-emerald-400 mt-0.5">0</div>
+            <div id="historyStatCount" class="text-lg font-mono font-black text-emerald-400 mt-0.5">0</div>
           </div>
         </div>
 
         <div class="border border-slate-800 rounded-xl overflow-hidden">
-          <div class="max-h-64 overflow-y-auto">
+          <div class="max-h-60 overflow-y-auto">
             <table class="w-full text-left text-xs">
               <thead class="bg-slate-800/90 text-slate-400 sticky top-0 uppercase text-[10px] font-bold border-b border-slate-700/80">
                 <tr>
-                  <th class="py-2.5 px-3">Start/End Timestamp</th>
-                  <th class="py-2.5 px-3">Speed (WPM)</th>
-                  <th class="py-2.5 px-3">Accuracy</th>
-                  <th class="py-2.5 px-3">Time</th>
-                  <th class="py-2.5 px-3">Mode</th>
+                  <th class="py-2 px-3">Start/End Timestamp</th>
+                  <th class="py-2 px-3">Speed (WPM)</th>
+                  <th class="py-2 px-3">Accuracy</th>
+                  <th class="py-2 px-3">Time</th>
+                  <th class="py-2 px-3">Mode</th>
                 </tr>
               </thead>
               <tbody id="historyTableBody" class="divide-y divide-slate-800/60 font-mono text-slate-300">
-                <!-- Records injected here -->
+                <!-- Records dynamically populated -->
               </tbody>
             </table>
           </div>
@@ -668,99 +569,51 @@
       </div>
 
       <div class="px-5 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between">
-        <button id="btnClearHistory" class="text-xs text-rose-400 hover:text-rose-300 transition font-semibold">ক্লিয়ার ইতিহাস</button>
-        <button id="btnDoneHistory" class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">বন্ধ করুন</button>
+        <button id="btnClearHistory" class="text-xs text-rose-400 hover:text-rose-300 transition font-semibold">ক্লিয়ার হিস্ট্রি</button>
+        <button id="btnDoneHistory" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white transition">বন্ধ করুন</button>
       </div>
 
     </div>
   </div>
 
   <script>
-    /**
-     * Preset text repositories
-     */
     const PRESET_TEXTS = {
       bangla: [
         "জ্ঞান যেখানে সীমাবদ্ধ, বুদ্ধি সেখানে আড়ষ্ট, মুক্তি সেখানে অসম্ভব। নিয়মিত অনুশীলনের মাধ্যমেই যেকোনো বিষয়ে পারদর্শিতা ও নিখুঁত দক্ষতা অর্জন সম্ভব হয়। কিবোর্ডে দ্রুত ও সঠিকভাবে টাইপ করার ক্ষমতা বর্তমান ডিজিটাল দুনিয়ায় কাজকে সহজ এবং গতিশীল করে তোলে।",
-        "আমাদের প্রিয় মাতৃভাষা বাংলা। রবীন্দ্রনাথ ঠাকুর ও কাজী নজরুল ইসলামের অমর সৃষ্টি আমাদের অহংকার। সততা, নিষ্ঠা ও আত্মবিশ্বাস থাকলে সব কঠিন কাজই সহজ হয়ে যায়। লক্ষ্য স্থির রেখে প্রতিদিন এগিয়ে চলাই সফলতার মূল চাবিকাঠি।",
-        "প্রযুক্তির যুগে কম্পিউটার ও ইন্টারনেটের সঠিক ব্যবহার জানা অত্যন্ত জরুরি। বাংলা টাইপিং চর্চা মননশীলতাকে বিকশিত করে এবং কর্মদক্ষতা বহুলাংশে বৃদ্ধি করে।"
+        "আমাদের প্রিয় মাতৃভাষা বাংলা। রবীন্দ্রনাথ ঠাকুর ও কাজী নজরুল ইসলামের অমর সৃষ্টি আমাদের অহংকার। সততা, নিষ্ঠা ও আত্মবিশ্বাস থাকলে সব কঠিন কাজই সহজ হয়ে যায়। লক্ষ্য স্থির রেখে প্রতিদিন এগিয়ে চলাই সফলতার মূল চাবিকাঠি।"
       ],
       standard: [
         "The quick brown fox jumps over the lazy dog while the sun sets behind the distant emerald hills. Precision and continuous rhythm are the secrets to developing effortless keyboard fluency.",
-        "Success in typing is not merely about rushing fingers forward with reckless abandon; it is about establishing a continuous cadence that stays calm under pressure. When each keystroke lands accurately, speed naturally follows.",
-        "Technology shapes the modern workplace, yet the humble mechanical keyboard remains one of our primary gateways into the digital cosmos. Mastering this tool transforms how programmers and writers manifest ideas into reality."
+        "Success in typing is not merely about rushing fingers forward with reckless abandon; it is about establishing a continuous cadence that stays calm under pressure. When each keystroke lands accurately, speed naturally follows."
       ],
       quotes: [
         "Stay hungry, stay foolish. Never let the noise of others' opinions drown out your own inner voice. Have the courage to follow your heart and intuition.",
-        "The only way to do great work is to love what you do. If you haven't found it yet, keep looking. Do not settle. As with all matters of the heart, you will know when you find it.",
         "Simplicity is prerequisite for reliability. Any fool can write code that a computer can understand. Good programmers write code that humans can understand."
       ],
       code: [
-        "const calculateVelocity = (distance, time) => { if (time <= 0) return 0; const result = distance / time; return Math.round(result * 100) / 100; };",
-        "function createKeyboardListener(element) { const buffer = []; return element.addEventListener('keydown', (e) => { if (e.key === 'Backspace') { buffer.pop(); } else { buffer.push(e.key); } }); }"
+        "const calculateVelocity = (distance, time) => { if (time <= 0) return 0; return Math.round((distance / time) * 100) / 100; };",
+        "function createKeyboardListener(element) { const buffer = []; return element.addEventListener('keydown', (e) => { if (e.key === 'Backspace') buffer.pop(); }); }"
       ],
       blank: "আপনার ইচ্ছামতো যেকোনো কিছু টাইপ করুন। নতুন কোনো চিন্তা, রচনা বা মুক্ত টাইপিং অনুশীলন করতে পারেন সম্পূর্ণ স্বাচ্ছন্দ্যে।"
     };
 
     const THEMES = {
-      dark: {
-        bg: '#070d18',
-        surface: '#0d1527',
-        correct: '#10b981',
-        wrong: '#f43f5e',
-        caret: '#6366f1',
-        textMain: '#f1f5f9'
-      },
-      catppuccin: {
-        bg: '#1e1e2e',
-        surface: '#181825',
-        correct: '#a6e3a1',
-        wrong: '#f38ba8',
-        caret: '#cba6f7',
-        textMain: '#cdd6f4'
-      },
-      nord: {
-        bg: '#242933',
-        surface: '#2e3440',
-        correct: '#88c0d0',
-        wrong: '#bf616a',
-        caret: '#81a1c1',
-        textMain: '#eceff4'
-      },
-      matrix: {
-        bg: '#050a06',
-        surface: '#08120b',
-        correct: '#10b981',
-        wrong: '#ef4444',
-        caret: '#34d399',
-        textMain: '#d1fae5'
-      },
-      paper: {
-        bg: '#faf8f5',
-        surface: '#eee9df',
-        correct: '#059669',
-        wrong: '#dc2626',
-        caret: '#4f46e5',
-        textMain: '#27272a'
-      },
-      dracula: {
-        bg: '#282a36',
-        surface: '#21222c',
-        correct: '#50fa7b',
-        wrong: '#ff5555',
-        caret: '#bd93f9',
-        textMain: '#f8f8f2'
-      }
+      dark: { bg: '#070d18', surface: '#0d1527', correct: '#10b981', wrong: '#f43f5e', caret: '#6366f1', textMain: '#f1f5f9' },
+      catppuccin: { bg: '#1e1e2e', surface: '#181825', correct: '#a6e3a1', wrong: '#f38ba8', caret: '#cba6f7', textMain: '#cdd6f4' },
+      nord: { bg: '#242933', surface: '#2e3440', correct: '#88c0d0', wrong: '#bf616a', caret: '#81a1c1', textMain: '#eceff4' },
+      matrix: { bg: '#050a06', surface: '#08120b', correct: '#10b981', wrong: '#ef4444', caret: '#34d399', textMain: '#d1fae5' },
+      paper: { bg: '#faf8f5', surface: '#eee9df', correct: '#059669', wrong: '#dc2626', caret: '#4f46e5', textMain: '#27272a' },
+      dracula: { bg: '#282a36', surface: '#21222c', correct: '#50fa7b', wrong: '#ff5555', caret: '#bd93f9', textMain: '#f8f8f2' }
     };
 
-    // State Variables
+    // Application State
     let currentThemeKey = 'dark';
     let currentFontSize = 28;
-    let currentFontFamily = 'font-hind'; // Default Hind Siliguri
+    let currentFontFamily = 'font-hind'; // Hind Siliguri default
     let currentCursorType = 'cursor-line';
-    let currentMode = '30'; // 15, 30, 60, 120, 'custom', 'free'
+    let currentMode = '30';
     let customTimerDuration = 45;
-    let currentSound = 'click';
+    let isSoundOn = true;
 
     let testStatus = 'idle'; // 'idle', 'running', 'completed'
     let targetText = '';
@@ -775,10 +628,9 @@
     let totalTestsCompleted = 0;
     let topWpm = 0;
     let testHistory = [];
-
     let audioCtx = null;
 
-    // DOM Elements
+    // Elements
     const bodyEl = document.getElementById('appBody');
     const liveClockEl = document.getElementById('liveClock');
     const textDisplayBox = document.getElementById('textDisplayBox');
@@ -811,8 +663,6 @@
     const metricTime = document.getElementById('metricTime');
     const metricTopWpm = document.getElementById('metricTopWpm');
     const metricTotalTests = document.getElementById('metricTotalTests');
-    const mobileTopWpm = document.getElementById('mobileTopWpm');
-    const mobileTotalTests = document.getElementById('mobileTotalTests');
 
     // Modals
     const modalCustomText = document.getElementById('modalCustomText');
@@ -826,22 +676,16 @@
 
     const modalCustomTimer = document.getElementById('modalCustomTimer');
     const btnCustomTimerTrigger = document.getElementById('btnCustomTimerTrigger');
-    const btnMobileCustomTimer = document.getElementById('btnMobileCustomTimer');
     const btnCloseCustomTimer = document.getElementById('btnCloseCustomTimer');
     const btnCancelCustomTimer = document.getElementById('btnCancelCustomTimer');
     const btnSetCustomTimer = document.getElementById('btnSetCustomTimer');
     const numCustomTimerInput = document.getElementById('numCustomTimerInput');
     const lblCustomMode = document.getElementById('lblCustomMode');
-    const lblMobileCustomMode = document.getElementById('lblMobileCustomMode');
 
     const modalSettings = document.getElementById('modalSettings');
     const btnOpenSettings = document.getElementById('btnOpenSettings');
     const btnCloseSettings = document.getElementById('btnCloseSettings');
     const btnDoneSettings = document.getElementById('btnDoneSettings');
-    const mobileSelFont = document.getElementById('mobileSelFont');
-    const mobileSelCursor = document.getElementById('mobileSelCursor');
-    const selSoundType = document.getElementById('selSoundType');
-
     const pickerCorrectColor = document.getElementById('pickerCorrectColor');
     const pickerWrongColor = document.getElementById('pickerWrongColor');
     const pickerCaretColor = document.getElementById('pickerCaretColor');
@@ -857,15 +701,13 @@
     const historyStatCount = document.getElementById('historyStatCount');
 
     function playKeySound() {
-      if (currentSound === 'none') return;
+      if (!isSoundOn) return;
       try {
         if (!audioCtx) {
           const AudioContext = window.AudioContext || window.webkitAudioContext;
           if (AudioContext) audioCtx = new AudioContext();
         }
-        if (audioCtx && audioCtx.state === 'suspended') {
-          audioCtx.resume();
-        }
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
         if (!audioCtx) return;
 
         const osc = audioCtx.createOscillator();
@@ -874,35 +716,19 @@
         gain.connect(audioCtx.destination);
 
         const now = audioCtx.currentTime;
-        if (currentSound === 'click') {
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(1400, now);
-          osc.frequency.exponentialRampToValueAtTime(120, now + 0.03);
-          gain.gain.setValueAtTime(0.12, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-          osc.start(now);
-          osc.stop(now + 0.03);
-        } else if (currentSound === 'thock') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(340, now);
-          osc.frequency.exponentialRampToValueAtTime(80, now + 0.05);
-          gain.gain.setValueAtTime(0.22, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-          osc.start(now);
-          osc.stop(now + 0.05);
-        } else if (currentSound === 'beep') {
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(650, now);
-          gain.gain.setValueAtTime(0.06, now);
-          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
-          osc.start(now);
-          osc.stop(now + 0.035);
-        }
-      } catch (err) {}
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(1200, now);
+        osc.frequency.exponentialRampToValueAtTime(100, now + 0.025);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.025);
+        osc.start(now);
+        osc.stop(now + 0.025);
+      } catch (e) {}
     }
 
+    // 6. Date & Time Engine
     function startLiveClock() {
-      function update() {
+      function updateClock() {
         const now = new Date();
         const options = { 
           hour: '2-digit', 
@@ -914,8 +740,8 @@
         };
         liveClockEl.textContent = now.toLocaleDateString(undefined, options);
       }
-      update();
-      setInterval(update, 1000);
+      updateClock();
+      setInterval(updateClock, 1000);
     }
 
     function applyTheme(themeKey) {
@@ -935,7 +761,6 @@
 
       bodyEl.style.backgroundColor = theme.bg;
       bodyEl.style.color = theme.textMain;
-
       document.getElementById('controlPanel').style.backgroundColor = theme.surface;
 
       document.querySelectorAll('.theme-btn').forEach(btn => {
@@ -960,13 +785,11 @@
       textDisplayBox.classList.add(fontClass);
       currentFontFamily = fontClass;
       selFontFamily.value = fontClass;
-      mobileSelFont.value = fontClass;
     }
 
     function setCursorType(cursorClass) {
       currentCursorType = cursorClass;
       selCursorType.value = cursorClass;
-      mobileSelCursor.value = cursorClass;
       renderTargetTextDisplay();
     }
 
@@ -977,7 +800,7 @@
       } else {
         targetText = sourceText.trim().replace(/\s+/g, ' ');
       }
-      targetChars = Array.from(targetText); // Correct unicode split for Bengali
+      targetChars = Array.from(targetText); // Accurate Bengali Unicode separation
       typedChars = [];
       renderTargetTextDisplay();
       updateMetricsLive();
@@ -1004,7 +827,6 @@
           charSpan.dataset.idx = globalCharIndex;
           charSpan.textContent = ch;
 
-          // Status coloring: correct / wrong / untyped
           if (globalCharIndex < typedChars.length) {
             const typed = typedChars[globalCharIndex];
             if (typed === ch) {
@@ -1018,7 +840,6 @@
             charSpan.style.color = currentThemeKey === 'paper' ? '#9a8d79' : '#4b5563';
           }
 
-          // Active Caret Placement
           if (globalCharIndex === typedChars.length) {
             applyCaretStyle(charSpan, caretColor);
           }
@@ -1027,7 +848,7 @@
           globalCharIndex++;
         });
 
-        // Add space token between words
+        // Add space token
         if (wIdx < words.length - 1) {
           const spaceSpan = document.createElement('span');
           spaceSpan.className = 'char-node';
@@ -1069,7 +890,6 @@
 
       scrollToActiveChar();
 
-      // Progress bar and character summary
       const progressPercent = Math.min((typedChars.length / targetChars.length) * 100, 100);
       testProgressBar.style.width = `${progressPercent}%`;
       charCountSummary.textContent = `${typedChars.length} / ${targetChars.length} chars`;
@@ -1111,12 +931,11 @@
 
     /**
      * SINGLE-POINT-OF-TRUTH KEYSTROKE PIPELINE
-     * Completely eliminates double-firing and multiple backspace cuts!
+     * Completely eliminates double typing and multiple backspace cuts!
      */
     function processInputChar(char) {
       if (testStatus === 'completed') return;
 
-      // Start on first typed character
       if (testStatus === 'idle') {
         startTypingSession();
       }
@@ -1144,33 +963,28 @@
       }
     }
 
-    // Attach to hidden proxy textarea with absolute priority
+    // Physical Keyboard handling via hidden input with preventDefault to eliminate duplicates
     hiddenInput.addEventListener('keydown', (e) => {
-      // Allow browser shortcuts (like Ctrl+R, Ctrl+C, Ctrl+V, etc.)
       if (e.ctrlKey || e.metaKey || e.altKey) return;
 
-      // Hotkey restarts
       if (e.key === 'Tab' || e.key === 'Escape') {
         e.preventDefault();
         resetTest();
         return;
       }
 
-      // Handle Backspace: prevent default so exactly 1 backspace occurs
       if (e.key === 'Backspace') {
         e.preventDefault();
         processBackspace();
         return;
       }
 
-      // Handle Space: prevent default and add space
       if (e.key === ' ') {
         e.preventDefault();
         processInputChar(' ');
         return;
       }
 
-      // Handle single character: PREVENT DEFAULT so input event will NOT duplicate it!
       if (e.key && e.key.length === 1) {
         e.preventDefault();
         processInputChar(e.key);
@@ -1178,16 +992,14 @@
       }
     });
 
-    // Mobile Virtual Keyboard and IME composite input fallback
+    // Mobile Virtual Keyboard and IME fallback
     hiddenInput.addEventListener('input', (e) => {
-      // Handles backspace from software keyboards when keydown is suppressed
       if (e.inputType === 'deleteContentBackward') {
         processBackspace();
         hiddenInput.value = '';
         return;
       }
 
-      // For virtual keyboards that send buffered input
       const val = hiddenInput.value;
       if (val && val.length > 0) {
         const arr = Array.from(val);
@@ -1196,12 +1008,8 @@
       }
     });
 
-    // Window global catch for seamless typing even if focus was clicked away
     window.addEventListener('keydown', (e) => {
-      // Ignore if typing inside modal textareas or inputs
-      if (e.target && ['TEXTAREA', 'INPUT'].includes(e.target.tagName)) {
-        return;
-      }
+      if (e.target && ['TEXTAREA', 'INPUT'].includes(e.target.tagName)) return;
 
       if (e.key === 'Tab' || e.key === 'Escape') {
         e.preventDefault();
@@ -1209,7 +1017,6 @@
         return;
       }
 
-      // Automatically focus hidden input
       focusTyping();
     });
 
@@ -1260,8 +1067,6 @@
     function updateHeaderStats() {
       metricTopWpm.textContent = topWpm;
       metricTotalTests.textContent = totalTestsCompleted;
-      mobileTopWpm.textContent = topWpm;
-      mobileTotalTests.textContent = totalTestsCompleted;
     }
 
     function startTypingSession() {
@@ -1279,8 +1084,6 @@
       }
 
       metricTime.textContent = currentMode === 'free' ? '0s' : `${timeRemaining}s`;
-
-      // Update Start / End button state to "End"
       updateStartEndButton(true);
 
       clearInterval(timerInterval);
@@ -1319,10 +1122,13 @@
         topWpm = finalMetrics.wpm;
       }
 
-      // Record to history: Start/End timestamp, Speed, Time, Accuracy Requirement
+      // 10. Record History: Start/End Timestamp, Speed, Time, Accuracy
+      const startTimeFormatted = new Date(startTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+      const endTimeFormatted = new Date(endTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});
+
       const record = {
         id: Date.now(),
-        startEnd: `${new Date(startTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})} - ${new Date(endTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}`,
+        startEnd: `${startTimeFormatted} – ${endTimeFormatted}`,
         wpm: finalMetrics.wpm,
         accuracy: finalMetrics.accuracy,
         duration: `${elapsedSec}s`,
@@ -1375,20 +1181,19 @@
     function updateStartEndButton(isRunning, isCompleted = false) {
       if (isRunning) {
         lblStartEndAction.textContent = 'End';
-        btnStartEndAction.className = 'flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-rose-600/30 transition cursor-pointer';
+        btnStartEndAction.className = 'flex items-center gap-1.5 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 rounded-lg shadow-md shadow-rose-600/30 transition cursor-pointer';
         iconStartEnd.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h12v12H6z"/></svg>';
       } else if (isCompleted) {
         lblStartEndAction.textContent = 'Restart';
-        btnStartEndAction.className = 'flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-indigo-600/30 transition cursor-pointer';
+        btnStartEndAction.className = 'flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 rounded-lg shadow-md shadow-indigo-600/30 transition cursor-pointer';
         iconStartEnd.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/></svg>';
       } else {
         lblStartEndAction.textContent = 'Start';
-        btnStartEndAction.className = 'flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 sm:py-1.5 rounded-lg shadow-lg shadow-emerald-600/30 transition cursor-pointer';
+        btnStartEndAction.className = 'flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold text-xs px-3 sm:px-4 py-1 rounded-lg shadow-md shadow-emerald-600/30 transition cursor-pointer';
         iconStartEnd.innerHTML = '<svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
       }
     }
 
-    // Start / End Button Click
     btnStartEndAction.addEventListener('click', () => {
       if (testStatus === 'running') {
         endTypingSession();
@@ -1402,13 +1207,12 @@
 
     btnQuickRestart.addEventListener('click', () => resetTest());
 
+    // Fullscreen Handling
     function toggleFullscreen() {
       if (!document.fullscreenElement) {
         document.documentElement.requestFullscreen().catch(() => {});
       } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
+        if (document.exitFullscreen) document.exitFullscreen();
       }
     }
 
@@ -1418,20 +1222,19 @@
         fsIconExit.classList.remove('hidden');
         lblFullscreenText.textContent = 'Exit FS';
         btnFullscreen.classList.add('bg-amber-950/90', 'border-amber-500/80', 'text-amber-300');
-        btnFullscreen.classList.remove('bg-indigo-950/90', 'border-indigo-500/70', 'text-indigo-300');
+        btnFullscreen.classList.remove('bg-indigo-900/90', 'border-indigo-400/60', 'text-indigo-200');
       } else {
         fsIconEnter.classList.remove('hidden');
         fsIconExit.classList.add('hidden');
         lblFullscreenText.textContent = 'ফুলস্ক্রিন';
         btnFullscreen.classList.remove('bg-amber-950/90', 'border-amber-500/80', 'text-amber-300');
-        btnFullscreen.classList.add('bg-indigo-950/90', 'border-indigo-500/70', 'text-indigo-300');
+        btnFullscreen.classList.add('bg-indigo-900/90', 'border-indigo-400/60', 'text-indigo-200');
       }
     }
 
     btnFullscreen.addEventListener('click', toggleFullscreen);
     document.addEventListener('fullscreenchange', updateFullscreenUI);
 
-    // Modal Helpers
     function openModal(el) {
       el.classList.remove('hidden');
       requestAnimationFrame(() => {
@@ -1451,7 +1254,7 @@
       }, 200);
     }
 
-    // Custom Text Modal
+    // Custom Text Modal Events
     btnOpenCustomText.addEventListener('click', () => {
       txtCustomInput.value = targetText;
       updateWordCounts();
@@ -1495,14 +1298,13 @@
       resetTest(txt);
     });
 
-    // Custom Timer Modal
+    // Custom Timer Events
     function openCustomTimerModal() {
       numCustomTimerInput.value = customTimerDuration;
       openModal(modalCustomTimer);
     }
 
     btnCustomTimerTrigger.addEventListener('click', openCustomTimerModal);
-    btnMobileCustomTimer.addEventListener('click', openCustomTimerModal);
     btnCloseCustomTimer.addEventListener('click', () => closeModal(modalCustomTimer));
     btnCancelCustomTimer.addEventListener('click', () => closeModal(modalCustomTimer));
 
@@ -1517,20 +1319,17 @@
       if (isNaN(sec) || sec < 5) sec = 5;
       if (sec > 3600) sec = 3600;
       customTimerDuration = sec;
-
       lblCustomMode.textContent = `${customTimerDuration}s`;
-      lblMobileCustomMode.textContent = `${customTimerDuration}s`;
-
       closeModal(modalCustomTimer);
       setTestMode('custom');
     });
 
     function setTestMode(modeVal) {
       currentMode = modeVal;
-      document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
+      document.querySelectorAll('.mode-btn').forEach(btn => {
         if (btn.dataset.mode === modeVal) {
           btn.classList.add('bg-indigo-600', 'text-white', 'font-bold');
-          btn.classList.remove('bg-slate-800', 'text-slate-300');
+          btn.classList.remove('text-slate-300');
         } else {
           btn.classList.remove('bg-indigo-600', 'text-white', 'font-bold');
           btn.classList.add('text-slate-300');
@@ -1539,16 +1338,14 @@
       resetTest();
     }
 
-    document.querySelectorAll('.mode-btn, .mobile-mode-btn').forEach(btn => {
+    document.querySelectorAll('.mode-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const mode = btn.dataset.mode;
-        if (mode !== 'custom') {
-          setTestMode(mode);
-        }
+        if (mode !== 'custom') setTestMode(mode);
       });
     });
 
-    // Settings Modal
+    // Settings & Colors Modal
     btnOpenSettings.addEventListener('click', () => openModal(modalSettings));
     btnCloseSettings.addEventListener('click', () => closeModal(modalSettings));
     btnDoneSettings.addEventListener('click', () => closeModal(modalSettings));
@@ -1561,37 +1358,23 @@
       picker.addEventListener('input', () => applyTheme(currentThemeKey));
     });
 
-    // Font & Cursor Events
+    // Font Steppers & Selectors
     btnFontInc.addEventListener('click', () => setFontSize(currentFontSize + 2));
     btnFontDec.addEventListener('click', () => setFontSize(currentFontSize - 2));
-
     selFontFamily.addEventListener('change', (e) => setFontFamily(e.target.value));
-    mobileSelFont.addEventListener('change', (e) => setFontFamily(e.target.value));
-
     selCursorType.addEventListener('change', (e) => setCursorType(e.target.value));
-    mobileSelCursor.addEventListener('change', (e) => setCursorType(e.target.value));
 
-    // Sound Events
-    selSoundType.addEventListener('change', (e) => {
-      currentSound = e.target.value;
-      updateSoundIcons();
-    });
-
+    // Audio Toggle
     btnSoundToggle.addEventListener('click', () => {
-      currentSound = currentSound === 'none' ? 'click' : 'none';
-      selSoundType.value = currentSound;
-      updateSoundIcons();
-    });
-
-    function updateSoundIcons() {
-      if (currentSound === 'none') {
-        soundIconOn.classList.add('hidden');
-        soundIconOff.classList.remove('hidden');
-      } else {
+      isSoundOn = !isSoundOn;
+      if (isSoundOn) {
         soundIconOn.classList.remove('hidden');
         soundIconOff.classList.add('hidden');
+      } else {
+        soundIconOn.classList.add('hidden');
+        soundIconOff.classList.remove('hidden');
       }
-    }
+    });
 
     // History Modal
     btnOpenHistory.addEventListener('click', () => {
@@ -1607,11 +1390,10 @@
 
     function renderHistoryTable() {
       historyTableBody.innerHTML = '';
-
       if (testHistory.length === 0) {
         historyTableBody.innerHTML = `
           <tr>
-            <td colspan="5" class="py-6 text-center text-slate-500 font-hind">
+            <td colspan="5" class="py-5 text-center text-slate-500 font-hind">
               কোনো হিস্ট্রি রেকর্ড পাওয়া যায়নি। একটি টেস্ট সম্পন্ন করুন!
             </td>
           </tr>`;
@@ -1627,11 +1409,11 @@
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-800/40 transition';
         tr.innerHTML = `
-          <td class="py-2.5 px-3 text-slate-400 font-mono text-[11px]">${item.startEnd}</td>
-          <td class="py-2.5 px-3 font-bold text-amber-400">${item.wpm}</td>
-          <td class="py-2.5 px-3 text-emerald-400 font-bold">${item.accuracy}%</td>
-          <td class="py-2.5 px-3 text-indigo-300 font-bold">${item.duration}</td>
-          <td class="py-2.5 px-3"><span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700">${item.mode}</span></td>
+          <td class="py-2 px-3 text-slate-400 font-mono text-[11px]">${item.startEnd}</td>
+          <td class="py-2 px-3 font-bold text-amber-400">${item.wpm}</td>
+          <td class="py-2 px-3 text-emerald-400 font-bold">${item.accuracy}%</td>
+          <td class="py-2 px-3 text-indigo-300 font-bold">${item.duration}</td>
+          <td class="py-2 px-3"><span class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-300 border border-slate-700">${item.mode}</span></td>
         `;
         historyTableBody.appendChild(tr);
       });
@@ -1642,14 +1424,13 @@
       historyStatCount.textContent = testHistory.length;
     }
 
-    // Initial Bootstrap
+    // App Initialization
     window.addEventListener('DOMContentLoaded', () => {
       startLiveClock();
       setFontSize(currentFontSize);
       setFontFamily(currentFontFamily);
       setCursorType(currentCursorType);
       applyTheme(currentThemeKey);
-      updateSoundIcons();
       updateFullscreenUI();
       updateHeaderStats();
 
